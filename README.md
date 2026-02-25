@@ -1,5 +1,7 @@
 # UMN Bar Line Forecasting Dashboard
 
+**Repository:** https://github.com/bentleylujero/umn-bar-traffic-algo
+
 Predicts wait times at bars near the University of Minnesota using historical observations, weather data, and machine learning.
 
 ---
