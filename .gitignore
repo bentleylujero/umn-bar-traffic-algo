@@ -1,0 +1,13 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# SQLite runtime files (keep schema.sql, ignore generated DB)
+data/*.db
+data/*.db-shm
+data/*.db-wal
+
+# macOS
+.DS_Store
