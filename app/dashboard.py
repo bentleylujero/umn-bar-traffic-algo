@@ -313,6 +313,10 @@ def _active_factors_label(row: pd.Series) -> str:
                     label = f"{label} ({int(mins)}min in)"
             parts.append(label)
 
+    late_draw = row.get("bar_late_draw")
+    if late_draw is not None and not pd.isna(late_draw) and late_draw > 0:
+        parts.append(f"Late-night draw ({int(late_draw * 100)}%)")
+
     tv_w = row.get("tv_game_weight")
     tv_h = row.get("tv_game_hour")
     if tv_w is not None and not pd.isna(tv_w) and tv_w > 0:

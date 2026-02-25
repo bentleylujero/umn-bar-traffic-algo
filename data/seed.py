@@ -221,6 +221,16 @@ def _traffic_multiplier(
     if extras["is_blackout_wednesday"] or extras["is_new_years_eve"]:
         mult *= 1.70
 
+    # Bar-specific schedule effects
+    if bar_id == 1:   # Blarney's — drunk-migration draw escalates after 10pm
+        if hour in (22, 23, 0, 1, 2):
+            h_adj = hour if hour >= 22 else hour + 24   # 0→24, 1→25, 2→26
+            draw  = (h_adj - 22) / 4.0                 # 0 at 10pm → 1 at 2am
+            mult *= 1.0 + draw * 0.60                  # up to +60% at 2am
+    if bar_id == 2:   # Sally's — late happy hour 10pm–midnight
+        if hour in (22, 23):
+            mult *= 1.25
+
     # TV sports — biggest effect during and just after game time (early hours)
     tv_weight = tv.get("tv_game_weight", 0.0)
     if tv_weight > 0:

@@ -45,6 +45,9 @@ BAR_SCHEDULES: dict[int, dict] = {
             "end":   (18, 17),   # 6:17 PM
         },
         "weekly_specials": [],
+        # After midnight, drunk crowds migrate here from cheaper bars.
+        # The later the hour, the stronger the draw.
+        "late_night_draw": True,
     },
     2: {  # Sally's Saloon
         "happy_hour": {
@@ -52,23 +55,32 @@ BAR_SCHEDULES: dict[int, dict] = {
             "start": (15, 0),    # 3:00 PM
             "end":   (18, 0),    # 6:00 PM
         },
-        "weekly_specials": [],
+        "weekly_specials": [
+            {
+                "name":  "Sally's Late Happy Hour",
+                "days":  list(range(7)),  # every day
+                "start": (22, 0),         # 10 PM
+                "end":   (24, 0),         # midnight
+            },
+        ],
+        "late_night_draw": False,
     },
     3: {  # Kollege Klub
         "happy_hour": None,
         "weekly_specials": [
             {
                 "name":  "KK Tuesday",
-                "day":   1,          # Tuesday (0=Mon)
+                "days":  [1],        # Tuesday only (0=Mon)
                 "start": (21, 0),    # 9 PM
                 "end":   (26, 0),    # 2 AM Wednesday (> 24 = next day)
             },
             {
                 "name":  "KK Friday After Class",
-                "day":   4,          # Friday
+                "days":  [4],        # Friday only
                 "start": (15, 0),    # 3 PM
                 "end":   (19, 0),    # 7 PM
             },
         ],
+        "late_night_draw": False,
     },
 }

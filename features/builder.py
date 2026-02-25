@@ -100,6 +100,8 @@ SIGNAL_FEATURES = [
     "is_happy_hour",
     "is_bar_special",
     "minutes_into_special",
+    # Continuous late-night migration draw (0 at 10pm → 1.0 at 2am, Blarney's only)
+    "bar_late_draw",
 ]
 
 ALL_FEATURES = TIME_FEATURES + ["bar_id"] + SIGNAL_FEATURES
@@ -188,9 +190,10 @@ class FeatureBuilder:
         """
         from config.settings import BAR_SCHEDULES
 
-        df["is_happy_hour"]       = 0
-        df["is_bar_special"]      = 0
+        df["is_happy_hour"]        = 0
+        df["is_bar_special"]       = 0
         df["minutes_into_special"] = 0.0
+        df["bar_late_draw"]        = 0.0
 
         frac = df["observed_at"].dt.hour + df["observed_at"].dt.minute / 60.0
         dow  = df["observed_at"].dt.dayofweek   # 0=Mon … 6=Sun
@@ -210,22 +213,24 @@ class FeatureBuilder:
                 df.loc[hh_mask, "minutes_into_special"] = (frac[hh_mask] - s_frac) * 60.0
 
             # ── Weekly specials ───────────────────────────────────────────
+            # "days" (list) is preferred; "day" (int) is kept for back-compat
             for special in sched.get("weekly_specials", []):
-                s_frac = special["start"][0] + special["start"][1] / 60.0
-                e_frac = special["end"][0]   + special["end"][1]   / 60.0
-                sp_day = special["day"]
+                s_frac   = special["start"][0] + special["start"][1] / 60.0
+                e_frac   = special["end"][0]   + special["end"][1]   / 60.0
+                sp_days  = special.get("days") or [special["day"]]
 
                 if e_frac <= 24:
                     # Same-day special
-                    sp_mask = bar_mask & (dow == sp_day) & (frac >= s_frac) & (frac < e_frac)
+                    sp_mask = bar_mask & dow.isin(sp_days) & (frac >= s_frac) & (frac < e_frac)
                     mins    = (frac[sp_mask] - s_frac) * 60.0
                 else:
-                    # Overnight special — spans into the next calendar day
-                    e_frac_next = e_frac - 24.0
-                    same_day    = bar_mask & (dow == sp_day)            & (frac >= s_frac)
-                    next_day    = bar_mask & (dow == (sp_day + 1) % 7)  & (frac <  e_frac_next)
-                    sp_mask     = same_day | next_day
-                    mins        = pd.Series(0.0, index=df.index)
+                    # Overnight — spans into the next calendar day
+                    e_frac_next  = e_frac - 24.0
+                    next_sp_days = [(d + 1) % 7 for d in sp_days]
+                    same_day = bar_mask & dow.isin(sp_days)      & (frac >= s_frac)
+                    next_day = bar_mask & dow.isin(next_sp_days) & (frac <  e_frac_next)
+                    sp_mask  = same_day | next_day
+                    mins     = pd.Series(0.0, index=df.index)
                     mins[same_day] = (frac[same_day] - s_frac) * 60.0
                     mins[next_day] = (frac[next_day] + 24.0 - s_frac) * 60.0
                     mins = mins[sp_mask]
@@ -234,6 +239,17 @@ class FeatureBuilder:
                 df.loc[sp_mask, "minutes_into_special"] = np.maximum(
                     df.loc[sp_mask, "minutes_into_special"], mins
                 )
+
+            # ── Late-night migration draw (Blarney's effect) ──────────────
+            # After 10pm the crowd at this bar grows because drunk people
+            # migrate here from cheaper bars. Gradient: 0 at 22:00 → 1 at 02:00.
+            if sched.get("late_night_draw"):
+                h = df.loc[bar_mask, "observed_at"].dt.hour
+                # Treat post-midnight hours as 24+h for a continuous scale
+                h_adj = h.copy().astype(float)
+                h_adj[h <= 2] = h[h <= 2] + 24.0   # 0→24, 1→25, 2→26
+                draw = ((h_adj - 22.0) / 4.0).clip(lower=0.0, upper=1.0)
+                df.loc[bar_mask, "bar_late_draw"] = draw.values
 
         return df
 
