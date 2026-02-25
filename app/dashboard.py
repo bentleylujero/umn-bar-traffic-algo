@@ -28,7 +28,7 @@ from providers.weather import fetch_current_weather
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="UMN Bar Line Forecast",
+    page_title="UMN Bar Forecast",
     page_icon="🍺",
     layout="wide",
 )
@@ -37,12 +37,11 @@ st.set_page_config(
 
 @st.cache_resource(show_spinner="Training models…")
 def _get_models():
-    """Train baseline + ML model once per session."""
+    """Train all 3 model pairs once per session."""
     try:
-        baseline, ml, df_feat = run_training()
-        return baseline, ml, df_feat
+        return run_training()
     except RuntimeError as exc:
-        return None, None, str(exc)
+        return {"error": str(exc)}
 
 
 @st.cache_data(ttl=600, show_spinner="Fetching weather…")
@@ -63,6 +62,8 @@ def _insert_observation(
     bar_id: int,
     observed_at: datetime,
     wait_minutes: float,
+    pct_full: float | None,
+    drink_wait_minutes: float | None,
     cover_charge: float | None,
     notes: str,
     temperature_c: float | None,
@@ -76,13 +77,17 @@ def _insert_observation(
         with conn:
             cur = conn.execute(
                 """
-                INSERT INTO observations (bar_id, observed_at, wait_minutes, cover_charge, notes)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO observations
+                    (bar_id, observed_at, wait_minutes, pct_full, drink_wait_minutes,
+                     cover_charge, notes)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     bar_id,
                     observed_at.isoformat(),
                     wait_minutes,
+                    pct_full,
+                    drink_wait_minutes,
                     cover_charge if cover_charge is not None and cover_charge >= 0 else None,
                     notes.strip() or None,
                 ),
@@ -108,10 +113,12 @@ def _recent_observations(limit: int = 15) -> pd.DataFrame:
     df = pd.read_sql_query(
         """
         SELECT
-            o.id            AS observation_id,
-            b.name          AS bar,
+            o.id                AS observation_id,
+            b.name              AS bar,
             o.observed_at,
             o.wait_minutes,
+            o.pct_full,
+            o.drink_wait_minutes,
             o.cover_charge,
             o.notes,
             s.temperature_c,
@@ -139,7 +146,8 @@ def _fetch_observation(obs_id: int) -> dict | None:
         """
         SELECT
             o.id, o.bar_id, b.name AS bar_name,
-            o.observed_at, o.wait_minutes, o.cover_charge, o.notes,
+            o.observed_at, o.wait_minutes, o.pct_full, o.drink_wait_minutes,
+            o.cover_charge, o.notes,
             s.temperature_c, s.precipitation_mm,
             COALESCE(s.is_game_day, 0) AS is_game_day,
             COALESCE(s.is_holiday, 0)  AS is_holiday
@@ -159,6 +167,8 @@ def _update_observation(
     bar_id: int,
     observed_at: datetime,
     wait_minutes: float,
+    pct_full: float | None,
+    drink_wait_minutes: float | None,
     cover_charge: float | None,
     notes: str,
     temperature_c: float | None,
@@ -174,6 +184,7 @@ def _update_observation(
                 """
                 UPDATE observations
                 SET bar_id = ?, observed_at = ?, wait_minutes = ?,
+                    pct_full = ?, drink_wait_minutes = ?,
                     cover_charge = ?, notes = ?
                 WHERE id = ?
                 """,
@@ -181,12 +192,13 @@ def _update_observation(
                     bar_id,
                     observed_at.isoformat(),
                     wait_minutes,
+                    pct_full,
+                    drink_wait_minutes,
                     cover_charge if cover_charge is not None and cover_charge >= 0 else None,
                     notes.strip() or None,
                     obs_id,
                 ),
             )
-            # Upsert the signals row (may not exist for old synthetic rows)
             conn.execute(
                 """
                 INSERT INTO signals
@@ -223,42 +235,114 @@ def _delete_observations(ids: list[int]) -> str | None:
         return str(exc)
 
 
-def _make_prediction_row(
-    bar_id: int,
-    dt: datetime,
-    weather: dict,
-) -> dict:
+_FACTOR_LABELS: dict[str, str] = {
+    "is_weekend":         "Weekend",
+    "is_thursday":        "Thursday",
+    "is_late_night":      "Late night",
+    "is_game_day":        "Game day",
+    "is_holiday":         "Holiday",
+    "is_severe_weather":  "Severe weather",
+    "is_football_home":   "Football home",
+    "is_basketball_home": "Basketball home",
+    "is_hockey_home":     "Hockey home",
+    "is_rivalry_game":    "Rivalry game",
+    "classes_in_session": "Classes in session",
+    "is_finals_week":     "Finals week",
+    "is_welcome_week":    "Welcome week",
+    "is_break":           "Break",
+    "is_summer_session":  "Summer session",
+    "is_st_patricks":     "St. Patrick's Day",
+    "is_halloween":       "Halloween",
+    "is_homecoming":      "Homecoming",
+    "is_bar_crawl":       "Bar crawl",
+}
+
+
+def _active_factors_label(row: pd.Series) -> str:
+    """Return a readable string of active signals for a single feature row."""
+    parts: list[str] = []
+
+    temp = row.get("temperature_c")
+    if temp is not None and not pd.isna(temp):
+        parts.append(f"{temp:.0f}°C")
+
+    precip = row.get("precipitation_mm")
+    if precip is not None and not pd.isna(precip) and precip > 0:
+        parts.append(f"{precip:.1f} mm precip")
+
+    snowfall = row.get("snowfall_mm")
+    if snowfall is not None and not pd.isna(snowfall) and snowfall > 0:
+        parts.append(f"{snowfall:.1f} mm snow")
+
+    for col, label in _FACTOR_LABELS.items():
+        val = row.get(col)
+        if val is not None and not pd.isna(val) and int(val) == 1:
+            parts.append(label)
+
+    return " · ".join(parts) if parts else "No special factors"
+
+
+def _make_prediction_row(bar_id: int, dt: datetime, weather: dict) -> dict:
     """Construct a single feature row for the given bar and timestamp."""
-    dow = dt.weekday()
-    hour = dt.hour
     return {
         "bar_id": bar_id,
         "observed_at": dt,
-        "wait_minutes": 0,  # placeholder — not used for prediction
-        "temperature_c": weather.get("temperature_c"),
+        "wait_minutes": 0,
+        "pct_full": 0,
+        "drink_wait_minutes": 0,
+        # Weather
+        "temperature_c":    weather.get("temperature_c"),
         "precipitation_mm": weather.get("precipitation_mm"),
+        "wind_chill_c":     weather.get("wind_chill_c"),
+        "snowfall_mm":      weather.get("snowfall_mm"),
+        "wind_speed_ms":    weather.get("wind_speed_ms"),
+        "is_severe_weather": int(bool(weather.get("is_severe_weather"))),
+        # Legacy
         "is_game_day": 0,
-        "is_holiday": 0,
+        "is_holiday":  0,
+        # Athletics
+        "is_football_home":   0,
+        "is_basketball_home": 0,
+        "is_hockey_home":     0,
+        "hours_until_game":   0,
+        "is_rivalry_game":    0,
+        # Academic
+        "classes_in_session": 0,
+        "is_finals_week":     0,
+        "is_welcome_week":    0,
+        "is_break":           0,
+        "is_summer_session":  0,
+        "week_of_semester":   0,
+        # Events
+        "is_st_patricks": 0,
+        "is_halloween":   0,
+        "is_homecoming":  0,
+        "is_bar_crawl":   0,
+        # Observation-level
+        "cover_charge": None,
     }
 
 
 # ── Layout ────────────────────────────────────────────────────────────────────
 
-st.title("🍺 UMN Bar Line Forecasting Dashboard")
-st.caption("Predict how long you'll wait in line at Dinkytown & nearby bars.")
+st.title("🍺 UMN Bar Forecasting Dashboard")
+st.caption("Predict line wait, how full the bar is, and how long to get a drink.")
 
 # Initialise DB (safe to call repeatedly)
 init_db()
 
 # Load models
-baseline, ml, df_feat_or_err = _get_models()
+models = _get_models()
 
-if baseline is None:
-    st.error(f"Could not train models: {df_feat_or_err}")
+if "error" in models:
+    st.error(f"Could not train models: {models['error']}")
     st.info("Run `python -m data.seed` in the project root, then refresh this page.")
     st.stop()
 
-df_feat: pd.DataFrame = df_feat_or_err  # type: ignore[assignment]
+baseline_wait,  ml_wait  = models["wait"]
+baseline_pct,   ml_pct   = models["pct_full"]
+baseline_drink, ml_drink = models["drink"]
+df_feat: pd.DataFrame    = models["df_feat"]
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 
@@ -271,7 +355,6 @@ with st.sidebar:
     st.subheader("Prediction time")
     pred_date = st.date_input("Date", value=datetime.now().date())
     pred_hour = st.slider("Hour (24h)", min_value=18, max_value=26, value=21, step=1)
-    # Clamp to next-day early hours
     actual_hour = pred_hour % 24
 
     is_game_day = st.checkbox("Gopher game day?", value=False)
@@ -306,40 +389,33 @@ raw_row["is_game_day"] = int(is_game_day)
 
 fb = FeatureBuilder()
 df_single = fb.build(pd.DataFrame([raw_row]))
-feature_cols = fb.feature_columns(df_single)
 
-# Predictions
-ml_pred = ml.predict(df_single)[0]
-baseline_pred = baseline.predict_one(
-    bar_id=bar_id,
-    day_of_week=pred_dt.weekday(),
-    hour=actual_hour,
-)
+# Predictions — clamp to sensible ranges
+ml_wait_pred  = max(0.0, float(ml_wait.predict(df_single)[0]))
+ml_pct_pred   = max(0.0, min(100.0, float(ml_pct.predict(df_single)[0])))
+ml_drink_pred = max(0.0, float(ml_drink.predict(df_single)[0]))
 
 # ── KPI row ───────────────────────────────────────────────────────────────────
 
 col1, col2, col3 = st.columns(3)
 with col1:
     st.metric(
-        "ML Prediction",
-        f"{ml_pred:.1f} min",
-        help="RandomForest regressor estimate",
+        "Line wait",
+        f"{ml_wait_pred:.1f} min",
+        help="Estimated wait to get inside",
     )
 with col2:
     st.metric(
-        "Baseline Prediction",
-        f"{baseline_pred:.1f} min",
-        delta=f"{ml_pred - baseline_pred:+.1f} min vs ML",
-        help="Historical median for this bar / day / hour",
+        "Bar fullness",
+        f"{ml_pct_pred:.0f}%",
+        help="Estimated % of capacity",
     )
 with col3:
-    crowd_label = (
-        "Quiet" if ml_pred < 5
-        else "Moderate" if ml_pred < 15
-        else "Busy" if ml_pred < 25
-        else "Very busy"
+    st.metric(
+        "Drink wait",
+        f"{ml_drink_pred:.1f} min",
+        help="Estimated wait to get a drink once inside",
     )
-    st.metric("Crowd level", crowd_label)
 
 st.divider()
 
@@ -347,7 +423,20 @@ st.divider()
 
 st.subheader("Tonight's forecast — all bars")
 
-hours_tonight = list(range(18, 27))  # 6 PM – 2 AM
+metric_choice = st.radio(
+    "Metric",
+    ["Line wait (min)", "Bar fullness (%)", "Drink wait (min)"],
+    horizontal=True,
+)
+
+_metric_map = {
+    "Line wait (min)":   (ml_wait,  "wait_minutes",       "Line wait (min)"),
+    "Bar fullness (%)":  (ml_pct,   "pct_full",           "Fullness (%)"),
+    "Drink wait (min)":  (ml_drink, "drink_wait_minutes", "Drink wait (min)"),
+}
+_model_for_chart, _col_for_chart, _y_label = _metric_map[metric_choice]
+
+hours_tonight = list(range(18, 27))
 rows = []
 for b in BARS:
     bid = _bar_name_to_id(b["name"], df_feat)
@@ -362,12 +451,17 @@ for b in BARS:
         raw = _make_prediction_row(bid, dt_h, weather)
         raw["is_game_day"] = int(is_game_day)
         df_h = fb.build(pd.DataFrame([raw]))
-        ml_h = float(ml.predict(df_h)[0])
+        val = float(_model_for_chart.predict(df_h)[0])
+        if _col_for_chart == "pct_full":
+            val = max(0.0, min(100.0, val))
+        else:
+            val = max(0.0, val)
         rows.append({
             "bar": b["name"],
             "hour": f"{h % 24:02d}:00",
             "hour_int": h,
-            "wait_minutes": max(0, ml_h),
+            _col_for_chart: val,
+            "factors": _active_factors_label(df_h.iloc[0]),
         })
 
 df_tonight = pd.DataFrame(rows)
@@ -377,9 +471,14 @@ chart = (
     .mark_line(point=True)
     .encode(
         x=alt.X("hour:N", title="Hour", sort=list(df_tonight["hour"].unique())),
-        y=alt.Y("wait_minutes:Q", title="Predicted wait (min)", scale=alt.Scale(zero=True)),
+        y=alt.Y(f"{_col_for_chart}:Q", title=_y_label, scale=alt.Scale(zero=True)),
         color=alt.Color("bar:N", title="Bar"),
-        tooltip=["bar", "hour", alt.Tooltip("wait_minutes:Q", format=".1f", title="Wait (min)")],
+        tooltip=[
+            alt.Tooltip("bar:N", title="Bar"),
+            alt.Tooltip("hour:N", title="Hour"),
+            alt.Tooltip(f"{_col_for_chart}:Q", format=".1f", title=_y_label),
+            alt.Tooltip("factors:N", title="Active factors"),
+        ],
     )
     .properties(height=350)
     .interactive()
@@ -390,9 +489,9 @@ st.divider()
 
 # ── Feature importance ────────────────────────────────────────────────────────
 
-st.subheader("Feature importance (ML model)")
+st.subheader("Feature importance (line wait model)")
 
-fi = ml.feature_importances_
+fi = ml_wait.feature_importances_
 if fi is not None:
     fi_df = fi.reset_index()
     fi_df.columns = ["feature", "importance"]
@@ -421,17 +520,17 @@ st.subheader("Model performance")
 met_col1, met_col2 = st.columns(2)
 with met_col1:
     st.caption("Training set")
-    if ml.train_metrics:
-        st.metric("MAE", f"{ml.train_metrics['mae']:.2f} min")
-        st.metric("RMSE", f"{ml.train_metrics['rmse']:.2f} min")
+    if ml_wait.train_metrics:
+        st.metric("MAE", f"{ml_wait.train_metrics['mae']:.2f} min")
+        st.metric("RMSE", f"{ml_wait.train_metrics['rmse']:.2f} min")
     else:
         st.info("No training metrics available.")
 
 with met_col2:
-    st.caption(f"Test set (last {ml.test_split_days} days)")
-    if ml.test_metrics:
-        st.metric("MAE", f"{ml.test_metrics['mae']:.2f} min")
-        st.metric("RMSE", f"{ml.test_metrics['rmse']:.2f} min")
+    st.caption(f"Test set (last {ml_wait.test_split_days} days)")
+    if ml_wait.test_metrics:
+        st.metric("MAE", f"{ml_wait.test_metrics['mae']:.2f} min")
+        st.metric("RMSE", f"{ml_wait.test_metrics['rmse']:.2f} min")
     else:
         st.info("Not enough test data for evaluation.")
 
@@ -442,10 +541,14 @@ st.divider()
 with st.expander("Historical observations (raw data)"):
     bar_hist = df_feat[df_feat["bar_id"] == bar_id].copy()
     bar_hist["observed_at"] = pd.to_datetime(bar_hist["observed_at"]).dt.tz_convert("US/Central")
+    cols_to_show = [
+        c for c in
+        ["observed_at", "wait_minutes", "pct_full", "drink_wait_minutes",
+         "hour", "day_of_week", "is_weekend"]
+        if c in bar_hist.columns
+    ]
     st.dataframe(
-        bar_hist[["observed_at", "wait_minutes", "hour", "day_of_week", "is_weekend"]]
-        .tail(200)
-        .reset_index(drop=True),
+        bar_hist[cols_to_show].tail(200).reset_index(drop=True),
         width="stretch",
     )
 
@@ -454,15 +557,15 @@ st.divider()
 # ── Log a real observation ────────────────────────────────────────────────────
 
 st.subheader("Log a real observation")
-st.caption("Submit an actual wait time you observed. New data will retrain the models.")
+st.caption("Submit what you observed. New data will retrain the models.")
 
 with st.form("log_observation", clear_on_submit=True):
     f_col1, f_col2 = st.columns(2)
 
     with f_col1:
-        f_bar = st.selectbox("Bar", [b["name"] for b in BARS], key="f_bar")
-        f_date = st.date_input("Date observed", value=datetime.now().date(), key="f_date")
-        f_hour = st.slider(
+        f_bar    = st.selectbox("Bar", [b["name"] for b in BARS], key="f_bar")
+        f_date   = st.date_input("Date observed", value=datetime.now().date(), key="f_date")
+        f_hour   = st.slider(
             "Hour observed (24h)", min_value=0, max_value=23,
             value=datetime.now().hour, key="f_hour",
         )
@@ -470,20 +573,28 @@ with st.form("log_observation", clear_on_submit=True):
 
     with f_col2:
         f_wait = st.number_input(
-            "Wait time (minutes)", min_value=0.0, max_value=180.0,
+            "Line wait (minutes)", min_value=0.0, max_value=180.0,
             value=10.0, step=0.5, key="f_wait",
+        )
+        f_pct_full = st.slider(
+            "Bar fullness (%)", min_value=0, max_value=100, value=50, key="f_pct_full",
+        )
+        f_drink_wait = st.number_input(
+            "Drink wait (minutes)", min_value=0.0, max_value=60.0,
+            value=5.0, step=0.5, key="f_drink_wait",
         )
         f_cover = st.number_input(
             "Cover charge ($) — leave 0 if none",
             min_value=0.0, max_value=50.0, value=0.0, step=0.5, key="f_cover",
         )
         f_game_day = st.checkbox("Gopher game day?", key="f_game_day")
-        f_holiday = st.checkbox("Holiday?", key="f_holiday")
+        f_holiday  = st.checkbox("Holiday?", key="f_holiday")
 
-    f_notes = st.text_input("Notes (optional)", placeholder="e.g. 'line wrapped around building'", key="f_notes")
+    f_notes = st.text_input(
+        "Notes (optional)", placeholder="e.g. 'line wrapped around building'", key="f_notes",
+    )
 
-    # Weather pre-fill from current conditions; user can override
-    st.caption("Weather at time of observation (auto-filled from current conditions — adjust if needed)")
+    st.caption("Weather at time of observation (auto-filled — adjust if needed)")
     w_col1, w_col2 = st.columns(2)
     with w_col1:
         f_temp = st.number_input(
@@ -493,8 +604,7 @@ with st.form("log_observation", clear_on_submit=True):
         )
     with w_col2:
         f_precip = st.number_input(
-            "Precipitation (mm/h)",
-            min_value=0.0,
+            "Precipitation (mm/h)", min_value=0.0,
             value=float(weather.get("precipitation_mm") or 0.0),
             step=0.1, key="f_precip",
         )
@@ -502,7 +612,6 @@ with st.form("log_observation", clear_on_submit=True):
     submitted = st.form_submit_button("Submit observation", type="primary", use_container_width=True)
 
 if submitted:
-    # Resolve bar_id from form selection
     f_bar_id = next(
         (i + 1 for i, b in enumerate(BARS) if b["name"] == f_bar), None
     )
@@ -517,6 +626,8 @@ if submitted:
             bar_id=f_bar_id,
             observed_at=obs_dt,
             wait_minutes=f_wait,
+            pct_full=float(f_pct_full),
+            drink_wait_minutes=f_drink_wait,
             cover_charge=f_cover if f_cover > 0 else None,
             notes=f_notes,
             temperature_c=f_temp,
@@ -528,16 +639,13 @@ if submitted:
             st.error(f"Failed to save observation: {err}")
         else:
             st.success(
-                f"Saved: {f_bar} — {f_wait:.1f} min wait at "
-                f"{obs_dt.strftime('%Y-%m-%d %H:%M UTC')}. "
+                f"Saved: {f_bar} at {obs_dt.strftime('%Y-%m-%d %H:%M UTC')}. "
                 "Models will retrain on next refresh."
             )
-            # Bust the model cache so the next render retrains with new data
             st.cache_resource.clear()
 
 st.subheader("Recently logged observations")
 
-# Use a counter key so the editor resets its state after a deletion
 if "obs_table_version" not in st.session_state:
     st.session_state["obs_table_version"] = 0
 
@@ -546,11 +654,10 @@ if df_recent.empty:
     st.info("No observations logged yet.")
 else:
     df_recent["observed_at"] = pd.to_datetime(df_recent["observed_at"]).dt.strftime("%Y-%m-%d %H:%M")
-    df_recent["created_at"] = pd.to_datetime(df_recent["created_at"]).dt.strftime("%Y-%m-%d %H:%M")
+    df_recent["created_at"]  = pd.to_datetime(df_recent["created_at"]).dt.strftime("%Y-%m-%d %H:%M")
 
-    # Add action checkbox columns; keep observation_id hidden via column_config=None
     df_display = df_recent.copy()
-    df_display.insert(0, "edit", False)
+    df_display.insert(0, "edit",   False)
     df_display.insert(0, "delete", False)
 
     editable_cols = {"delete", "edit"}
@@ -558,19 +665,21 @@ else:
         df_display,
         key=f"recent_obs_{st.session_state['obs_table_version']}",
         column_config={
-            "delete": st.column_config.CheckboxColumn("Delete?", default=False, width="small"),
-            "edit": st.column_config.CheckboxColumn("Edit?", default=False, width="small"),
-            "observation_id": None,   # hidden — used only for DB operations
-            "bar": st.column_config.TextColumn("Bar"),
-            "observed_at": st.column_config.TextColumn("Observed at"),
-            "wait_minutes": st.column_config.NumberColumn("Wait (min)", format="%.1f"),
-            "cover_charge": st.column_config.NumberColumn("Cover ($)", format="%.2f"),
-            "notes": st.column_config.TextColumn("Notes"),
-            "temperature_c": st.column_config.NumberColumn("Temp (°C)", format="%.1f"),
-            "precipitation_mm": st.column_config.NumberColumn("Precip (mm/h)", format="%.2f"),
-            "is_game_day": st.column_config.CheckboxColumn("Game day", disabled=True),
-            "is_holiday": st.column_config.CheckboxColumn("Holiday", disabled=True),
-            "created_at": st.column_config.TextColumn("Logged at"),
+            "delete":             st.column_config.CheckboxColumn("Delete?",         default=False, width="small"),
+            "edit":               st.column_config.CheckboxColumn("Edit?",           default=False, width="small"),
+            "observation_id":     None,
+            "bar":                st.column_config.TextColumn("Bar"),
+            "observed_at":        st.column_config.TextColumn("Observed at"),
+            "wait_minutes":       st.column_config.NumberColumn("Line wait (min)",   format="%.1f"),
+            "pct_full":           st.column_config.NumberColumn("Fullness (%)",      format="%.0f"),
+            "drink_wait_minutes": st.column_config.NumberColumn("Drink wait (min)",  format="%.1f"),
+            "cover_charge":       st.column_config.NumberColumn("Cover ($)",         format="%.2f"),
+            "notes":              st.column_config.TextColumn("Notes"),
+            "temperature_c":      st.column_config.NumberColumn("Temp (°C)",         format="%.1f"),
+            "precipitation_mm":   st.column_config.NumberColumn("Precip (mm/h)",     format="%.2f"),
+            "is_game_day":        st.column_config.CheckboxColumn("Game day",  disabled=True),
+            "is_holiday":         st.column_config.CheckboxColumn("Holiday",   disabled=True),
+            "created_at":         st.column_config.TextColumn("Logged at"),
         },
         disabled=[c for c in df_display.columns if c not in editable_cols],
         hide_index=True,
@@ -653,8 +762,8 @@ if editing_id:
                         ),
                         key="ef_bar",
                     )
-                    ef_date = st.date_input("Date observed", value=obs_dt.date(), key="ef_date")
-                    ef_hour = st.slider(
+                    ef_date   = st.date_input("Date observed", value=obs_dt.date(), key="ef_date")
+                    ef_hour   = st.slider(
                         "Hour observed (24h)", min_value=0, max_value=23,
                         value=obs_dt.hour, key="ef_hour",
                     )
@@ -669,8 +778,16 @@ if editing_id:
 
                 with ef_col2:
                     ef_wait = st.number_input(
-                        "Wait time (minutes)", min_value=0.0, max_value=180.0,
+                        "Line wait (minutes)", min_value=0.0, max_value=180.0,
                         value=float(obs["wait_minutes"]), step=0.5, key="ef_wait",
+                    )
+                    ef_pct_full = st.slider(
+                        "Bar fullness (%)", min_value=0, max_value=100,
+                        value=int(obs["pct_full"] or 50), key="ef_pct_full",
+                    )
+                    ef_drink_wait = st.number_input(
+                        "Drink wait (minutes)", min_value=0.0, max_value=60.0,
+                        value=float(obs["drink_wait_minutes"] or 5.0), step=0.5, key="ef_drink_wait",
                     )
                     ef_cover = st.number_input(
                         "Cover charge ($) — leave 0 if none",
@@ -721,6 +838,8 @@ if editing_id:
                         bar_id=ef_bar_id,
                         observed_at=updated_dt,
                         wait_minutes=ef_wait,
+                        pct_full=float(ef_pct_full),
+                        drink_wait_minutes=ef_drink_wait,
                         cover_charge=ef_cover if ef_cover > 0 else None,
                         notes=ef_notes,
                         temperature_c=ef_temp,
