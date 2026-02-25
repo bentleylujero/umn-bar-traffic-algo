@@ -77,8 +77,19 @@ SIGNAL_FEATURES = [
     "is_bar_crawl",
     "is_blackout_wednesday",
     "is_new_years_eve",
-    # Sports (external to UMN)
+    # Sports (external to UMN — bar TV-watching signals)
     "is_twins_home",
+    "is_nfl_game_day",
+    "is_nfl_playoffs",
+    "is_super_bowl",
+    "is_vikings_game",
+    "is_cfb_saturday",
+    "is_cfb_championship",
+    "is_march_madness",
+    "is_march_madness_elite",
+    "is_nba_playoffs",
+    "tv_game_hour",
+    "tv_game_weight",
     # Academic (expanded)
     "is_midterms_week",
     "is_syllabus_week",

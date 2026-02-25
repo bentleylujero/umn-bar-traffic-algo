@@ -176,10 +176,12 @@ def _synthetic_weather(day: datetime) -> dict:
 
 def _traffic_multiplier(
     bar_id: int,
+    hour: int,
     acad: dict,
     games: dict,
     weather: dict,
     extras: dict,
+    tv: dict,
 ) -> float:
     """Combine signal flags into a single wait/crowd multiplier."""
     mult = 1.0
@@ -219,6 +221,19 @@ def _traffic_multiplier(
     if extras["is_blackout_wednesday"] or extras["is_new_years_eve"]:
         mult *= 1.70
 
+    # TV sports — biggest effect during and just after game time (early hours)
+    tv_weight = tv.get("tv_game_weight", 0.0)
+    if tv_weight > 0:
+        tv_hour = tv.get("tv_game_hour")
+        if tv_hour is not None:
+            # Hours during/right after the game get the full boost;
+            # hours more than 4h away get reduced boost
+            hrs_from_game = abs(hour - tv_hour)
+            proximity = max(0.0, 1.0 - hrs_from_game / 5.0)
+        else:
+            proximity = 0.5
+        mult *= 1.0 + (tv_weight * 0.18 * proximity)
+
     # Severe weather suppresses foot traffic
     if weather["is_severe_weather"]:
         mult *= 0.40
@@ -236,6 +251,96 @@ def _thanksgiving(year: int) -> _date:
     # weekday(): 0=Mon … 6=Sun; Thursday=3
     first_thu = nov1 + timedelta(days=(3 - nov1.weekday()) % 7)
     return first_thu + timedelta(weeks=3)
+
+
+def _tv_sports_flags(day: datetime) -> dict:
+    """Synthetic TV-sports signals based on day-of-week and month.
+
+    Covers the realistic sports calendar so the model can learn the
+    early-evening crowd boost driven by watching big games at bars.
+    """
+    d     = day.date()
+    dow   = d.weekday()   # 0=Mon … 6=Sun
+    month = d.month
+
+    # NFL: Sep–Feb; Sundays + Thursday/Monday night games
+    nfl_season   = month in {9, 10, 11, 12, 1, 2}
+    nfl_game_day = int(nfl_season and dow in {3, 0, 6})  # Thu/Mon/Sun
+    # Playoffs: 2nd week of Jan onward
+    nfl_playoffs = int(nfl_game_day and (
+        (month == 1 and d.day >= 10) or month == 2
+    ))
+    # Super Bowl: first Sunday in February (~Feb 8 in 2026)
+    is_super_bowl = int(d.month == 2 and dow == 6 and 1 <= d.day <= 14
+                        and nfl_playoffs)
+    # Vikings: 60% chance they're in any NFL game
+    is_vikings_game = int(nfl_game_day and random.random() < 0.60)
+
+    # CFB: Sep–Dec Saturdays; bowl games Dec 28–Jan 20
+    is_cfb_saturday    = int(dow == 5 and month in {9, 10, 11, 12})
+    is_cfb_championship = int(
+        (month == 12 and d.day >= 28) or (month == 1 and d.day <= 20)
+    )
+
+    # March Madness: mid-March to early April
+    is_march_madness = int(
+        (month == 3 and d.day >= 14) or (month == 4 and d.day <= 7)
+    )
+    is_march_madness_elite = int(
+        is_march_madness and random.random() < 0.30
+    )
+
+    # NBA playoffs: April–June, most nights
+    is_nba_playoffs = int(month in {4, 5, 6} and random.random() < 0.55)
+
+    # TV game weight (magnitude 0–4)
+    weight = 0.0
+    if is_super_bowl:
+        weight = 4.0
+    elif nfl_playoffs:
+        weight = max(weight, 2.0)
+    elif is_cfb_championship:
+        weight = max(weight, 1.5)
+    elif is_march_madness_elite:
+        weight = max(weight, 2.0)
+    elif nfl_game_day:
+        weight = max(weight, 1.0)
+    elif is_march_madness:
+        weight = max(weight, 0.8)
+    elif is_nba_playoffs:
+        weight = max(weight, 1.0)
+    elif is_cfb_saturday:
+        weight = max(weight, 0.6)
+    if is_vikings_game:
+        weight = min(weight + 0.5, 4.0)
+
+    # Typical kickoff hours (local, 24h)
+    if is_super_bowl:
+        tv_game_hour = 18
+    elif nfl_game_day:
+        tv_game_hour = 13   # 1 PM typical early window
+    elif is_cfb_saturday or is_cfb_championship:
+        tv_game_hour = 12
+    elif is_march_madness:
+        tv_game_hour = 14
+    elif is_nba_playoffs:
+        tv_game_hour = 20   # 8 PM ET → 7 PM CT
+    else:
+        tv_game_hour = None
+
+    return {
+        "is_nfl_game_day":        nfl_game_day,
+        "is_nfl_playoffs":        nfl_playoffs,
+        "is_super_bowl":          is_super_bowl,
+        "is_vikings_game":        is_vikings_game,
+        "is_cfb_saturday":        is_cfb_saturday,
+        "is_cfb_championship":    is_cfb_championship,
+        "is_march_madness":       is_march_madness,
+        "is_march_madness_elite": is_march_madness_elite,
+        "is_nba_playoffs":        is_nba_playoffs,
+        "tv_game_hour":           tv_game_hour,
+        "tv_game_weight":         weight,
+    }
 
 
 def _extra_event_flags(day: datetime) -> dict:
@@ -328,6 +433,7 @@ def seed(days: int = HISTORY_DAYS) -> None:
             acad       = _academic_flags(day)
             games      = _game_flags(day)
             extras     = _extra_event_flags(day)
+            tv         = _tv_sports_flags(day)
             is_holiday = int(day.date() in _HOLIDAY_DATES)
 
             is_st_patricks = int(day.date().month == 3 and day.date().day == 17)
@@ -345,7 +451,7 @@ def seed(days: int = HISTORY_DAYS) -> None:
 
                     is_late_night = hour in (0, 1, 2)
                     weather       = _synthetic_weather(day)
-                    mult          = _traffic_multiplier(bar_id, acad, games, weather, extras)
+                    mult          = _traffic_multiplier(bar_id, hour, acad, games, weather, extras, tv)
 
                     wait  = max(0.0, round(_wait(bar_id, hour, is_weekend, is_late_night) * mult, 1))
                     pct   = max(0.0, min(100.0, round(_pct_full(bar_id, hour, is_weekend, is_late_night) * mult, 1)))
@@ -383,8 +489,12 @@ def seed(days: int = HISTORY_DAYS) -> None:
                                      is_break, is_summer_session, week_of_semester,
                                      is_st_patricks, is_halloween, is_homecoming, is_bar_crawl,
                                      is_blackout_wednesday, is_new_years_eve, is_twins_home,
-                                     is_midterms_week, is_syllabus_week, days_until_break)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                     is_midterms_week, is_syllabus_week, days_until_break,
+                                     is_nfl_game_day, is_nfl_playoffs, is_super_bowl,
+                                     is_vikings_game, is_cfb_saturday, is_cfb_championship,
+                                     is_march_madness, is_march_madness_elite, is_nba_playoffs,
+                                     tv_game_hour, tv_game_weight)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                                 """,
                                 (
                                     obs_id,
@@ -417,6 +527,17 @@ def seed(days: int = HISTORY_DAYS) -> None:
                                     acad["is_midterms_week"],
                                     acad["is_syllabus_week"],
                                     acad["days_until_break"],
+                                    tv["is_nfl_game_day"],
+                                    tv["is_nfl_playoffs"],
+                                    tv["is_super_bowl"],
+                                    tv["is_vikings_game"],
+                                    tv["is_cfb_saturday"],
+                                    tv["is_cfb_championship"],
+                                    tv["is_march_madness"],
+                                    tv["is_march_madness_elite"],
+                                    tv["is_nba_playoffs"],
+                                    tv["tv_game_hour"],
+                                    tv["tv_game_weight"],
                                 ),
                             )
                             inserted += 1

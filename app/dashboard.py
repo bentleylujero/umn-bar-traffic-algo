@@ -25,7 +25,7 @@ from data.db import get_connection, init_db
 from features.builder import FeatureBuilder
 from models.train import load_observations, run_training
 from providers.calendar import compute_academic_flags, compute_event_flags
-from providers.sports import fetch_umn_games, fetch_twins_game
+from providers.sports import fetch_umn_games, fetch_tv_sports
 from providers.weather import fetch_current_weather
 
 # ── Page config ───────────────────────────────────────────────────────────────
@@ -58,8 +58,8 @@ def _get_today_signals(pred_date):
     acad   = compute_academic_flags(dt)
     events = compute_event_flags(dt)
     games  = fetch_umn_games(pred_date)
-    twins  = fetch_twins_game(pred_date)
-    return {**acad, **events, **games, **twins}
+    tv     = fetch_tv_sports(pred_date)
+    return {**acad, **events, **games, **tv}
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -270,11 +270,20 @@ _FACTOR_LABELS: dict[str, str] = {
     "is_halloween":           "Halloween",
     "is_homecoming":          "Homecoming",
     "is_bar_crawl":           "Bar crawl",
-    "is_blackout_wednesday":  "Blackout Wednesday",
-    "is_new_years_eve":       "New Year's Eve",
-    "is_twins_home":          "Twins home",
-    "is_happy_hour":          "Happy hour",
-    "is_bar_special":         "Bar special",
+    "is_blackout_wednesday":   "Blackout Wednesday",
+    "is_new_years_eve":        "New Year's Eve",
+    "is_twins_home":           "Twins home",
+    "is_nfl_game_day":         "NFL on TV",
+    "is_nfl_playoffs":         "NFL Playoffs",
+    "is_super_bowl":           "Super Bowl",
+    "is_vikings_game":         "Vikings game",
+    "is_cfb_saturday":         "CFB Saturday",
+    "is_cfb_championship":     "CFB Bowl/Championship",
+    "is_march_madness":        "March Madness",
+    "is_march_madness_elite":  "Final Four/Elite 8",
+    "is_nba_playoffs":         "NBA Playoffs",
+    "is_happy_hour":           "Happy hour",
+    "is_bar_special":          "Bar special",
 }
 
 
@@ -304,6 +313,14 @@ def _active_factors_label(row: pd.Series) -> str:
                     label = f"{label} ({int(mins)}min in)"
             parts.append(label)
 
+    tv_w = row.get("tv_game_weight")
+    tv_h = row.get("tv_game_hour")
+    if tv_w is not None and not pd.isna(tv_w) and tv_w > 0:
+        label = f"TV game {tv_w:.1f}/4.0"
+        if tv_h is not None and not pd.isna(tv_h):
+            label += f" @ {int(tv_h):02d}:00"
+        parts.append(label)
+
     dub = row.get("days_until_break")
     if dub is not None and not pd.isna(dub) and 0 < dub <= 7:
         parts.append(f"{int(dub)}d until break")
@@ -327,8 +344,8 @@ def _make_prediction_row(
     """
     s = {**signals, **(overrides or {})}
 
-    # hours_until_game: positive = before game, negative = after
-    game_hour = s.get("game_hour") or s.get("twins_game_hour")
+    # hours_until_game: positive = before UMN game, negative = after
+    game_hour = s.get("game_hour")
     hours_until_game = (
         round(game_hour - dt.hour, 1) if game_hour is not None else None
     )
@@ -372,6 +389,18 @@ def _make_prediction_row(
         "is_new_years_eve":      s.get("is_new_years_eve",      0),
         "is_homecoming":         s.get("is_homecoming",         0),
         "is_bar_crawl":          s.get("is_bar_crawl",          0),
+        # TV sports
+        "is_nfl_game_day":        s.get("is_nfl_game_day",        0),
+        "is_nfl_playoffs":        s.get("is_nfl_playoffs",        0),
+        "is_super_bowl":          s.get("is_super_bowl",          0),
+        "is_vikings_game":        s.get("is_vikings_game",        0),
+        "is_cfb_saturday":        s.get("is_cfb_saturday",        0),
+        "is_cfb_championship":    s.get("is_cfb_championship",    0),
+        "is_march_madness":       s.get("is_march_madness",       0),
+        "is_march_madness_elite": s.get("is_march_madness_elite", 0),
+        "is_nba_playoffs":        s.get("is_nba_playoffs",        0),
+        "tv_game_hour":           s.get("tv_game_hour"),
+        "tv_game_weight":         s.get("tv_game_weight",         0.0),
         # Observation-level
         "cover_charge": None,
     }
@@ -427,29 +456,46 @@ with st.sidebar:
     today_signals = _get_today_signals(pred_date)
 
     _SIGNAL_DISPLAY: list[tuple[str, str]] = [
-        ("classes_in_session",  "Classes in session"),
-        ("is_syllabus_week",    "Syllabus week"),
-        ("is_midterms_week",    "Midterms week"),
-        ("is_finals_week",      "Finals week"),
-        ("is_welcome_week",     "Welcome week"),
-        ("is_break",            "Break / no classes"),
-        ("is_summer_session",   "Summer session"),
-        ("is_game_day",         "Gopher game day"),
-        ("is_football_home",    "Football home"),
-        ("is_basketball_home",  "Basketball home"),
-        ("is_hockey_home",      "Hockey home"),
-        ("is_rivalry_game",     "Rivalry game"),
-        ("is_twins_home",       "Twins home"),
-        ("is_holiday",          "Holiday"),
+        # Academic
+        ("classes_in_session",   "Classes in session"),
+        ("is_syllabus_week",     "Syllabus week"),
+        ("is_midterms_week",     "Midterms week"),
+        ("is_finals_week",       "Finals week"),
+        ("is_welcome_week",      "Welcome week"),
+        ("is_break",             "Break / no classes"),
+        ("is_summer_session",    "Summer session"),
+        # UMN Athletics (home games)
+        ("is_game_day",          "Gopher home game"),
+        ("is_football_home",     "↳ Football"),
+        ("is_basketball_home",   "↳ Basketball"),
+        ("is_hockey_home",       "↳ Hockey"),
+        ("is_rivalry_game",      "↳ Rivalry game"),
+        # TV sports (bar-watching)
+        ("is_nfl_game_day",      "NFL on TV"),
+        ("is_super_bowl",        "↳ Super Bowl"),
+        ("is_nfl_playoffs",      "↳ NFL Playoffs"),
+        ("is_vikings_game",      "↳ Vikings game"),
+        ("is_cfb_saturday",      "CFB Saturday"),
+        ("is_cfb_championship",  "CFB Bowl/Championship"),
+        ("is_march_madness",     "March Madness"),
+        ("is_march_madness_elite","↳ Elite 8 / Final Four"),
+        ("is_nba_playoffs",      "NBA Playoffs"),
+        # Events / holidays
+        ("is_holiday",           "Holiday"),
         ("is_blackout_wednesday","Blackout Wednesday"),
-        ("is_new_years_eve",    "New Year's Eve"),
-        ("is_st_patricks",      "St. Patrick's Day"),
-        ("is_halloween",        "Halloween"),
+        ("is_new_years_eve",     "New Year's Eve"),
+        ("is_st_patricks",       "St. Patrick's Day"),
+        ("is_halloween",         "Halloween"),
     ]
     active = [(lbl, today_signals.get(key, 0)) for key, lbl in _SIGNAL_DISPLAY]
     for lbl, val in active:
         icon = "🟢" if val else "⚪"
         st.caption(f"{icon} {lbl}")
+
+    tv_w = today_signals.get("tv_game_weight", 0.0)
+    tv_h = today_signals.get("tv_game_hour")
+    if tv_w > 0 and tv_h is not None:
+        st.caption(f"📺 Biggest game: {tv_h:02d}:00  weight={tv_w:.1f}/4.0")
 
     dub = today_signals.get("days_until_break")
     if dub is not None and dub > 0:

@@ -56,10 +56,29 @@ def load_observations(conn: sqlite3.Connection) -> pd.DataFrame:
             COALESCE(s.is_summer_session,   0) AS is_summer_session,
             s.week_of_semester,
             -- Events
-            COALESCE(s.is_st_patricks,      0) AS is_st_patricks,
-            COALESCE(s.is_halloween,        0) AS is_halloween,
-            COALESCE(s.is_homecoming,       0) AS is_homecoming,
-            COALESCE(s.is_bar_crawl,        0) AS is_bar_crawl
+            COALESCE(s.is_st_patricks,           0) AS is_st_patricks,
+            COALESCE(s.is_halloween,             0) AS is_halloween,
+            COALESCE(s.is_homecoming,            0) AS is_homecoming,
+            COALESCE(s.is_bar_crawl,             0) AS is_bar_crawl,
+            COALESCE(s.is_blackout_wednesday,    0) AS is_blackout_wednesday,
+            COALESCE(s.is_new_years_eve,         0) AS is_new_years_eve,
+            -- External sports (bar-watching TV events)
+            COALESCE(s.is_twins_home,            0) AS is_twins_home,
+            COALESCE(s.is_nfl_game_day,          0) AS is_nfl_game_day,
+            COALESCE(s.is_nfl_playoffs,          0) AS is_nfl_playoffs,
+            COALESCE(s.is_super_bowl,            0) AS is_super_bowl,
+            COALESCE(s.is_vikings_game,          0) AS is_vikings_game,
+            COALESCE(s.is_cfb_saturday,          0) AS is_cfb_saturday,
+            COALESCE(s.is_cfb_championship,      0) AS is_cfb_championship,
+            COALESCE(s.is_march_madness,         0) AS is_march_madness,
+            COALESCE(s.is_march_madness_elite,   0) AS is_march_madness_elite,
+            COALESCE(s.is_nba_playoffs,          0) AS is_nba_playoffs,
+            s.tv_game_hour,
+            COALESCE(s.tv_game_weight,         0.0) AS tv_game_weight,
+            -- Academic (expanded)
+            COALESCE(s.is_midterms_week,         0) AS is_midterms_week,
+            COALESCE(s.is_syllabus_week,         0) AS is_syllabus_week,
+            s.days_until_break
         FROM observations o
         JOIN bars b ON b.id = o.bar_id
         LEFT JOIN signals s ON s.observation_id = o.id

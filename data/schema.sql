@@ -66,6 +66,19 @@ CREATE TABLE IF NOT EXISTS signals (
     is_summer_session  INTEGER NOT NULL DEFAULT 0 CHECK (is_summer_session  IN (0,1)),
     week_of_semester   INTEGER,      -- 1–16 when classes in session, NULL otherwise
 
+    -- TV sports (bar-watching events — affects early hours)
+    is_nfl_game_day        INTEGER NOT NULL DEFAULT 0 CHECK (is_nfl_game_day        IN (0,1)),
+    is_nfl_playoffs        INTEGER NOT NULL DEFAULT 0 CHECK (is_nfl_playoffs        IN (0,1)),
+    is_super_bowl          INTEGER NOT NULL DEFAULT 0 CHECK (is_super_bowl          IN (0,1)),
+    is_vikings_game        INTEGER NOT NULL DEFAULT 0 CHECK (is_vikings_game        IN (0,1)),
+    is_cfb_saturday        INTEGER NOT NULL DEFAULT 0 CHECK (is_cfb_saturday        IN (0,1)),
+    is_cfb_championship    INTEGER NOT NULL DEFAULT 0 CHECK (is_cfb_championship    IN (0,1)),
+    is_march_madness       INTEGER NOT NULL DEFAULT 0 CHECK (is_march_madness       IN (0,1)),
+    is_march_madness_elite INTEGER NOT NULL DEFAULT 0 CHECK (is_march_madness_elite IN (0,1)),
+    is_nba_playoffs        INTEGER NOT NULL DEFAULT 0 CHECK (is_nba_playoffs        IN (0,1)),
+    tv_game_hour           INTEGER,          -- local kickoff hour of biggest game; NULL if none
+    tv_game_weight         REAL    NOT NULL DEFAULT 0.0,  -- magnitude 0–4
+
     -- Events
     is_st_patricks        INTEGER NOT NULL DEFAULT 0 CHECK (is_st_patricks        IN (0,1)),
     is_halloween          INTEGER NOT NULL DEFAULT 0 CHECK (is_halloween          IN (0,1)),
