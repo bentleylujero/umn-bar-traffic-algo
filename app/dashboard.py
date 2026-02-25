@@ -24,6 +24,8 @@ from config.settings import BARS
 from data.db import get_connection, init_db
 from features.builder import FeatureBuilder
 from models.train import load_observations, run_training
+from providers.calendar import compute_academic_flags, compute_event_flags
+from providers.sports import fetch_umn_games, fetch_twins_game
 from providers.weather import fetch_current_weather
 
 # ── Page config ───────────────────────────────────────────────────────────────
@@ -47,6 +49,17 @@ def _get_models():
 @st.cache_data(ttl=600, show_spinner="Fetching weather…")
 def _get_weather():
     return fetch_current_weather()
+
+
+@st.cache_data(ttl=3600, show_spinner="Fetching today's signals…")
+def _get_today_signals(pred_date):
+    """Auto-detect all non-weather signals for pred_date. Cached 1 hour."""
+    dt     = datetime(pred_date.year, pred_date.month, pred_date.day, 20, 0, 0)
+    acad   = compute_academic_flags(dt)
+    events = compute_event_flags(dt)
+    games  = fetch_umn_games(pred_date)
+    twins  = fetch_twins_game(pred_date)
+    return {**acad, **events, **games, **twins}
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -298,8 +311,28 @@ def _active_factors_label(row: pd.Series) -> str:
     return " · ".join(parts) if parts else "No special factors"
 
 
-def _make_prediction_row(bar_id: int, dt: datetime, weather: dict) -> dict:
-    """Construct a single feature row for the given bar and timestamp."""
+def _make_prediction_row(
+    bar_id: int,
+    dt: datetime,
+    weather: dict,
+    signals: dict,
+    overrides: dict | None = None,
+) -> dict:
+    """Construct a single feature row using auto-detected signals.
+
+    Parameters
+    ----------
+    signals : dict returned by _get_today_signals — all non-weather flags.
+    overrides : optional manual flag overrides (homecoming, bar crawl, etc.).
+    """
+    s = {**signals, **(overrides or {})}
+
+    # hours_until_game: positive = before game, negative = after
+    game_hour = s.get("game_hour") or s.get("twins_game_hour")
+    hours_until_game = (
+        round(game_hour - dt.hour, 1) if game_hour is not None else None
+    )
+
     return {
         "bar_id": bar_id,
         "observed_at": dt,
@@ -307,41 +340,38 @@ def _make_prediction_row(bar_id: int, dt: datetime, weather: dict) -> dict:
         "pct_full": 0,
         "drink_wait_minutes": 0,
         # Weather
-        "temperature_c":    weather.get("temperature_c"),
-        "precipitation_mm": weather.get("precipitation_mm"),
-        "wind_chill_c":     weather.get("wind_chill_c"),
-        "snowfall_mm":      weather.get("snowfall_mm"),
-        "wind_speed_ms":    weather.get("wind_speed_ms"),
+        "temperature_c":     weather.get("temperature_c"),
+        "precipitation_mm":  weather.get("precipitation_mm"),
+        "wind_chill_c":      weather.get("wind_chill_c"),
+        "snowfall_mm":       weather.get("snowfall_mm"),
+        "wind_speed_ms":     weather.get("wind_speed_ms"),
         "is_severe_weather": int(bool(weather.get("is_severe_weather"))),
-        # Legacy
-        "is_game_day": 0,
-        "is_holiday":  0,
         # Athletics
-        "is_football_home":   0,
-        "is_basketball_home": 0,
-        "is_hockey_home":     0,
-        "hours_until_game":   0,
-        "is_rivalry_game":    0,
+        "is_game_day":         s.get("is_game_day",         0),
+        "is_football_home":    s.get("is_football_home",    0),
+        "is_basketball_home":  s.get("is_basketball_home",  0),
+        "is_hockey_home":      s.get("is_hockey_home",      0),
+        "hours_until_game":    hours_until_game,
+        "is_rivalry_game":     s.get("is_rivalry_game",     0),
+        "is_twins_home":       s.get("is_twins_home",       0),
         # Academic
-        "classes_in_session": 0,
-        "is_finals_week":     0,
-        "is_welcome_week":    0,
-        "is_break":           0,
-        "is_summer_session":  0,
-        "week_of_semester":   0,
+        "classes_in_session":  s.get("classes_in_session",  0),
+        "is_finals_week":      s.get("is_finals_week",      0),
+        "is_welcome_week":     s.get("is_welcome_week",     0),
+        "is_syllabus_week":    s.get("is_syllabus_week",    0),
+        "is_midterms_week":    s.get("is_midterms_week",    0),
+        "is_break":            s.get("is_break",            0),
+        "is_summer_session":   s.get("is_summer_session",   0),
+        "week_of_semester":    s.get("week_of_semester"),
+        "days_until_break":    s.get("days_until_break"),
         # Events
-        "is_st_patricks":        0,
-        "is_halloween":          0,
-        "is_homecoming":         0,
-        "is_bar_crawl":          0,
-        "is_blackout_wednesday": 0,
-        "is_new_years_eve":      0,
-        # Sports (external)
-        "is_twins_home":         0,
-        # Academic (expanded)
-        "is_midterms_week":      0,
-        "is_syllabus_week":      0,
-        "days_until_break":      None,
+        "is_holiday":            s.get("is_holiday",            0),
+        "is_st_patricks":        s.get("is_st_patricks",        0),
+        "is_halloween":          s.get("is_halloween",          0),
+        "is_blackout_wednesday": s.get("is_blackout_wednesday", 0),
+        "is_new_years_eve":      s.get("is_new_years_eve",      0),
+        "is_homecoming":         s.get("is_homecoming",         0),
+        "is_bar_crawl":          s.get("is_bar_crawl",          0),
         # Observation-level
         "cover_charge": None,
     }
@@ -381,18 +411,53 @@ with st.sidebar:
     pred_hour = st.slider("Hour (24h)", min_value=18, max_value=26, value=21, step=1)
     actual_hour = pred_hour % 24
 
-    is_game_day = st.checkbox("Gopher game day?", value=False)
-
     st.divider()
     st.subheader("Current weather")
     weather = _get_weather()
-    temp = weather.get("temperature_c")
+    temp   = weather.get("temperature_c")
     precip = weather.get("precipitation_mm")
     if temp is not None:
         st.metric("Temperature", f"{temp:.1f} °C")
         st.metric("Precipitation", f"{precip:.1f} mm/h" if precip is not None else "—")
     else:
         st.warning("Weather unavailable (offline?)")
+
+    st.divider()
+    st.subheader("Auto-detected signals")
+    today_signals = _get_today_signals(pred_date)
+
+    _SIGNAL_DISPLAY: list[tuple[str, str]] = [
+        ("classes_in_session",  "Classes in session"),
+        ("is_syllabus_week",    "Syllabus week"),
+        ("is_midterms_week",    "Midterms week"),
+        ("is_finals_week",      "Finals week"),
+        ("is_welcome_week",     "Welcome week"),
+        ("is_break",            "Break / no classes"),
+        ("is_summer_session",   "Summer session"),
+        ("is_game_day",         "Gopher game day"),
+        ("is_football_home",    "Football home"),
+        ("is_basketball_home",  "Basketball home"),
+        ("is_hockey_home",      "Hockey home"),
+        ("is_rivalry_game",     "Rivalry game"),
+        ("is_twins_home",       "Twins home"),
+        ("is_holiday",          "Holiday"),
+        ("is_blackout_wednesday","Blackout Wednesday"),
+        ("is_new_years_eve",    "New Year's Eve"),
+        ("is_st_patricks",      "St. Patrick's Day"),
+        ("is_halloween",        "Halloween"),
+    ]
+    active = [(lbl, today_signals.get(key, 0)) for key, lbl in _SIGNAL_DISPLAY]
+    for lbl, val in active:
+        icon = "🟢" if val else "⚪"
+        st.caption(f"{icon} {lbl}")
+
+    dub = today_signals.get("days_until_break")
+    if dub is not None and dub > 0:
+        st.caption(f"📅 {int(dub)} days until break")
+
+    with st.expander("Manual overrides"):
+        override_homecoming = st.checkbox("Homecoming weekend", value=False)
+        override_bar_crawl  = st.checkbox("Bar crawl",          value=False)
 
 # ── Main content ──────────────────────────────────────────────────────────────
 
@@ -407,9 +472,13 @@ pred_dt = datetime(
     tzinfo=timezone.utc,
 )
 
-# Build feature row
-raw_row = _make_prediction_row(bar_id, pred_dt, weather)
-raw_row["is_game_day"] = int(is_game_day)
+overrides = {
+    "is_homecoming": int(override_homecoming),
+    "is_bar_crawl":  int(override_bar_crawl),
+}
+
+# Build feature row — all signals auto-detected
+raw_row = _make_prediction_row(bar_id, pred_dt, weather, today_signals, overrides)
 
 fb = FeatureBuilder()
 df_single = fb.build(pd.DataFrame([raw_row]))
@@ -472,8 +541,7 @@ for b in BARS:
             pred_date.year, pred_date.month, pred_date.day,
             actual_h, 0, 0, tzinfo=timezone.utc,
         )
-        raw = _make_prediction_row(bid, dt_h, weather)
-        raw["is_game_day"] = int(is_game_day)
+        raw = _make_prediction_row(bid, dt_h, weather, today_signals, overrides)
         df_h = fb.build(pd.DataFrame([raw]))
         val = float(_model_for_chart.predict(df_h)[0])
         if _col_for_chart == "pct_full":
