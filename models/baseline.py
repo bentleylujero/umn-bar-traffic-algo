@@ -24,7 +24,8 @@ class BaselineModel:
     exact slot has no data.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, target_col: str = "wait_minutes") -> None:
+        self.target_col = target_col
         self._table: pd.DataFrame | None = None
         self._fallback_bar: pd.Series | None = None      # bar_id → median
         self._fallback_dow: pd.Series | None = None      # day_of_week → median
@@ -37,25 +38,25 @@ class BaselineModel:
 
         Required columns: bar_id, day_of_week, hour, wait_minutes.
         """
-        required = {"bar_id", "day_of_week", "hour", "wait_minutes"}
+        required = {"bar_id", "day_of_week", "hour", self.target_col}
         missing = required - set(df.columns)
         if missing:
             raise ValueError(f"BaselineModel.fit: missing columns {missing}")
 
         self._table = (
-            df.groupby(["bar_id", "day_of_week", "hour"])["wait_minutes"]
+            df.groupby(["bar_id", "day_of_week", "hour"])[self.target_col]
             .median()
-            .rename("predicted_wait")
+            .rename("predicted_val")
             .reset_index()
         )
 
         self._fallback_bar = (
-            df.groupby("bar_id")["wait_minutes"].median()
+            df.groupby("bar_id")[self.target_col].median()
         )
         self._fallback_dow = (
-            df.groupby("day_of_week")["wait_minutes"].median()
+            df.groupby("day_of_week")[self.target_col].median()
         )
-        self._global_median = float(df["wait_minutes"].median())
+        self._global_median = float(df[self.target_col].median())
         log.info(
             "BaselineModel fitted on %d rows, %d unique slots",
             len(df),
@@ -96,7 +97,7 @@ class BaselineModel:
         )
         rows = self._table[mask]
         if not rows.empty:
-            return float(rows.iloc[0]["predicted_wait"])
+            return float(rows.iloc[0]["predicted_val"])
 
         # Fallback 1: same bar, any time
         if bar_id in self._fallback_bar.index:  # type: ignore[union-attr]

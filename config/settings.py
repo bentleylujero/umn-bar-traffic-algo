@@ -18,11 +18,9 @@ LONGITUDE = -93.2650
 
 # Bars tracked (name → rough address for display)
 BARS = [
-    {"name": "Blarney Pub & Grill", "neighborhood": "Dinkytown"},
-    {"name": "The Library Bar", "neighborhood": "Dinkytown"},
-    {"name": "Stub & Herbs", "neighborhood": "Dinkytown"},
-    {"name": "Bock's Bar", "neighborhood": "Marcy-Holmes"},
-    {"name": "Bullwinkle's Saloon", "neighborhood": "Dinkytown"},
+    {"name": "Blarney's Pub and Grill", "neighborhood": "Dinkytown"},
+    {"name": "Sally's Saloon", "neighborhood": "Stadium Village"},
+    {"name": "Kollege Klub", "neighborhood": "Dinkytown"},
 ]
 
 # Model

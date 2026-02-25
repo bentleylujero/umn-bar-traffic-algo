@@ -13,11 +13,20 @@ The raw DataFrame must contain at least:
     - wait_minutes : float  (the target — preserved, not used as a feature)
 
 Optional columns (passed through if present):
-    - temperature_c, precipitation_mm, is_game_day, is_holiday
+    Weather     : temperature_c, precipitation_mm, wind_chill_c, snowfall_mm,
+                  wind_speed_ms, is_severe_weather
+    Legacy      : is_game_day, is_holiday
+    Athletics   : is_football_home, is_basketball_home, is_hockey_home,
+                  hours_until_game, is_rivalry_game
+    Academic    : classes_in_session, is_finals_week, is_welcome_week,
+                  is_break, is_summer_session, week_of_semester
+    Events      : is_st_patricks, is_halloween, is_homecoming, is_bar_crawl
+    Observation : cover_charge
 """
 
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 
 
@@ -25,18 +34,49 @@ import pandas as pd
 TIME_FEATURES = [
     "hour",
     "day_of_week",
-    "is_weekend",
+    "hour_sin",        # cyclical encoding — avoids the 23→0 discontinuity
+    "hour_cos",
+    "dow_sin",
+    "dow_cos",
+    "is_weekend",      # Fri–Sun
+    "is_thursday",     # Wed/Thu are the college "going-out" nights
     "month",
     "week_of_year",
-    "is_late_night",   # 12 AM–2 AM  (bars still open, crowd maxes)
+    "is_late_night",   # 12 AM–2 AM (bars still open, crowd maxes)
 ]
 
-# ── Signal feature names (present only when signals table is joined) ──────────
+# ── Signal feature names (present only when signals/obs columns are joined) ──
 SIGNAL_FEATURES = [
+    # Weather
     "temperature_c",
     "precipitation_mm",
+    "wind_chill_c",
+    "snowfall_mm",
+    "wind_speed_ms",
+    "is_severe_weather",
+    # Legacy game/holiday flags
     "is_game_day",
     "is_holiday",
+    # Athletics (sport-specific)
+    "is_football_home",
+    "is_basketball_home",
+    "is_hockey_home",
+    "hours_until_game",
+    "is_rivalry_game",
+    # Academic calendar
+    "classes_in_session",
+    "is_finals_week",
+    "is_welcome_week",
+    "is_break",
+    "is_summer_session",
+    "week_of_semester",
+    # Events
+    "is_st_patricks",
+    "is_halloween",
+    "is_homecoming",
+    "is_bar_crawl",
+    # Observation-level
+    "cover_charge",
 ]
 
 ALL_FEATURES = TIME_FEATURES + ["bar_id"] + SIGNAL_FEATURES
@@ -83,8 +123,7 @@ class FeatureBuilder:
         """Return the list of feature column names present in *df*."""
         candidates = TIME_FEATURES + ["bar_id"] + SIGNAL_FEATURES
         if self.add_lag_features:
-            lag_cols = self._lag_column_names()
-            candidates = candidates + lag_cols
+            candidates = candidates + self._lag_column_names()
         return [c for c in candidates if c in df.columns]
 
     # ── Private helpers ───────────────────────────────────────────────────────
@@ -98,12 +137,22 @@ class FeatureBuilder:
     @staticmethod
     def _add_time_features(df: pd.DataFrame) -> pd.DataFrame:
         ts = df["observed_at"].dt
-        df["hour"] = ts.hour
-        df["day_of_week"] = ts.dayofweek          # 0=Mon … 6=Sun
-        df["is_weekend"] = (df["day_of_week"] >= 4).astype(int)  # Fri–Sun
-        df["month"] = ts.month
-        df["week_of_year"] = ts.isocalendar().week.astype(int)
-        df["is_late_night"] = ((df["hour"] >= 0) & (df["hour"] <= 2)).astype(int)
+
+        df["hour"]        = ts.hour
+        df["day_of_week"] = ts.dayofweek                              # 0=Mon … 6=Sun
+
+        # Cyclical encodings — eliminate artificial discontinuity at period boundaries
+        df["hour_sin"] = np.sin(2 * np.pi * df["hour"] / 24)
+        df["hour_cos"] = np.cos(2 * np.pi * df["hour"] / 24)
+        df["dow_sin"]  = np.sin(2 * np.pi * df["day_of_week"] / 7)
+        df["dow_cos"]  = np.cos(2 * np.pi * df["day_of_week"] / 7)
+
+        df["is_weekend"]  = (df["day_of_week"] >= 4).astype(int)     # Fri–Sun
+        df["is_thursday"] = (df["day_of_week"] == 3).astype(int)     # Thu bar night
+        df["month"]       = ts.month
+        df["week_of_year"]= ts.isocalendar().week.astype(int)
+        df["is_late_night"]= ((df["hour"] >= 0) & (df["hour"] <= 2)).astype(int)
+
         return df
 
     def _add_lag_features(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -119,10 +168,7 @@ class FeatureBuilder:
             group = group.sort_index()
             for lag in self.lag_hours:
                 col = f"wait_lag_{lag}h"
-                group[col] = (
-                    group["wait_minutes"]
-                    .shift(lag)          # shift by lag periods (≈hours)
-                )
+                group[col] = group["wait_minutes"].shift(lag)
             lag_dfs.append(group)
         df = pd.concat(lag_dfs).sort_index().reset_index()
         return df

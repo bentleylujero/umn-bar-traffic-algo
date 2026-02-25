@@ -37,9 +37,11 @@ class WaitTimeModel:
     def __init__(
         self,
         feature_cols: list[str],
+        target_col: str = "wait_minutes",
         test_split_days: int = TEST_SPLIT_DAYS,
     ) -> None:
         self.feature_cols = feature_cols
+        self.target_col = target_col
         self.test_split_days = test_split_days
 
         self._pipeline: Optional[Pipeline] = None
@@ -66,7 +68,7 @@ class WaitTimeModel:
             )
 
         X_train = train[self.feature_cols]
-        y_train = train["wait_minutes"]
+        y_train = train[self.target_col]
 
         self._pipeline = Pipeline([
             ("imputer", SimpleImputer(strategy="median")),
@@ -86,7 +88,7 @@ class WaitTimeModel:
         # Test metrics (only if enough test data)
         if len(test) >= 5:
             X_test = test[self.feature_cols]
-            y_test = test["wait_minutes"]
+            y_test = test[self.target_col]
             y_test_pred = self._pipeline.predict(X_test)
             self.test_metrics = _metrics(y_test, y_test_pred)
         else:
