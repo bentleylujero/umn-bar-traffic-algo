@@ -27,10 +27,16 @@ _SIGNALS_MIGRATIONS: list[tuple[str, str]] = [
     ("is_break",           "INTEGER NOT NULL DEFAULT 0"),
     ("is_summer_session",  "INTEGER NOT NULL DEFAULT 0"),
     ("week_of_semester",   "INTEGER"),
-    ("is_st_patricks",     "INTEGER NOT NULL DEFAULT 0"),
-    ("is_halloween",       "INTEGER NOT NULL DEFAULT 0"),
-    ("is_homecoming",      "INTEGER NOT NULL DEFAULT 0"),
-    ("is_bar_crawl",       "INTEGER NOT NULL DEFAULT 0"),
+    ("is_st_patricks",        "INTEGER NOT NULL DEFAULT 0"),
+    ("is_halloween",          "INTEGER NOT NULL DEFAULT 0"),
+    ("is_homecoming",         "INTEGER NOT NULL DEFAULT 0"),
+    ("is_bar_crawl",          "INTEGER NOT NULL DEFAULT 0"),
+    ("is_blackout_wednesday", "INTEGER NOT NULL DEFAULT 0"),
+    ("is_new_years_eve",      "INTEGER NOT NULL DEFAULT 0"),
+    ("is_twins_home",         "INTEGER NOT NULL DEFAULT 0"),
+    ("is_midterms_week",      "INTEGER NOT NULL DEFAULT 0"),
+    ("is_syllabus_week",      "INTEGER NOT NULL DEFAULT 0"),
+    ("days_until_break",      "REAL"),
 ]
 
 

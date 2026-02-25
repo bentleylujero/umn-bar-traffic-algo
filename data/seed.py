@@ -9,6 +9,7 @@ from __future__ import annotations
 import random
 from datetime import date as _date
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 
 import numpy as np
 
@@ -48,6 +49,8 @@ OPEN_HOURS = list(range(18, 24)) + list(range(0, 3))  # 6 PM – 2 AM
 # ── Academic calendar constants (Spring 2026) ────────────────────────────────
 _SPRING_2026_START        = _date(2026, 1, 20)
 _SPRING_2026_WELCOME_END  = _date(2026, 1, 26)  # end of first / welcome week
+_SPRING_2026_MIDTERMS_S   = _date(2026, 3,  2)  # ~week 7
+_SPRING_2026_MIDTERMS_E   = _date(2026, 3, 20)  # ~week 9
 _SPRING_2026_FINALS_START = _date(2026, 4, 27)
 _SPRING_2026_END          = _date(2026, 5, 15)
 
@@ -62,22 +65,29 @@ def _academic_flags(day: datetime) -> dict:
     d = day.date()
     if _SPRING_2026_START <= d < _SPRING_2026_FINALS_START:
         week = (d - _SPRING_2026_START).days // 7 + 1
+        days_until_break = (_SPRING_2026_FINALS_START - d).days
         return {
             "classes_in_session": 1,
             "is_finals_week":     0,
             "is_welcome_week":    int(d <= _SPRING_2026_WELCOME_END),
+            "is_syllabus_week":   int(d <= _SPRING_2026_WELCOME_END),
+            "is_midterms_week":   int(_SPRING_2026_MIDTERMS_S <= d <= _SPRING_2026_MIDTERMS_E),
             "is_break":           0,
             "is_summer_session":  0,
             "week_of_semester":   week,
+            "days_until_break":   float(days_until_break),
         }
     if _SPRING_2026_FINALS_START <= d <= _SPRING_2026_END:
         return {
             "classes_in_session": 0,
             "is_finals_week":     1,
             "is_welcome_week":    0,
+            "is_syllabus_week":   0,
+            "is_midterms_week":   0,
             "is_break":           0,
             "is_summer_session":  0,
             "week_of_semester":   16,
+            "days_until_break":   0.0,
         }
     # Winter break, summer, or between semesters
     is_summer = 5 <= d.month <= 8
@@ -85,9 +95,12 @@ def _academic_flags(day: datetime) -> dict:
         "classes_in_session": 0,
         "is_finals_week":     0,
         "is_welcome_week":    0,
+        "is_syllabus_week":   0,
+        "is_midterms_week":   0,
         "is_break":           int(not is_summer),
         "is_summer_session":  int(is_summer),
         "week_of_semester":   None,
+        "days_until_break":   None,
     }
 
 
@@ -161,28 +174,50 @@ def _synthetic_weather(day: datetime) -> dict:
     }
 
 
-def _traffic_multiplier(bar_id: int, acad: dict, games: dict, weather: dict) -> float:
+def _traffic_multiplier(
+    bar_id: int,
+    acad: dict,
+    games: dict,
+    weather: dict,
+    extras: dict,
+) -> float:
     """Combine signal flags into a single wait/crowd multiplier."""
     mult = 1.0
 
     # Academic calendar — strongest structural signal
     if not acad["classes_in_session"] and not acad["is_finals_week"]:
         mult *= 0.35   # break / summer: near-empty
+    elif acad["is_syllabus_week"]:
+        mult *= 1.45   # very first week, everyone socialising
     elif acad["is_welcome_week"]:
         mult *= 1.40   # first week energy
+    elif acad["is_midterms_week"]:
+        mult *= 0.80   # studying pressure; similar to finals
     elif acad["is_finals_week"]:
         mult *= 0.85   # mixed stress-drink vs. study effect
 
-    # Athletics — bar-specific sensitivity
+    # days_until_break: winding-up effect in final weeks before break
+    dub = acad.get("days_until_break")
+    if dub is not None and 0 < dub <= 7:
+        mult *= 1.15   # last-week-of-class celebration bump
+
+    # UMN Athletics — bar-specific sensitivity
     if games["is_football_home"]:
-        # Sally's (bar_id=2) is steps from Huntington Bank Stadium
-        mult *= 1.60 if bar_id == 2 else 1.30
+        mult *= 1.60 if bar_id == 2 else 1.30  # Sally's near stadium
     elif games["is_hockey_home"]:
         mult *= 1.35
     elif games["is_basketball_home"]:
         mult *= 1.20
     if games["is_rivalry_game"]:
         mult *= 1.20
+
+    # Twins home — Dinkytown bars (1 & 3) benefit more from downtown spillover
+    if extras["is_twins_home"]:
+        mult *= 1.25 if bar_id in (1, 3) else 1.15
+
+    # Drinking holidays
+    if extras["is_blackout_wednesday"] or extras["is_new_years_eve"]:
+        mult *= 1.70
 
     # Severe weather suppresses foot traffic
     if weather["is_severe_weather"]:
@@ -193,6 +228,39 @@ def _traffic_multiplier(bar_id: int, acad: dict, games: dict, weather: dict) -> 
         mult *= 0.65
 
     return mult
+
+
+def _thanksgiving(year: int) -> _date:
+    """Return the date of Thanksgiving (4th Thursday of November)."""
+    nov1 = _date(year, 11, 1)
+    # weekday(): 0=Mon … 6=Sun; Thursday=3
+    first_thu = nov1 + timedelta(days=(3 - nov1.weekday()) % 7)
+    return first_thu + timedelta(weeks=3)
+
+
+def _extra_event_flags(day: datetime) -> dict:
+    """Return flags for major drinking holidays and external sports."""
+    d   = day.date()
+    dow = d.weekday()
+
+    # Blackout Wednesday: day before Thanksgiving
+    tgiving = _thanksgiving(d.year)
+    is_blackout_wednesday = int(d == tgiving - timedelta(days=1))
+
+    # New Year's Eve
+    is_new_years_eve = int(d.month == 12 and d.day == 31)
+
+    # Twins home: April–September; ~30% chance on any day in season
+    is_twins_home = int(
+        d.month in {4, 5, 6, 7, 8, 9} and
+        random.random() < (0.40 if dow in (4, 5, 6) else 0.28)
+    )
+
+    return {
+        "is_blackout_wednesday": is_blackout_wednesday,
+        "is_new_years_eve":      is_new_years_eve,
+        "is_twins_home":         is_twins_home,
+    }
 
 
 def _cover_charge(bar_id: int, day: datetime) -> float | None:
@@ -259,14 +327,13 @@ def seed(days: int = HISTORY_DAYS) -> None:
 
             acad       = _academic_flags(day)
             games      = _game_flags(day)
+            extras     = _extra_event_flags(day)
             is_holiday = int(day.date() in _HOLIDAY_DATES)
 
-            # St. Patrick's Day / Halloween / etc. are outside the 60-day dev window
-            # but the columns are seeded as 0 so the schema is exercised.
             is_st_patricks = int(day.date().month == 3 and day.date().day == 17)
             is_halloween   = int(day.date().month == 10 and day.date().day == 31)
-            is_homecoming  = 0   # manually set for Homecoming weekend
-            is_bar_crawl   = int(random.random() < 0.01)   # ~1% of days
+            is_homecoming  = 0
+            is_bar_crawl   = int(random.random() < 0.01)
 
             for bar_id in BAR_PROFILES:
                 cover = _cover_charge(bar_id, day)
@@ -278,7 +345,7 @@ def seed(days: int = HISTORY_DAYS) -> None:
 
                     is_late_night = hour in (0, 1, 2)
                     weather       = _synthetic_weather(day)
-                    mult          = _traffic_multiplier(bar_id, acad, games, weather)
+                    mult          = _traffic_multiplier(bar_id, acad, games, weather, extras)
 
                     wait  = max(0.0, round(_wait(bar_id, hour, is_weekend, is_late_night) * mult, 1))
                     pct   = max(0.0, min(100.0, round(_pct_full(bar_id, hour, is_weekend, is_late_night) * mult, 1)))
@@ -314,8 +381,10 @@ def seed(days: int = HISTORY_DAYS) -> None:
                                      hours_until_game, is_rivalry_game,
                                      classes_in_session, is_finals_week, is_welcome_week,
                                      is_break, is_summer_session, week_of_semester,
-                                     is_st_patricks, is_halloween, is_homecoming, is_bar_crawl)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                     is_st_patricks, is_halloween, is_homecoming, is_bar_crawl,
+                                     is_blackout_wednesday, is_new_years_eve, is_twins_home,
+                                     is_midterms_week, is_syllabus_week, days_until_break)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                                 """,
                                 (
                                     obs_id,
@@ -342,6 +411,12 @@ def seed(days: int = HISTORY_DAYS) -> None:
                                     is_halloween,
                                     is_homecoming,
                                     is_bar_crawl,
+                                    extras["is_blackout_wednesday"],
+                                    extras["is_new_years_eve"],
+                                    extras["is_twins_home"],
+                                    acad["is_midterms_week"],
+                                    acad["is_syllabus_week"],
+                                    acad["days_until_break"],
                                 ),
                             )
                             inserted += 1

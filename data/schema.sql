@@ -67,10 +67,20 @@ CREATE TABLE IF NOT EXISTS signals (
     week_of_semester   INTEGER,      -- 1–16 when classes in session, NULL otherwise
 
     -- Events
-    is_st_patricks     INTEGER NOT NULL DEFAULT 0 CHECK (is_st_patricks  IN (0,1)),
-    is_halloween       INTEGER NOT NULL DEFAULT 0 CHECK (is_halloween    IN (0,1)),
-    is_homecoming      INTEGER NOT NULL DEFAULT 0 CHECK (is_homecoming   IN (0,1)),
-    is_bar_crawl       INTEGER NOT NULL DEFAULT 0 CHECK (is_bar_crawl    IN (0,1)),
+    is_st_patricks        INTEGER NOT NULL DEFAULT 0 CHECK (is_st_patricks        IN (0,1)),
+    is_halloween          INTEGER NOT NULL DEFAULT 0 CHECK (is_halloween          IN (0,1)),
+    is_homecoming         INTEGER NOT NULL DEFAULT 0 CHECK (is_homecoming         IN (0,1)),
+    is_bar_crawl          INTEGER NOT NULL DEFAULT 0 CHECK (is_bar_crawl          IN (0,1)),
+    is_blackout_wednesday INTEGER NOT NULL DEFAULT 0 CHECK (is_blackout_wednesday IN (0,1)),
+    is_new_years_eve      INTEGER NOT NULL DEFAULT 0 CHECK (is_new_years_eve      IN (0,1)),
+
+    -- Sports (external to UMN)
+    is_twins_home         INTEGER NOT NULL DEFAULT 0 CHECK (is_twins_home         IN (0,1)),
+
+    -- Academic (expanded)
+    is_midterms_week      INTEGER NOT NULL DEFAULT 0 CHECK (is_midterms_week      IN (0,1)),
+    is_syllabus_week      INTEGER NOT NULL DEFAULT 0 CHECK (is_syllabus_week      IN (0,1)),
+    days_until_break      REAL,   -- days until next break/finals; NULL when already on break
 
     created_at       TEXT    NOT NULL DEFAULT (datetime('now'))
 );

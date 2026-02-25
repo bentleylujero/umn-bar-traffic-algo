@@ -75,8 +75,20 @@ SIGNAL_FEATURES = [
     "is_halloween",
     "is_homecoming",
     "is_bar_crawl",
+    "is_blackout_wednesday",
+    "is_new_years_eve",
+    # Sports (external to UMN)
+    "is_twins_home",
+    # Academic (expanded)
+    "is_midterms_week",
+    "is_syllabus_week",
+    "days_until_break",
     # Observation-level
     "cover_charge",
+    # Bar-specific computed signals (not stored in DB — derived from bar_id + time)
+    "is_happy_hour",
+    "is_bar_special",
+    "minutes_into_special",
 ]
 
 ALL_FEATURES = TIME_FEATURES + ["bar_id"] + SIGNAL_FEATURES
@@ -113,6 +125,7 @@ class FeatureBuilder:
         df = self._ensure_datetime(df)
         df = df.sort_values("observed_at").reset_index(drop=True)
         df = self._add_time_features(df)
+        df = self._add_bar_schedule_features(df)
 
         if self.add_lag_features:
             df = self._add_lag_features(df)
@@ -152,6 +165,64 @@ class FeatureBuilder:
         df["month"]       = ts.month
         df["week_of_year"]= ts.isocalendar().week.astype(int)
         df["is_late_night"]= ((df["hour"] >= 0) & (df["hour"] <= 2)).astype(int)
+
+        return df
+
+    @staticmethod
+    def _add_bar_schedule_features(df: pd.DataFrame) -> pd.DataFrame:
+        """Compute happy-hour and weekly-special flags from bar_id + timestamp.
+
+        These signals are deterministic given (bar_id, observed_at) so they
+        are computed here rather than stored in the DB.
+        """
+        from config.settings import BAR_SCHEDULES
+
+        df["is_happy_hour"]       = 0
+        df["is_bar_special"]      = 0
+        df["minutes_into_special"] = 0.0
+
+        frac = df["observed_at"].dt.hour + df["observed_at"].dt.minute / 60.0
+        dow  = df["observed_at"].dt.dayofweek   # 0=Mon … 6=Sun
+
+        for bar_id, sched in BAR_SCHEDULES.items():
+            bar_mask = df["bar_id"] == bar_id
+            if not bar_mask.any():
+                continue
+
+            # ── Happy hour ────────────────────────────────────────────────
+            hh = sched.get("happy_hour")
+            if hh:
+                s_frac = hh["start"][0] + hh["start"][1] / 60.0
+                e_frac = hh["end"][0]   + hh["end"][1]   / 60.0
+                hh_mask = bar_mask & dow.isin(hh["days"]) & (frac >= s_frac) & (frac < e_frac)
+                df.loc[hh_mask, "is_happy_hour"]       = 1
+                df.loc[hh_mask, "minutes_into_special"] = (frac[hh_mask] - s_frac) * 60.0
+
+            # ── Weekly specials ───────────────────────────────────────────
+            for special in sched.get("weekly_specials", []):
+                s_frac = special["start"][0] + special["start"][1] / 60.0
+                e_frac = special["end"][0]   + special["end"][1]   / 60.0
+                sp_day = special["day"]
+
+                if e_frac <= 24:
+                    # Same-day special
+                    sp_mask = bar_mask & (dow == sp_day) & (frac >= s_frac) & (frac < e_frac)
+                    mins    = (frac[sp_mask] - s_frac) * 60.0
+                else:
+                    # Overnight special — spans into the next calendar day
+                    e_frac_next = e_frac - 24.0
+                    same_day    = bar_mask & (dow == sp_day)            & (frac >= s_frac)
+                    next_day    = bar_mask & (dow == (sp_day + 1) % 7)  & (frac <  e_frac_next)
+                    sp_mask     = same_day | next_day
+                    mins        = pd.Series(0.0, index=df.index)
+                    mins[same_day] = (frac[same_day] - s_frac) * 60.0
+                    mins[next_day] = (frac[next_day] + 24.0 - s_frac) * 60.0
+                    mins = mins[sp_mask]
+
+                df.loc[sp_mask, "is_bar_special"]      = 1
+                df.loc[sp_mask, "minutes_into_special"] = np.maximum(
+                    df.loc[sp_mask, "minutes_into_special"], mins
+                )
 
         return df
 

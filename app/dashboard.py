@@ -236,25 +236,32 @@ def _delete_observations(ids: list[int]) -> str | None:
 
 
 _FACTOR_LABELS: dict[str, str] = {
-    "is_weekend":         "Weekend",
-    "is_thursday":        "Thursday",
-    "is_late_night":      "Late night",
-    "is_game_day":        "Game day",
-    "is_holiday":         "Holiday",
-    "is_severe_weather":  "Severe weather",
-    "is_football_home":   "Football home",
-    "is_basketball_home": "Basketball home",
-    "is_hockey_home":     "Hockey home",
-    "is_rivalry_game":    "Rivalry game",
-    "classes_in_session": "Classes in session",
-    "is_finals_week":     "Finals week",
-    "is_welcome_week":    "Welcome week",
-    "is_break":           "Break",
-    "is_summer_session":  "Summer session",
-    "is_st_patricks":     "St. Patrick's Day",
-    "is_halloween":       "Halloween",
-    "is_homecoming":      "Homecoming",
-    "is_bar_crawl":       "Bar crawl",
+    "is_weekend":             "Weekend",
+    "is_thursday":            "Thursday",
+    "is_late_night":          "Late night",
+    "is_game_day":            "Game day",
+    "is_holiday":             "Holiday",
+    "is_severe_weather":      "Severe weather",
+    "is_football_home":       "Football home",
+    "is_basketball_home":     "Basketball home",
+    "is_hockey_home":         "Hockey home",
+    "is_rivalry_game":        "Rivalry game",
+    "classes_in_session":     "Classes in session",
+    "is_finals_week":         "Finals week",
+    "is_welcome_week":        "Welcome week",
+    "is_syllabus_week":       "Syllabus week",
+    "is_midterms_week":       "Midterms week",
+    "is_break":               "Break",
+    "is_summer_session":      "Summer session",
+    "is_st_patricks":         "St. Patrick's Day",
+    "is_halloween":           "Halloween",
+    "is_homecoming":          "Homecoming",
+    "is_bar_crawl":           "Bar crawl",
+    "is_blackout_wednesday":  "Blackout Wednesday",
+    "is_new_years_eve":       "New Year's Eve",
+    "is_twins_home":          "Twins home",
+    "is_happy_hour":          "Happy hour",
+    "is_bar_special":         "Bar special",
 }
 
 
@@ -277,7 +284,16 @@ def _active_factors_label(row: pd.Series) -> str:
     for col, label in _FACTOR_LABELS.items():
         val = row.get(col)
         if val is not None and not pd.isna(val) and int(val) == 1:
+            # Annotate happy hour / bar special with how far in we are
+            if col in ("is_happy_hour", "is_bar_special"):
+                mins = row.get("minutes_into_special")
+                if mins is not None and not pd.isna(mins) and mins > 0:
+                    label = f"{label} ({int(mins)}min in)"
             parts.append(label)
+
+    dub = row.get("days_until_break")
+    if dub is not None and not pd.isna(dub) and 0 < dub <= 7:
+        parts.append(f"{int(dub)}d until break")
 
     return " · ".join(parts) if parts else "No special factors"
 
@@ -314,10 +330,18 @@ def _make_prediction_row(bar_id: int, dt: datetime, weather: dict) -> dict:
         "is_summer_session":  0,
         "week_of_semester":   0,
         # Events
-        "is_st_patricks": 0,
-        "is_halloween":   0,
-        "is_homecoming":  0,
-        "is_bar_crawl":   0,
+        "is_st_patricks":        0,
+        "is_halloween":          0,
+        "is_homecoming":         0,
+        "is_bar_crawl":          0,
+        "is_blackout_wednesday": 0,
+        "is_new_years_eve":      0,
+        # Sports (external)
+        "is_twins_home":         0,
+        # Academic (expanded)
+        "is_midterms_week":      0,
+        "is_syllabus_week":      0,
+        "days_until_break":      None,
         # Observation-level
         "cover_charge": None,
     }
