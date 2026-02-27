@@ -49,6 +49,20 @@ _SIGNALS_MIGRATIONS: list[tuple[str, str]] = [
     ("is_nba_playoffs",        "INTEGER NOT NULL DEFAULT 0"),
     ("tv_game_hour",           "INTEGER"),
     ("tv_game_weight",         "REAL NOT NULL DEFAULT 0.0"),
+    # MN-specific pro sports
+    ("is_wild_game",              "INTEGER NOT NULL DEFAULT 0"),
+    ("is_timberwolves_game",      "INTEGER NOT NULL DEFAULT 0"),
+    ("is_nhl_playoffs",           "INTEGER NOT NULL DEFAULT 0"),
+    # Weather expanded
+    ("cloud_cover",               "REAL"),
+    ("is_first_nice_day",         "INTEGER NOT NULL DEFAULT 0"),
+    # Academic expanded
+    ("is_study_days",             "INTEGER NOT NULL DEFAULT 0"),
+    ("is_commencement",           "INTEGER NOT NULL DEFAULT 0"),
+    ("days_since_semester_start", "INTEGER"),
+    # Events expanded
+    ("is_cinco_de_mayo",          "INTEGER NOT NULL DEFAULT 0"),
+    ("is_parents_weekend",        "INTEGER NOT NULL DEFAULT 0"),
 ]
 
 

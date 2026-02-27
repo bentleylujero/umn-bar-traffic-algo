@@ -46,6 +46,14 @@ def _is_severe(code: Optional[int]) -> int:
     return int(code in _SEVERE_CODES) if code is not None else 0
 
 
+def _is_first_nice_day(temp_c: Optional[float]) -> int:
+    """Heuristic: warm spring emergence day in Minneapolis (Feb–Apr, temp >= 10 °C)."""
+    if temp_c is None:
+        return 0
+    now = datetime.now(timezone.utc)
+    return int(now.month in (2, 3, 4) and temp_c >= 10.0)
+
+
 def fetch_current_weather(
     lat: float = LATITUDE,
     lon: float = LONGITUDE,
@@ -61,6 +69,8 @@ def fetch_current_weather(
         snowfall_mm       : float   (snowfall in last hour)
         wind_speed_ms     : float   (wind speed in m/s)
         is_severe_weather : int     (0 or 1)
+        cloud_cover       : float   (% cloud coverage 0-100)
+        is_first_nice_day : int     (0 or 1)
         fetched_at        : str     (ISO-8601 UTC)
     """
     cache_key = f"current_{lat}_{lon}"
@@ -79,6 +89,7 @@ def fetch_current_weather(
             "snowfall",
             "wind_speed_10m",
             "weather_code",
+            "cloud_cover",
         ],
         "wind_speed_unit": "ms",
         "timezone": "America/Chicago",
@@ -96,6 +107,8 @@ def fetch_current_weather(
             "snowfall_mm":      _cm_to_mm(current.get("snowfall")),
             "wind_speed_ms":    current.get("wind_speed_10m"),
             "is_severe_weather": _is_severe(current.get("weather_code")),
+            "cloud_cover":       current.get("cloud_cover"),
+            "is_first_nice_day": _is_first_nice_day(current.get("temperature_2m")),
             "fetched_at":       datetime.now(timezone.utc).isoformat(),
         }
     except requests.RequestException as exc:
@@ -107,6 +120,8 @@ def fetch_current_weather(
             "snowfall_mm":      None,
             "wind_speed_ms":    None,
             "is_severe_weather": 0,
+            "cloud_cover":       None,
+            "is_first_nice_day": 0,
             "fetched_at":       datetime.now(timezone.utc).isoformat(),
         }
 
@@ -122,13 +137,15 @@ def fetch_hourly_forecast(
     """Return an hourly forecast for the next *days* days.
 
     Each item has:
-        hour              : str    (ISO-8601 local time)
-        temperature_c     : float
-        precipitation_mm  : float
-        wind_chill_c      : float
-        snowfall_mm       : float
-        wind_speed_ms     : float
-        is_severe_weather : int
+        hour                     : str    (ISO-8601 local time)
+        temperature_c            : float
+        precipitation_mm         : float
+        wind_chill_c             : float
+        snowfall_mm              : float
+        wind_speed_ms            : float
+        is_severe_weather        : int
+        cloud_cover              : float  (% cloud coverage 0-100)
+        precipitation_probability: int    (% probability 0-100)
     """
     cache_key = f"forecast_{lat}_{lon}_{days}"
     cached = _cache_get(cache_key)
@@ -145,6 +162,8 @@ def fetch_hourly_forecast(
             "snowfall",
             "wind_speed_10m",
             "weather_code",
+            "cloud_cover",
+            "precipitation_probability",
         ],
         "wind_speed_unit":  "ms",
         "forecast_days":    days,
@@ -163,19 +182,25 @@ def fetch_hourly_forecast(
         snowfall      = hourly.get("snowfall", [])
         wind_speed    = hourly.get("wind_speed_10m", [])
         weather_codes = hourly.get("weather_code", [])
+        cloud_cover   = hourly.get("cloud_cover", [])
+        precip_prob   = hourly.get("precipitation_probability", [])
 
         result = [
             {
-                "hour":             t,
-                "temperature_c":    temp,
-                "precipitation_mm": prec,
-                "wind_chill_c":     app,
-                "snowfall_mm":      _cm_to_mm(snow),
-                "wind_speed_ms":    ws,
-                "is_severe_weather": _is_severe(code),
+                "hour":                      t,
+                "temperature_c":             temp,
+                "precipitation_mm":          prec,
+                "wind_chill_c":              app,
+                "snowfall_mm":               _cm_to_mm(snow),
+                "wind_speed_ms":             ws,
+                "is_severe_weather":         _is_severe(code),
+                "cloud_cover":               cc,
+                "precipitation_probability": pp,
             }
-            for t, temp, app, prec, snow, ws, code in zip(
-                times, temps, apparent, precip, snowfall, wind_speed, weather_codes
+            for t, temp, app, prec, snow, ws, code, cc, pp in zip(
+                times, temps, apparent, precip, snowfall, wind_speed, weather_codes,
+                cloud_cover or ([None] * len(times)),
+                precip_prob  or ([None] * len(times)),
             )
         ]
     except requests.RequestException as exc:

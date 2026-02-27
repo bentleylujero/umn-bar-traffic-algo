@@ -41,6 +41,8 @@ def load_observations(conn: sqlite3.Connection) -> pd.DataFrame:
             s.snowfall_mm,
             s.wind_speed_ms,
             COALESCE(s.is_severe_weather,   0) AS is_severe_weather,
+            s.cloud_cover,
+            COALESCE(s.is_first_nice_day,   0) AS is_first_nice_day,
             -- Legacy flags
             COALESCE(s.is_game_day,         0) AS is_game_day,
             COALESCE(s.is_holiday,          0) AS is_holiday,
@@ -75,12 +77,20 @@ def load_observations(conn: sqlite3.Connection) -> pd.DataFrame:
             COALESCE(s.is_march_madness,         0) AS is_march_madness,
             COALESCE(s.is_march_madness_elite,   0) AS is_march_madness_elite,
             COALESCE(s.is_nba_playoffs,          0) AS is_nba_playoffs,
+            COALESCE(s.is_wild_game,             0) AS is_wild_game,
+            COALESCE(s.is_timberwolves_game,     0) AS is_timberwolves_game,
+            COALESCE(s.is_nhl_playoffs,          0) AS is_nhl_playoffs,
             s.tv_game_hour,
             COALESCE(s.tv_game_weight,         0.0) AS tv_game_weight,
             -- Academic (expanded)
             COALESCE(s.is_midterms_week,         0) AS is_midterms_week,
             COALESCE(s.is_syllabus_week,         0) AS is_syllabus_week,
-            s.days_until_break
+            s.days_until_break,
+            COALESCE(s.is_study_days,            0) AS is_study_days,
+            COALESCE(s.is_commencement,          0) AS is_commencement,
+            s.days_since_semester_start,
+            COALESCE(s.is_cinco_de_mayo,         0) AS is_cinco_de_mayo,
+            COALESCE(s.is_parents_weekend,       0) AS is_parents_weekend
         FROM observations o
         JOIN bars b ON b.id = o.bar_id
         LEFT JOIN signals s ON s.observation_id = o.id

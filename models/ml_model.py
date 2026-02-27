@@ -85,7 +85,7 @@ class WaitTimeModel:
         w_train = sample_weight[train_mask.values] if sample_weight is not None else None
 
         self._pipeline = Pipeline([
-            ("imputer", SimpleImputer(strategy="median")),
+            ("imputer", SimpleImputer(strategy="median", keep_empty_features=True)),
             ("rf", RandomForestRegressor(
                 n_estimators=RF_N_ESTIMATORS,
                 max_depth=RF_MAX_DEPTH,

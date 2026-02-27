@@ -282,6 +282,14 @@ _FACTOR_LABELS: dict[str, str] = {
     "is_march_madness":        "March Madness",
     "is_march_madness_elite":  "Final Four/Elite 8",
     "is_nba_playoffs":         "NBA Playoffs",
+    "is_wild_game":            "Wild game",
+    "is_timberwolves_game":    "Timberwolves game",
+    "is_nhl_playoffs":         "NHL Playoffs",
+    "is_first_nice_day":       "First nice spring day",
+    "is_study_days":           "Study/reading days",
+    "is_commencement":         "Commencement weekend",
+    "is_cinco_de_mayo":        "Cinco de Mayo",
+    "is_parents_weekend":      "Parents' Weekend",
     "is_happy_hour":           "Happy hour",
     "is_bar_special":          "Bar special",
 }
@@ -405,6 +413,20 @@ def _make_prediction_row(
         "is_nba_playoffs":        s.get("is_nba_playoffs",        0),
         "tv_game_hour":           s.get("tv_game_hour"),
         "tv_game_weight":         s.get("tv_game_weight",         0.0),
+        # MN-specific pro sports
+        "is_wild_game":           s.get("is_wild_game",           0),
+        "is_timberwolves_game":   s.get("is_timberwolves_game",   0),
+        "is_nhl_playoffs":        s.get("is_nhl_playoffs",        0),
+        # Weather expanded
+        "cloud_cover":            weather.get("cloud_cover"),
+        "is_first_nice_day":      int(bool(weather.get("is_first_nice_day"))),
+        # Academic expanded
+        "is_study_days":          s.get("is_study_days",          0),
+        "is_commencement":        s.get("is_commencement",        0),
+        "days_since_semester_start": s.get("days_since_semester_start"),
+        # Events expanded
+        "is_cinco_de_mayo":       s.get("is_cinco_de_mayo",       0),
+        "is_parents_weekend":     s.get("is_parents_weekend",     0),
         # Observation-level
         "cover_charge": None,
     }
@@ -441,7 +463,7 @@ with st.sidebar:
 
     st.subheader("Prediction time")
     pred_date = st.date_input("Date", value=datetime.now().date())
-    pred_hour = st.slider("Hour (24h)", min_value=18, max_value=26, value=21, step=1)
+    pred_hour = st.slider("Hour (24h)", min_value=14, max_value=26, value=21, step=1)
     actual_hour = pred_hour % 24
 
     st.divider()
@@ -484,12 +506,20 @@ with st.sidebar:
         ("is_march_madness",     "March Madness"),
         ("is_march_madness_elite","↳ Elite 8 / Final Four"),
         ("is_nba_playoffs",      "NBA Playoffs"),
+        ("is_wild_game",           "\u21b3 Wild game"),
+        ("is_timberwolves_game",   "\u21b3 Timberwolves game"),
+        ("is_nhl_playoffs",        "NHL Playoffs"),
         # Events / holidays
         ("is_holiday",           "Holiday"),
         ("is_blackout_wednesday","Blackout Wednesday"),
         ("is_new_years_eve",     "New Year's Eve"),
         ("is_st_patricks",       "St. Patrick's Day"),
         ("is_halloween",         "Halloween"),
+        ("is_cinco_de_mayo",       "Cinco de Mayo"),
+        ("is_parents_weekend",     "Parents' Weekend"),
+        ("is_study_days",          "Study/reading days"),
+        ("is_commencement",        "Commencement"),
+        ("is_first_nice_day",      "First nice spring day"),
     ]
     active = [(lbl, today_signals.get(key, 0)) for key, lbl in _SIGNAL_DISPLAY]
     for lbl, val in active:
@@ -533,10 +563,67 @@ raw_row = _make_prediction_row(bar_id, pred_dt, weather, today_signals, override
 fb = FeatureBuilder()
 df_single = fb.build(pd.DataFrame([raw_row]))
 
+# Capacity threshold above which a line forms outside the bar
+_WAIT_LINE_THRESHOLD = 90.0  # % full — err toward showing less line rather than more
+
 # Predictions — clamp to sensible ranges
 ml_wait_pred  = max(0.0, float(ml_wait.predict(df_single)[0]))
 ml_pct_pred   = max(0.0, min(100.0, float(ml_pct.predict(df_single)[0])))
 ml_drink_pred = max(0.0, float(ml_drink.predict(df_single)[0]))
+
+# No line forms until the bar is at/above capacity threshold
+if ml_pct_pred < _WAIT_LINE_THRESHOLD:
+    ml_wait_pred = 0.0
+
+# ── Today's notable factors ───────────────────────────────────────────────────
+
+_NOTABLE_SIGNALS: list[tuple[str, str]] = [
+    # UMN athletics
+    ("is_football_home",       "Football home game"),
+    ("is_basketball_home",     "Basketball home game"),
+    ("is_hockey_home",         "Hockey home game"),
+    ("is_rivalry_game",        "Rivalry game"),
+    # TV sports
+    ("is_super_bowl",          "Super Bowl"),
+    ("is_nfl_playoffs",        "NFL Playoffs"),
+    ("is_vikings_game",        "Vikings game"),
+    ("is_cfb_championship",    "CFB Bowl/Championship"),
+    ("is_march_madness_elite", "Final Four / Elite 8"),
+    ("is_march_madness",       "March Madness"),
+    ("is_nba_playoffs",        "NBA Playoffs"),
+    ("is_wild_game",           "Wild game"),
+    ("is_timberwolves_game",   "Timberwolves game"),
+    ("is_nhl_playoffs",        "NHL Playoffs"),
+    ("is_cfb_saturday",        "CFB Saturday"),
+    ("is_nfl_game_day",        "NFL on TV"),
+    # Academic
+    ("is_finals_week",         "Finals week"),
+    ("is_welcome_week",        "Welcome week"),
+    ("is_syllabus_week",       "Syllabus week"),
+    ("is_midterms_week",       "Midterms week"),
+    ("is_break",               "Break / no classes"),
+    # Events
+    ("is_holiday",             "Holiday"),
+    ("is_st_patricks",         "St. Patrick's Day"),
+    ("is_halloween",           "Halloween"),
+    ("is_cinco_de_mayo",       "Cinco de Mayo"),
+    ("is_parents_weekend",     "Parents' Weekend"),
+    ("is_commencement",        "Commencement weekend"),
+    ("is_study_days",          "Study/reading days"),
+    ("is_first_nice_day",      "First nice spring day"),
+    ("is_homecoming",          "Homecoming weekend"),
+    ("is_bar_crawl",           "Bar crawl"),
+    ("is_blackout_wednesday",  "Blackout Wednesday"),
+    ("is_new_years_eve",       "New Year's Eve"),
+]
+
+_all_signals = {**today_signals, **overrides}
+_active_notable = [label for key, label in _NOTABLE_SIGNALS if _all_signals.get(key)]
+
+if _active_notable:
+    st.info("**Today:** " + " · ".join(_active_notable))
+else:
+    st.info("**Today:** No special factors — typical night")
 
 # ── KPI row ───────────────────────────────────────────────────────────────────
 
@@ -579,7 +666,7 @@ _metric_map = {
 }
 _model_for_chart, _col_for_chart, _y_label = _metric_map[metric_choice]
 
-hours_tonight = list(range(18, 27))
+hours_tonight = list(range(14, 27))
 rows = []
 for b in BARS:
     bid = _bar_name_to_id(b["name"], df_feat)
@@ -594,7 +681,10 @@ for b in BARS:
         raw = _make_prediction_row(bid, dt_h, weather, today_signals, overrides)
         df_h = fb.build(pd.DataFrame([raw]))
         val = float(_model_for_chart.predict(df_h)[0])
-        if _col_for_chart == "pct_full":
+        if _col_for_chart == "wait_minutes":
+            pct_h = max(0.0, min(100.0, float(ml_pct.predict(df_h)[0])))
+            val = max(0.0, val) if pct_h >= _WAIT_LINE_THRESHOLD else 0.0
+        elif _col_for_chart == "pct_full":
             val = max(0.0, min(100.0, val))
         else:
             val = max(0.0, val)

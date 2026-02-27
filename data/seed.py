@@ -13,6 +13,7 @@ from typing import Optional
 
 import numpy as np
 
+from config.settings import BAR_SCHEDULES
 from data.db import get_connection, init_db
 
 SEED = 42
@@ -44,7 +45,7 @@ BAR_DRINK_PROFILES = {
 }
 
 # Hours during which the bar is open (inclusive)
-OPEN_HOURS = list(range(18, 24)) + list(range(0, 3))  # 6 PM – 2 AM
+OPEN_HOURS = list(range(14, 24)) + list(range(0, 3))  # 2 PM – 2 AM
 
 # ── Academic calendar constants (Spring 2026) ────────────────────────────────
 _SPRING_2026_START        = _date(2026, 1, 20)
@@ -76,6 +77,9 @@ def _academic_flags(day: datetime) -> dict:
             "is_summer_session":  0,
             "week_of_semester":   week,
             "days_until_break":   float(days_until_break),
+            "is_study_days":      int(_SPRING_2026_FINALS_START - timedelta(days=3) <= d < _SPRING_2026_FINALS_START),
+            "days_since_semester_start": (d - _SPRING_2026_START).days,
+            "is_commencement":    0,
         }
     if _SPRING_2026_FINALS_START <= d <= _SPRING_2026_END:
         return {
@@ -88,6 +92,9 @@ def _academic_flags(day: datetime) -> dict:
             "is_summer_session":  0,
             "week_of_semester":   16,
             "days_until_break":   0.0,
+            "is_study_days":      0,
+            "days_since_semester_start": (d - _SPRING_2026_START).days,
+            "is_commencement":    0,
         }
     # Winter break, summer, or between semesters
     is_summer = 5 <= d.month <= 8
@@ -101,6 +108,9 @@ def _academic_flags(day: datetime) -> dict:
         "is_summer_session":  int(is_summer),
         "week_of_semester":   None,
         "days_until_break":   None,
+        "is_study_days":      0,
+        "days_since_semester_start": None,
+        "is_commencement":    int(d.month == 5 and _SPRING_2026_END < d <= _SPRING_2026_END + timedelta(days=3)),
     }
 
 
@@ -164,6 +174,10 @@ def _synthetic_weather(day: datetime) -> dict:
     precip_mm     = round(max(0.0, np.random.normal(0.5, 1.5)), 2)
     is_severe     = int(random.random() < 0.02 or snowfall_mm > 50)
 
+    # Cloud cover (0-100%)
+    cloud_cover = round(min(100.0, max(0.0, np.random.beta(2, 2) * 100)), 1)
+    is_first_nice_day = int(month in (2, 3, 4) and temp_c >= 10.0)
+
     return {
         "temperature_c":    temp_c,
         "precipitation_mm": precip_mm,
@@ -171,12 +185,52 @@ def _synthetic_weather(day: datetime) -> dict:
         "snowfall_mm":      snowfall_mm,
         "wind_speed_ms":    wind_ms,
         "is_severe_weather": is_severe,
+        "cloud_cover":       cloud_cover,
+        "is_first_nice_day": is_first_nice_day,
     }
+
+
+def _bar_special_boost(bar_id: int, dow: int, hour: int) -> float:
+    """Return the traffic_boost for any active weekly special at (bar_id, dow, hour).
+
+    Uses the same schedule data as features/builder.py so synthetic observations
+    are consistent with the feature signals the model will see at prediction time.
+    Returns 0.0 when no special is active.
+    """
+    sched = BAR_SCHEDULES.get(bar_id, {})
+    frac  = float(hour)          # decimal hour (seed always uses whole hours)
+
+    best_boost = 0.0
+
+    # Happy-hour boost: not modelled separately here — handled below as part of
+    # the bar-specific logic that already exists.
+
+    for special in sched.get("weekly_specials", []):
+        sp_days = special.get("days") or [special.get("day")]
+        s_frac  = special["start"][0] + special["start"][1] / 60.0
+        e_frac  = special["end"][0]   + special["end"][1]   / 60.0
+        boost   = special.get("traffic_boost", 0.0)
+
+        if e_frac <= 24:
+            active = (dow in sp_days) and (s_frac <= frac < e_frac)
+        else:
+            # Overnight special: same day (after start) OR next day (before end-24)
+            e_next     = e_frac - 24.0
+            next_days  = [(d + 1) % 7 for d in sp_days]
+            same_night = (dow in sp_days)      and (frac >= s_frac)
+            next_morn  = (dow in next_days)    and (frac <  e_next)
+            active     = same_night or next_morn
+
+        if active:
+            best_boost = max(best_boost, boost)
+
+    return best_boost
 
 
 def _traffic_multiplier(
     bar_id: int,
     hour: int,
+    dow: int,
     acad: dict,
     games: dict,
     weather: dict,
@@ -185,6 +239,12 @@ def _traffic_multiplier(
 ) -> float:
     """Combine signal flags into a single wait/crowd multiplier."""
     mult = 1.0
+
+    # Early-afternoon ramp: bars are nearly empty before 6 PM.
+    # The multiplier scales from ~5% capacity at 2 PM up to full baseline at 6 PM.
+    _EARLY_RAMP = {14: 0.05, 15: 0.15, 16: 0.30, 17: 0.55}
+    if hour in _EARLY_RAMP:
+        mult *= _EARLY_RAMP[hour]
 
     # Academic calendar — strongest structural signal
     if not acad["classes_in_session"] and not acad["is_finals_week"]:
@@ -217,6 +277,30 @@ def _traffic_multiplier(
     if extras["is_twins_home"]:
         mult *= 1.25 if bar_id in (1, 3) else 1.15
 
+    # Minnesota Wild game (Sally's has Wild specials)
+    if extras.get("is_wild_game"):
+        mult *= 1.25 if bar_id == 2 else 1.10
+
+    # Minnesota Timberwolves game (Sally's has T-Wolves specials)
+    if extras.get("is_timberwolves_game"):
+        mult *= 1.20 if bar_id == 2 else 1.08
+
+    # Cinco de Mayo bar crawl boost
+    if extras.get("is_cinco_de_mayo"):
+        mult *= 1.35
+
+    # Commencement weekend — families celebrating at nearby bars
+    if acad.get("is_commencement"):
+        mult *= 1.35
+
+    # Parents' Weekend — families on campus
+    if extras.get("is_parents_weekend"):
+        mult *= 1.20
+
+    # First nice spring day — outdoor patio surge
+    if weather.get("is_first_nice_day"):
+        mult *= 1.25
+
     # Drinking holidays
     if extras["is_blackout_wednesday"] or extras["is_new_years_eve"]:
         mult *= 1.70
@@ -227,9 +311,14 @@ def _traffic_multiplier(
             h_adj = hour if hour >= 22 else hour + 24   # 0→24, 1→25, 2→26
             draw  = (h_adj - 22) / 4.0                 # 0 at 10pm → 1 at 2am
             mult *= 1.0 + draw * 0.60                  # up to +60% at 2am
-    if bar_id == 2:   # Sally's — late happy hour 10pm–midnight
-        if hour in (22, 23):
-            mult *= 1.25
+
+    # Weekly specials — apply traffic_boost from BAR_SCHEDULES.
+    # This ensures synthetic observations show a realistic crowd spike during
+    # deal nights (karaoke Thursday, KK Tuesday, etc.) so the model can learn
+    # the pattern from training data.
+    special_boost = _bar_special_boost(bar_id, dow, hour)
+    if special_boost > 0:
+        mult *= 1.0 + special_boost
 
     # TV sports — biggest effect during and just after game time (early hours)
     tv_weight = tv.get("tv_game_weight", 0.0)
@@ -371,10 +460,41 @@ def _extra_event_flags(day: datetime) -> dict:
         random.random() < (0.40 if dow in (4, 5, 6) else 0.28)
     )
 
+    # Cinco de Mayo — bar crawl night
+    is_cinco_de_mayo = int(d.month == 5 and d.day == 5)
+
+    # Minnesota Wild: Oct–Apr; more on Fri/Sat
+    is_wild_game = int(
+        d.month in {10, 11, 12, 1, 2, 3, 4} and
+        random.random() < (0.28 if dow in (4, 5) else 0.16)
+    )
+
+    # Minnesota Timberwolves: Oct–Apr (regular season); occasionally May–Jun playoffs
+    is_timberwolves_game = int(
+        d.month in {10, 11, 12, 1, 2, 3, 4} and
+        random.random() < 0.20
+    )
+
+    # NHL playoffs: April–June
+    is_nhl_playoffs = int(
+        d.month in {4, 5, 6} and random.random() < 0.40
+    )
+
+    # Parents' Weekend
+    is_parents_weekend = int(
+        (_date(2025, 10, 17) <= d <= _date(2025, 10, 19)) or
+        (_date(2026, 10, 16) <= d <= _date(2026, 10, 18))
+    )
+
     return {
         "is_blackout_wednesday": is_blackout_wednesday,
         "is_new_years_eve":      is_new_years_eve,
         "is_twins_home":         is_twins_home,
+        "is_cinco_de_mayo":      is_cinco_de_mayo,
+        "is_wild_game":          is_wild_game,
+        "is_timberwolves_game":  is_timberwolves_game,
+        "is_nhl_playoffs":       is_nhl_playoffs,
+        "is_parents_weekend":    is_parents_weekend,
     }
 
 
@@ -461,7 +581,7 @@ def seed(days: int = HISTORY_DAYS) -> None:
 
                     is_late_night = hour in (0, 1, 2)
                     weather       = _synthetic_weather(day)
-                    mult          = _traffic_multiplier(bar_id, hour, acad, games, weather, extras, tv)
+                    mult          = _traffic_multiplier(bar_id, hour, day.weekday(), acad, games, weather, extras, tv)
 
                     wait  = max(0.0, round(_wait(bar_id, hour, is_weekend, is_late_night) * mult, 1))
                     pct   = max(0.0, min(100.0, round(_pct_full(bar_id, hour, is_weekend, is_late_night) * mult, 1)))
@@ -503,8 +623,12 @@ def seed(days: int = HISTORY_DAYS) -> None:
                                      is_nfl_game_day, is_nfl_playoffs, is_super_bowl,
                                      is_vikings_game, is_cfb_saturday, is_cfb_championship,
                                      is_march_madness, is_march_madness_elite, is_nba_playoffs,
-                                     tv_game_hour, tv_game_weight)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                     tv_game_hour, tv_game_weight,
+                                     is_wild_game, is_timberwolves_game, is_nhl_playoffs,
+                                     cloud_cover, is_first_nice_day,
+                                     is_study_days, is_commencement, days_since_semester_start,
+                                     is_cinco_de_mayo, is_parents_weekend)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                                 """,
                                 (
                                     obs_id,
@@ -548,6 +672,16 @@ def seed(days: int = HISTORY_DAYS) -> None:
                                     tv["is_nba_playoffs"],
                                     tv["tv_game_hour"],
                                     tv["tv_game_weight"],
+                                    extras["is_wild_game"],
+                                    extras["is_timberwolves_game"],
+                                    extras["is_nhl_playoffs"],
+                                    weather["cloud_cover"],
+                                    weather["is_first_nice_day"],
+                                    acad["is_study_days"],
+                                    acad["is_commencement"],
+                                    acad["days_since_semester_start"],
+                                    extras["is_cinco_de_mayo"],
+                                    extras["is_parents_weekend"],
                                 ),
                             )
                             inserted += 1

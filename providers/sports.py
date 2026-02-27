@@ -189,6 +189,9 @@ def fetch_tv_sports(target_date: date) -> dict:
         is_march_madness      : 0/1 — NCAA tournament game
         is_march_madness_elite: 0/1 — Elite 8 / Final Four / Championship
         is_nba_playoffs       : 0/1 — NBA playoff game
+        is_wild_game          : 0/1 — Minnesota Wild playing
+        is_timberwolves_game  : 0/1 — Minnesota Timberwolves playing
+        is_nhl_playoffs       : 0/1 — NHL playoff game
         tv_game_hour          : int | None — kickoff of biggest game (local hr)
         tv_game_weight        : float — magnitude 0–4
     """
@@ -207,6 +210,9 @@ def fetch_tv_sports(target_date: date) -> dict:
         "is_march_madness":       0,
         "is_march_madness_elite": 0,
         "is_nba_playoffs":        0,
+        "is_wild_game":           0,
+        "is_timberwolves_game":   0,
+        "is_nhl_playoffs":        0,
         "tv_game_hour":           None,
         "tv_game_weight":         0.0,
     }
@@ -283,15 +289,49 @@ def fetch_tv_sports(target_date: date) -> dict:
 
         _update_best(w, hour)
 
-    # ── NBA playoffs ─────────────────────────────────────────────────────────
+    # ── NBA (Timberwolves + generic playoffs) ─────────────────────────────────────
     for event in _scoreboard("basketball", "nba", target_date):
-        if _season_type(event) != 3:
-            continue            # regular season doesn't drive bar traffic
+        stype = _season_type(event)
+        is_twolves = _has_slug(event, "minnesota")
 
-        result["is_nba_playoffs"] = 1
+        if is_twolves:
+            result["is_timberwolves_game"] = 1
+
+        if stype == 1:   # preseason — no bar draw
+            continue
+
         name = event.get("name", "").lower()
         hour = _kickoff_local(event)
-        w    = 2.0 if "final" in name else 1.2
+
+        if stype == 3:   # postseason
+            result["is_nba_playoffs"] = 1
+            w = 2.0 if "final" in name else 1.2
+            if is_twolves:
+                w = min(w + 0.3, 4.0)   # T-Wolves in playoffs = bigger local draw
+            _update_best(w, hour)
+        elif is_twolves:
+            # T-Wolves regular season — Sally's has Timberwolves specials
+            _update_best(0.8, hour)
+
+    # ── NHL (includes Minnesota Wild) ─────────────────────────────────────────
+    for event in _scoreboard("hockey", "nhl", target_date):
+        stype = _season_type(event)
+        if stype == 1:   # preseason
+            continue
+
+        name    = event.get("name", "").lower()
+        hour    = _kickoff_local(event)
+        is_wild = _has_slug(event, "minnesota")
+
+        if stype == 3:   # playoffs
+            result["is_nhl_playoffs"] = 1
+            w = 2.0 if "final" in name else 1.5
+        else:
+            w = 0.6   # generic NHL regular season — modest bar draw
+
+        if is_wild:
+            result["is_wild_game"] = 1
+            w = min(w + 0.5, 4.0)   # Wild game boosts draw (Sally's has Wild specials)
 
         _update_best(w, hour)
 

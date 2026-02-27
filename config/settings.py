@@ -41,6 +41,9 @@ DRINKING_HOLIDAY_WEIGHTS: dict[str, float] = {
     "is_bar_crawl":          3.5,   # organized crawl guarantees a massive crowd surge
     "is_blackout_wednesday": 3.5,   # Thanksgiving eve — college students home = bars packed
     "is_homecoming":         3.0,   # UMN homecoming weekend has significant bar traffic
+    "is_cinco_de_mayo":      3.0,   # Mexican holiday bar crawls; Blarney's especially
+    "is_commencement":       2.5,   # families + graduates celebrating at nearby bars
+    "is_parents_weekend":    1.5,   # families on campus — moderate bar activity
 }
 # Training rows that fall on a drinking holiday are multiplied by this factor so
 # the RandomForest fits those observations much more tightly.

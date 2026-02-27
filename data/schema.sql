@@ -90,10 +90,28 @@ CREATE TABLE IF NOT EXISTS signals (
     -- Sports (external to UMN)
     is_twins_home         INTEGER NOT NULL DEFAULT 0 CHECK (is_twins_home         IN (0,1)),
 
+    -- MN-specific pro sports (Sally's has Wild + T-Wolves specials)
+    is_wild_game            INTEGER NOT NULL DEFAULT 0 CHECK (is_wild_game            IN (0,1)),
+    is_timberwolves_game    INTEGER NOT NULL DEFAULT 0 CHECK (is_timberwolves_game    IN (0,1)),
+    is_nhl_playoffs         INTEGER NOT NULL DEFAULT 0 CHECK (is_nhl_playoffs         IN (0,1)),
+
+    -- Weather (expanded)
+    cloud_cover             REAL,           -- % cloud coverage (0–100)
+    is_first_nice_day       INTEGER NOT NULL DEFAULT 0 CHECK (is_first_nice_day       IN (0,1)),
+
     -- Academic (expanded)
     is_midterms_week      INTEGER NOT NULL DEFAULT 0 CHECK (is_midterms_week      IN (0,1)),
     is_syllabus_week      INTEGER NOT NULL DEFAULT 0 CHECK (is_syllabus_week      IN (0,1)),
     days_until_break      REAL,   -- days until next break/finals; NULL when already on break
+
+    -- Academic (further expanded)
+    is_study_days             INTEGER NOT NULL DEFAULT 0 CHECK (is_study_days             IN (0,1)),
+    is_commencement           INTEGER NOT NULL DEFAULT 0 CHECK (is_commencement           IN (0,1)),
+    days_since_semester_start INTEGER,    -- days since semester started; NULL off-semester
+
+    -- Events (expanded)
+    is_cinco_de_mayo          INTEGER NOT NULL DEFAULT 0 CHECK (is_cinco_de_mayo          IN (0,1)),
+    is_parents_weekend        INTEGER NOT NULL DEFAULT 0 CHECK (is_parents_weekend        IN (0,1)),
 
     created_at       TEXT    NOT NULL DEFAULT (datetime('now'))
 );

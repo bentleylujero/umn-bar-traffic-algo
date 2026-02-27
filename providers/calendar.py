@@ -47,6 +47,14 @@ def _thanksgiving(year: int) -> date:
     return first_thu + timedelta(weeks=3)
 
 
+# ── UMN Parents' Weekends (early October each fall) ──────────────────────────
+_PARENTS_WEEKENDS: list[tuple[date, date]] = [
+    (date(2025, 10, 17), date(2025, 10, 19)),
+    (date(2026, 10, 16), date(2026, 10, 18)),
+    (date(2027, 10, 15), date(2027, 10, 17)),
+]
+
+
 def compute_academic_flags(dt: datetime) -> dict:
     """Return all academic-calendar signal flags for the given datetime."""
     d = dt.date()
@@ -54,42 +62,60 @@ def compute_academic_flags(dt: datetime) -> dict:
 
     for _label, start, syl_end, mid_s, mid_e, fin_s, end in _SEMESTERS:
         if start <= d < fin_s:
-            week = (d - start).days // 7 + 1
+            days_since = (d - start).days
+            week       = days_since // 7 + 1
+            is_study   = int(fin_s - timedelta(days=3) <= d < fin_s)
             return {
-                "classes_in_session": 1,
-                "is_finals_week":     0,
-                "is_welcome_week":    int(d <= syl_end),
-                "is_syllabus_week":   int(d <= syl_end),
-                "is_midterms_week":   int(mid_s <= d <= mid_e),
-                "is_break":           0,
-                "is_summer_session":  0,
-                "week_of_semester":   week,
-                "days_until_break":   float((fin_s - d).days),
+                "classes_in_session":       1,
+                "is_finals_week":           0,
+                "is_welcome_week":          int(d <= syl_end),
+                "is_syllabus_week":         int(d <= syl_end),
+                "is_midterms_week":         int(mid_s <= d <= mid_e),
+                "is_break":                 0,
+                "is_summer_session":        0,
+                "week_of_semester":         week,
+                "days_until_break":         float((fin_s - d).days),
+                "is_study_days":            is_study,
+                "days_since_semester_start": days_since,
+                "is_commencement":          0,
             }
         if fin_s <= d <= end:
             return {
-                "classes_in_session": 0,
-                "is_finals_week":     1,
-                "is_welcome_week":    0,
-                "is_syllabus_week":   0,
-                "is_midterms_week":   0,
-                "is_break":           0,
-                "is_summer_session":  0,
-                "week_of_semester":   16,
-                "days_until_break":   0.0,
+                "classes_in_session":       0,
+                "is_finals_week":           1,
+                "is_welcome_week":          0,
+                "is_syllabus_week":         0,
+                "is_midterms_week":         0,
+                "is_break":                 0,
+                "is_summer_session":        0,
+                "week_of_semester":         16,
+                "days_until_break":         0.0,
+                "is_study_days":            0,
+                "days_since_semester_start": (d - start).days,
+                "is_commencement":          0,
             }
 
     # Between semesters / summer / break
+    # Commencement: within 3 days after a spring semester end
+    is_commencement = int(
+        any(
+            end.month == 5 and end < d <= end + timedelta(days=3)
+            for _, _, _, _, _, _, end in _SEMESTERS
+        )
+    )
     return {
-        "classes_in_session": 0,
-        "is_finals_week":     0,
-        "is_welcome_week":    0,
-        "is_syllabus_week":   0,
-        "is_midterms_week":   0,
-        "is_break":           int(not is_summer),
-        "is_summer_session":  int(is_summer),
-        "week_of_semester":   None,
-        "days_until_break":   None,
+        "classes_in_session":       0,
+        "is_finals_week":           0,
+        "is_welcome_week":          0,
+        "is_syllabus_week":         0,
+        "is_midterms_week":         0,
+        "is_break":                 int(not is_summer and not is_commencement),
+        "is_summer_session":        int(is_summer),
+        "week_of_semester":         None,
+        "days_until_break":         None,
+        "is_study_days":            0,
+        "days_since_semester_start": None,
+        "is_commencement":          is_commencement,
     }
 
 
@@ -97,6 +123,10 @@ def compute_event_flags(dt: datetime) -> dict:
     """Return holiday / special-event flags for the given datetime."""
     d   = dt.date()
     tg  = _thanksgiving(d.year)
+
+    is_parents_weekend = int(
+        any(start <= d <= end for start, end in _PARENTS_WEEKENDS)
+    )
 
     return {
         "is_holiday":            int(
@@ -109,4 +139,6 @@ def compute_event_flags(dt: datetime) -> dict:
         "is_halloween":          int(d.month == 10 and d.day == 31),
         "is_blackout_wednesday": int(d == tg - timedelta(days=1)),
         "is_new_years_eve":      int(d.month == 12 and d.day == 31),
+        "is_cinco_de_mayo":      int(d.month == 5  and d.day == 5),
+        "is_parents_weekend":    is_parents_weekend,
     }

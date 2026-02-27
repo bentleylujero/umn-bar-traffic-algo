@@ -14,7 +14,7 @@ The raw DataFrame must contain at least:
 
 Optional columns (passed through if present):
     Weather     : temperature_c, precipitation_mm, wind_chill_c, snowfall_mm,
-                  wind_speed_ms, is_severe_weather
+                  wind_speed_ms, is_severe_weather, cloud_cover, is_first_nice_day
     Legacy      : is_game_day, is_holiday
     Athletics   : is_football_home, is_basketball_home, is_hockey_home,
                   hours_until_game, is_rivalry_game
@@ -54,6 +54,8 @@ SIGNAL_FEATURES = [
     "snowfall_mm",
     "wind_speed_ms",
     "is_severe_weather",
+    "cloud_cover",
+    "is_first_nice_day",
     # Legacy game/holiday flags
     "is_game_day",
     "is_holiday",
@@ -88,12 +90,23 @@ SIGNAL_FEATURES = [
     "is_march_madness",
     "is_march_madness_elite",
     "is_nba_playoffs",
+    # MN-specific pro sports (Sally's has Wild + T-Wolves specials)
+    "is_wild_game",
+    "is_timberwolves_game",
+    "is_nhl_playoffs",
     "tv_game_hour",
     "tv_game_weight",
     # Academic (expanded)
     "is_midterms_week",
     "is_syllabus_week",
     "days_until_break",
+    # Academic (further expanded)
+    "is_study_days",
+    "is_commencement",
+    "days_since_semester_start",
+    # Events (expanded)
+    "is_cinco_de_mayo",
+    "is_parents_weekend",
     # Observation-level
     "cover_charge",
     # Bar-specific computed signals (not stored in DB — derived from bar_id + time)
