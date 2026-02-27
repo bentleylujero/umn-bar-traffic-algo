@@ -51,16 +51,29 @@ class WaitTimeModel:
 
     # ── Public API ────────────────────────────────────────────────────────────
 
-    def fit(self, df: pd.DataFrame) -> "WaitTimeModel":
+    def fit(
+        self,
+        df: pd.DataFrame,
+        sample_weight: "np.ndarray | None" = None,
+    ) -> "WaitTimeModel":
         """Fit the model.  df must have observed_at, wait_minutes, and all
-        columns in feature_cols."""
+        columns in feature_cols.
+
+        Parameters
+        ----------
+        sample_weight : array-like, optional
+            Per-row training weights aligned with *df* (before the train/test
+            split).  Rows in the test split are ignored.  Pass higher weights
+            for drinking-holiday rows so the RF fits those observations more tightly.
+        """
         df = df.copy()
         df["observed_at"] = pd.to_datetime(df["observed_at"], utc=True)
-        df = df.sort_values("observed_at")
+        df = df.sort_values("observed_at").reset_index(drop=True)
 
         cutoff = df["observed_at"].max() - timedelta(days=self.test_split_days)
-        train = df[df["observed_at"] <= cutoff]
-        test = df[df["observed_at"] > cutoff]
+        train_mask = df["observed_at"] <= cutoff
+        train = df[train_mask]
+        test = df[~train_mask]
 
         if len(train) < 10:
             log.warning(
@@ -69,6 +82,7 @@ class WaitTimeModel:
 
         X_train = train[self.feature_cols]
         y_train = train[self.target_col]
+        w_train = sample_weight[train_mask.values] if sample_weight is not None else None
 
         self._pipeline = Pipeline([
             ("imputer", SimpleImputer(strategy="median")),
@@ -79,7 +93,11 @@ class WaitTimeModel:
                 n_jobs=-1,
             )),
         ])
-        self._pipeline.fit(X_train, y_train)
+        # Pass sample_weight through the pipeline via the rf step name
+        fit_params = {}
+        if w_train is not None:
+            fit_params["rf__sample_weight"] = w_train
+        self._pipeline.fit(X_train, y_train, **fit_params)
 
         # Training metrics
         y_train_pred = self._pipeline.predict(X_train)

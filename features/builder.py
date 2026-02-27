@@ -102,6 +102,10 @@ SIGNAL_FEATURES = [
     "minutes_into_special",
     # Continuous late-night migration draw (0 at 10pm → 1.0 at 2am, Blarney's only)
     "bar_late_draw",
+    # Composite drinking-holiday intensity (0 on normal nights; higher = bigger holiday).
+    # Aggregates is_st_patricks, is_halloween, etc. into a single continuous signal
+    # so the RF can split strongly on holiday magnitude rather than each sparse flag.
+    "drinking_holiday_weight",
 ]
 
 ALL_FEATURES = TIME_FEATURES + ["bar_id"] + SIGNAL_FEATURES
@@ -139,6 +143,7 @@ class FeatureBuilder:
         df = df.sort_values("observed_at").reset_index(drop=True)
         df = self._add_time_features(df)
         df = self._add_bar_schedule_features(df)
+        df = self._add_drinking_holiday_weight(df)
 
         if self.add_lag_features:
             df = self._add_lag_features(df)
@@ -251,6 +256,24 @@ class FeatureBuilder:
                 draw = ((h_adj - 22.0) / 4.0).clip(lower=0.0, upper=1.0)
                 df.loc[bar_mask, "bar_late_draw"] = draw.values
 
+        return df
+
+    @staticmethod
+    def _add_drinking_holiday_weight(df: pd.DataFrame) -> pd.DataFrame:
+        """Build a composite drinking-holiday intensity feature.
+
+        For each row, sums the configured weights for every active holiday flag.
+        Result is 0 on normal nights and scales up with holiday magnitude, giving
+        the RandomForest a single continuous signal to split on instead of many
+        sparse binary flags.
+        """
+        from config.settings import DRINKING_HOLIDAY_WEIGHTS
+
+        weight = pd.Series(0.0, index=df.index)
+        for col, w in DRINKING_HOLIDAY_WEIGHTS.items():
+            if col in df.columns:
+                weight += df[col].fillna(0).astype(float) * w
+        df["drinking_holiday_weight"] = weight
         return df
 
     def _add_lag_features(self, df: pd.DataFrame) -> pd.DataFrame:

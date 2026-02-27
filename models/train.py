@@ -9,8 +9,10 @@ from __future__ import annotations
 import logging
 import sqlite3
 
+import numpy as np
 import pandas as pd
 
+from config.settings import DRINKING_HOLIDAY_WEIGHTS, HOLIDAY_SAMPLE_WEIGHT_MULTIPLIER
 from data.db import get_connection, init_db
 from features.builder import FeatureBuilder
 from models.baseline import BaselineModel
@@ -115,6 +117,17 @@ def run_training(add_lag_features: bool = False) -> dict:
     feature_cols = fb.feature_columns(df_feat)
     log.info("Feature columns: %s", feature_cols)
 
+    # Build per-row sample weights: drinking-holiday rows get a large multiplier
+    # so the RandomForest pays much more attention to those rare, high-impact nights.
+    holiday_cols = [c for c in DRINKING_HOLIDAY_WEIGHTS if c in df_feat.columns]
+    is_holiday = (df_feat[holiday_cols].fillna(0) > 0).any(axis=1)
+    sample_weight = np.where(is_holiday, HOLIDAY_SAMPLE_WEIGHT_MULTIPLIER, 1.0)
+    n_holiday = int(is_holiday.sum())
+    log.info(
+        "Sample weights: %d holiday rows × %.1f, %d normal rows × 1.0",
+        n_holiday, HOLIDAY_SAMPLE_WEIGHT_MULTIPLIER, len(df_feat) - n_holiday,
+    )
+
     result: dict = {"df_feat": df_feat}
 
     for target, key in [
@@ -126,7 +139,7 @@ def run_training(add_lag_features: bool = False) -> dict:
         baseline.fit(df_feat)
 
         ml = WaitTimeModel(feature_cols=feature_cols, target_col=target)
-        ml.fit(df_feat)
+        ml.fit(df_feat, sample_weight=sample_weight)
 
         log.info(
             "[%s] Train MAE=%.2f  Test MAE=%s",
