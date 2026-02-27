@@ -47,7 +47,10 @@ PopularTimesNode┘
 ## Run commands
 1. `python -m data.seed` — populate DB with synthetic data
 2. `streamlit run app/dashboard.py` — Streamlit dashboard (port 8501)
-3. `uvicorn platform.backend.main:app --reload --port 8001` — FastAPI platform (port 8001)
+3. `python -m uvicorn platform.backend.main:app --reload --port 8001` — FastAPI platform (port 8001)
+   NOTE: must use `python -m uvicorn` (not bare `uvicorn`) — the `platform/` package name shadows
+   Python's stdlib `platform` module when the binary runs outside the project's sys.path.
+4. `python -m http.server 3000 --directory frontend` — Crowd Intel dashboard (port 3000)
 
 ## Architecture Rules
 1. NEVER modify models/ or features/ without explicit approval
