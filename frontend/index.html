@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crowd Intel — UMN Bar Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inconsolata:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── RESET ──────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── TOKENS ─────────────────────────────────────────────── */
+    :root {
+      --bg:           #080508;
+      --bg2:          #0d0a0e;
+      --card:         #110d14;
+      --card-h:       #171219;
+      --amber:        #e8a020;
+      --amber-bright: #ffb533;
+      --amber-dim:    rgba(232,160,32,0.35);
+      --amber-glow:   rgba(232,160,32,0.10);
+      --orange:       #d05820;
+      --red:          #df3030;
+      --red-dim:      rgba(223,48,48,0.25);
+      --green:        #56a85c;
+      --cream:        #ede0cc;
+      --cream-60:     rgba(237,224,204,0.60);
+      --cream-30:     rgba(237,224,204,0.30);
+      --cream-12:     rgba(237,224,204,0.12);
+      --border:       rgba(232,160,32,0.16);
+      --border-hot:   rgba(232,160,32,0.60);
+      --fd:           'Anton', sans-serif;
+      --fm:           'Inconsolata', monospace;
+    }
+
+    /* ── BASE ───────────────────────────────────────────────── */
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--cream);
+      font-family: var(--fm);
+      overflow-x: hidden;
+    }
+
+    /* grain overlay */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 9998; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.032'/%3E%3C/svg%3E");
+      opacity: 0.7;
+    }
+
+    /* ambient glow behind cards */
+    body::after {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 60% 40% at 50% 38%, rgba(232,160,32,0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 30% at 20% 80%, rgba(208,88,32,0.04) 0%, transparent 60%);
+    }
+
+    .app {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── HEADER ─────────────────────────────────────────────── */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      height: 68px;
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(8,5,8,0.92);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(8px);
+    }
+
+    /* scanline stripe on header */
+    header::after {
+      content: '';
+      position: absolute; inset: 0; pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg, transparent 0 2px, rgba(0,0,0,0.06) 2px 3px
+      );
+    }
+
+    .hd-left {
+      display: flex;
+      align-items: baseline;
+      gap: 0.8rem;
+    }
+
+    .logo {
+      font-family: var(--fd);
+      font-size: 1.9rem;
+      letter-spacing: 0.04em;
+      color: var(--amber);
+      text-shadow: 0 0 18px rgba(232,160,32,0.55), 0 0 36px rgba(232,160,32,0.18);
+      line-height: 1;
+    }
+
+    .logo-sub {
+      font-size: 0.6rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--cream-30);
+    }
+
+    .hd-center {
+      position: absolute; left: 50%; transform: translateX(-50%);
+      font-size: 0.58rem;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: rgba(237,224,204,0.18);
+    }
+
+    .hd-right {
+      display: flex;
+      align-items: center;
+      gap: 1.4rem;
+    }
+
+    .live-badge {
+      display: flex; align-items: center; gap: 0.4rem;
+      font-size: 0.62rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--amber);
+    }
+
+    .live-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--amber);
+      box-shadow: 0 0 5px var(--amber), 0 0 10px rgba(232,160,32,0.4);
+      animation: blink 2.2s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    .clock {
+      font-size: 0.88rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--cream-60);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .api-pill {
+      font-size: 0.58rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 0.22rem 0.6rem;
+      border: 1px solid;
+      border-radius: 2px;
+    }
+
+    .api-pill.online  { color: var(--green); border-color: rgba(86,168,92,0.35); }
+    .api-pill.offline { color: var(--red);   border-color: var(--red-dim); }
+    .api-pill.loading { color: var(--amber-dim); border-color: var(--border); animation: blink 1s linear infinite; }
+
+    /* ── ERROR BANNER ───────────────────────────────────────── */
+    .error-banner {
+      display: none;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.65rem 2rem;
+      background: rgba(200,40,40,0.12);
+      border-bottom: 1px solid rgba(200,40,40,0.3);
+      font-size: 0.68rem;
+      color: #e87070;
+    }
+
+    .error-banner.show { display: flex; }
+
+    /* ── MAIN ───────────────────────────────────────────────── */
+    main {
+      flex: 1;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.75rem;
+    }
+
+    /* ── SECTION LABEL ──────────────────────────────────────── */
+    .section-label {
+      font-size: 0.55rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── BAR CARDS ──────────────────────────────────────────── */
+    .bars-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+    }
+
+    .bar-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 1.75rem 1.75rem 1.5rem;
+      position: relative;
+      overflow: hidden;
+      cursor: default;
+      transition: border-color 0.35s, box-shadow 0.35s;
+      animation: rise 0.55s cubic-bezier(0.2, 0, 0.2, 1) both;
+    }
+
+    .bar-card:nth-child(1) { animation-delay: 0.05s; }
+    .bar-card:nth-child(2) { animation-delay: 0.15s; }
+    .bar-card:nth-child(3) { animation-delay: 0.25s; }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0);    }
+    }
+
+    .bar-card:hover {
+      border-color: var(--border-hot);
+      box-shadow: 0 0 36px var(--amber-glow), inset 0 0 24px var(--amber-glow);
+    }
+
+    /* amber corner notch */
+    .bar-card::before {
+      content: '';
+      position: absolute; top: 0; right: 0;
+      border-style: solid;
+      border-width: 0 24px 24px 0;
+      border-color: transparent var(--amber) transparent transparent;
+      opacity: 0.35;
+      transition: opacity 0.3s;
+    }
+
+    .bar-card:hover::before { opacity: 0.85; }
+
+    /* background bar number watermark */
+    .card-watermark {
+      position: absolute;
+      bottom: -0.5rem; right: 1rem;
+      font-family: var(--fd);
+      font-size: 7rem;
+      color: rgba(232,160,32,0.04);
+      line-height: 1;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .bar-id-tag {
+      font-size: 0.56rem;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: var(--cream-30);
+      margin-bottom: 0.2rem;
+    }
+
+    .bar-name {
+      font-family: var(--fd);
+      font-size: 1.65rem;
+      color: var(--amber-bright);
+      letter-spacing: 0.03em;
+      line-height: 1;
+      margin-bottom: 1.4rem;
+      text-shadow: 0 0 18px rgba(255,181,51,0.22);
+    }
+
+    .wait-row {
+      display: flex;
+      align-items: baseline;
+      gap: 0.45rem;
+      margin-bottom: 1.1rem;
+    }
+
+    .wait-num {
+      font-family: var(--fd);
+      font-size: 5.2rem;
+      line-height: 1;
+      transition: color 0.5s, text-shadow 0.5s;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .wait-num.quiet  { color: var(--amber);  text-shadow: 0 0 24px var(--amber-dim); }
+    .wait-num.medium { color: var(--orange); text-shadow: 0 0 24px rgba(208,88,32,0.35); }
+    .wait-num.busy   { color: var(--red);    text-shadow: 0 0 24px var(--red-dim); animation: throb 1.4s ease-in-out infinite; }
+
+    @keyframes throb {
+      0%, 100% { text-shadow: 0 0 24px var(--red-dim); }
+      50%       { text-shadow: 0 0 32px rgba(223,48,48,0.55), 0 0 60px rgba(223,48,48,0.2); }
+    }
+
+    .wait-unit {
+      font-size: 0.7rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--cream-30);
+      line-height: 1.4;
+    }
+
+    /* fill track */
+    .fill-track {
+      height: 5px;
+      background: var(--cream-12);
+      margin-bottom: 0.5rem;
+      overflow: hidden;
+    }
+
+    .fill-bar {
+      height: 100%;
+      width: 0;
+      transition: width 1.1s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .fill-bar::after {
+      content: '';
+      position: absolute; right: 0; top: 0; bottom: 0;
+      width: 14px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35));
+    }
+
+    .fill-bar.quiet  { background: linear-gradient(90deg, #7a5210, var(--amber)); }
+    .fill-bar.medium { background: linear-gradient(90deg, #7a2e10, var(--orange)); }
+    .fill-bar.busy   { background: linear-gradient(90deg, #7a1010, var(--red)); animation: flash-track 1.4s ease-in-out infinite; }
+
+    @keyframes flash-track {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.7; }
+    }
+
+    .fill-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.1rem;
+    }
+
+    .fill-pct {
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      color: var(--cream-60);
+    }
+
+    .vs-typical {
+      font-size: 0.6rem;
+      letter-spacing: 0.08em;
+    }
+
+    .vs-typical.up   { color: var(--red); }
+    .vs-typical.down { color: var(--green); }
+    .vs-typical.flat { color: var(--cream-30); }
+
+    .card-badges {
+      display: flex;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 0.53rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 0.22rem 0.52rem;
+      border: 1px solid;
+    }
+
+    .badge-conf-high   { color: var(--green); border-color: rgba(86,168,92,0.30); }
+    .badge-conf-medium { color: var(--amber); border-color: var(--border); }
+    .badge-conf-low    { color: var(--cream-30); border-color: var(--cream-12); }
+
+    .badge-ml       { color: var(--amber-bright); border-color: rgba(255,181,51,0.28); }
+    .badge-baseline { color: var(--cream-60);    border-color: var(--border); }
+    .badge-fallback { color: var(--red);          border-color: var(--red-dim); }
+
+    /* ── SIGNALS PANEL ──────────────────────────────────────── */
+    .signals-wrap {
+      border: 1px solid var(--border);
+      background: var(--card);
+    }
+
+    .signals-topbar {
+      padding: 0.65rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .signals-topbar-title {
+      font-size: 0.56rem;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--amber);
+    }
+
+    .signals-topbar-ts {
+      font-size: 0.58rem;
+      color: var(--cream-30);
+      letter-spacing: 0.08em;
+    }
+
+    .signals-cols {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .sig-col {
+      padding: 1.15rem 1.5rem;
+      border-right: 1px solid var(--border);
+    }
+
+    .sig-col:last-child { border-right: none; }
+
+    .sig-col-title {
+      font-size: 0.52rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 0.65rem;
+      padding-bottom: 0.45rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sig-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding: 0.22rem 0;
+      font-size: 0.68rem;
+    }
+
+    .sig-k {
+      color: var(--cream-30);
+      letter-spacing: 0.04em;
+    }
+
+    .sig-v         { font-weight: 600; letter-spacing: 0.06em; }
+    .sig-v.active  { color: var(--amber); }
+    .sig-v.hot     { color: var(--red); }
+    .sig-v.good    { color: var(--green); }
+    .sig-v.dim     { color: rgba(237,224,204,0.22); }
+    .sig-v.neutral { color: var(--cream-60); }
+
+    /* ── FOOTER ─────────────────────────────────────────────── */
+    footer {
+      padding: 0.55rem 2rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.58rem;
+      color: var(--cream-30);
+      letter-spacing: 0.08em;
+    }
+
+    .ft-left { display: flex; gap: 1.5rem; align-items: center; }
+
+    #refresh-cd { color: var(--amber-dim); }
+
+    /* ── SKELETON ───────────────────────────────────────────── */
+    .skel {
+      background: linear-gradient(
+        90deg,
+        var(--card) 25%,
+        rgba(255,255,255,0.035) 50%,
+        var(--card) 75%
+      );
+      background-size: 200% 100%;
+      animation: shimmer 1.6s infinite;
+      border-radius: 1px;
+    }
+
+    @keyframes shimmer {
+      from { background-position: 200% 0; }
+      to   { background-position: -200% 0; }
+    }
+
+    /* ── RESPONSIVE ─────────────────────────────────────────── */
+    @media (max-width: 860px) {
+      .bars-grid    { grid-template-columns: 1fr; }
+      .signals-cols { grid-template-columns: 1fr; }
+      .sig-col { border-right: none; border-bottom: 1px solid var(--border); }
+      .sig-col:last-child { border-bottom: none; }
+      .hd-center { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ── HEADER ── -->
+  <header>
+    <div class="hd-left">
+      <span class="logo">CROWD INTEL</span>
+      <span class="logo-sub">UMN Bar Tracker</span>
+    </div>
+    <span class="hd-center">Minneapolis · Stadium Village · Dinkytown</span>
+    <div class="hd-right">
+      <div class="live-badge"><span class="live-dot"></span>Live</div>
+      <span class="clock" id="clock">--:--:--</span>
+      <span class="api-pill loading" id="api-pill">Connecting</span>
+    </div>
+  </header>
+
+  <!-- ── ERROR BANNER ── -->
+  <div class="error-banner" id="error-banner">
+    <span>⚠</span>
+    <span id="error-msg">Cannot reach API. Start backend: <code>uvicorn platform.backend.main:app --reload --port 8001</code></span>
+  </div>
+
+  <!-- ── MAIN ── -->
+  <main>
+
+    <!-- Bar cards -->
+    <div>
+      <div class="section-label">Wait Time Forecast</div>
+      <div class="bars-grid" id="bars-grid">
+        <div class="bar-card"><div class="skel" style="height:240px"></div></div>
+        <div class="bar-card"><div class="skel" style="height:240px"></div></div>
+        <div class="bar-card"><div class="skel" style="height:240px"></div></div>
+      </div>
+    </div>
+
+    <!-- Signals panel -->
+    <div>
+      <div class="section-label">Signal Readout</div>
+      <div class="signals-wrap">
+        <div class="signals-topbar">
+          <span class="signals-topbar-title">Live Inputs</span>
+          <span class="signals-topbar-ts" id="signals-ts">—</span>
+        </div>
+        <div class="signals-cols" id="signals-cols">
+          <div class="sig-col"><div class="skel" style="height:130px"></div></div>
+          <div class="sig-col"><div class="skel" style="height:130px"></div></div>
+          <div class="sig-col"><div class="skel" style="height:130px"></div></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ── FOOTER ── -->
+  <footer>
+    <div class="ft-left">
+      <span id="last-updated">—</span>
+      <span id="refresh-cd">Refreshing in 60s</span>
+    </div>
+    <span>Open Foundry Platform · UMN Bar Traffic Algo</span>
+  </footer>
+
+</div>
+
+<script>
+  /* ── CONFIG ────────────────────────────────────────────── */
+  const API        = 'http://localhost:8001';
+  const REFRESH_S  = 60;
+  const BAR_LABELS = {
+    "Blarney's Pub and Grill": "Blarney's",
+    "Sally's Saloon":          "Sally's",
+    "Kollege Klub":            "KK",
+  };
+
+  let cdInterval = null;
+  let cdLeft     = REFRESH_S;
+
+  /* ── CLOCK ─────────────────────────────────────────────── */
+  function tick() {
+    const n = new Date();
+    const pad = v => String(v).padStart(2,'0');
+    document.getElementById('clock').textContent =
+      `${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+  }
+  setInterval(tick, 1000);
+  tick();
+
+  /* ── COUNTDOWN ─────────────────────────────────────────── */
+  function startCountdown() {
+    clearInterval(cdInterval);
+    cdLeft = REFRESH_S;
+    const el = document.getElementById('refresh-cd');
+    cdInterval = setInterval(() => {
+      cdLeft--;
+      el.textContent = cdLeft > 0 ? `Refreshing in ${cdLeft}s` : 'Refreshing…';
+      if (cdLeft <= 0) { clearInterval(cdInterval); fetchAll(); }
+    }, 1000);
+  }
+
+  /* ── CLASSIFY ──────────────────────────────────────────── */
+  function tier(pct) {
+    if (pct >= 0.70) return 'busy';
+    if (pct >= 0.40) return 'medium';
+    return 'quiet';
+  }
+
+  /* ── COUNT-UP ──────────────────────────────────────────── */
+  function countUp(el, target) {
+    let cur = 0;
+    const step = Math.max(1, Math.ceil(target / 22));
+    const iv = setInterval(() => {
+      cur = Math.min(cur + step, target);
+      el.textContent = cur;
+      if (cur >= target) clearInterval(iv);
+    }, 36);
+  }
+
+  /* ── VS TYPICAL ────────────────────────────────────────── */
+  function vsTypical(currentPct, typicalPct) {
+    const diff = currentPct - typicalPct;
+    if (diff > 10)  return { cls: 'up',   label: `↑ +${Math.round(diff)}% vs typical` };
+    if (diff < -10) return { cls: 'down', label: `↓ ${Math.round(diff)}% vs typical` };
+    return { cls: 'flat', label: '→ About typical' };
+  }
+
+  /* ── RENDER BARS ───────────────────────────────────────── */
+  function renderBars(preds, popularTimes) {
+    const grid = document.getElementById('bars-grid');
+    grid.innerHTML = '';
+
+    preds.forEach((p, i) => {
+      const name    = BAR_LABELS[p.bar_name] || p.bar_name;
+      const cls     = tier(p.predicted_pct_full);
+      const pctDisp = Math.round(p.predicted_pct_full * 100);
+      const waitRnd = Math.round(p.predicted_wait_minutes);
+
+      // vs typical comparison
+      const popEntry = popularTimes && (popularTimes[p.bar_id] || popularTimes[String(p.bar_id)]);
+      const typical  = popEntry ? popEntry.typical_busyness_pct : null;
+      const vt       = typical != null ? vsTypical(pctDisp, typical) : null;
+
+      const confBadge  = `badge badge-conf-${p.confidence}`;
+      const modelKey   = p.model_used === 'ml' ? 'ml' : p.model_used === 'baseline' ? 'baseline' : 'fallback';
+      const modelLabel = p.model_used === 'ml' ? 'ML Model' : p.model_used === 'baseline' ? 'Baseline' : 'Fallback';
+
+      const card = document.createElement('div');
+      card.className = 'bar-card';
+      card.style.animationDelay = `${i * 0.1}s`;
+      card.innerHTML = `
+        <div class="card-watermark">${p.bar_id}</div>
+        <div class="bar-id-tag">Bar #${p.bar_id}</div>
+        <div class="bar-name">${name}</div>
+        <div class="wait-row">
+          <span class="wait-num ${cls}" id="wn-${p.bar_id}">0</span>
+          <span class="wait-unit">min<br>wait</span>
+        </div>
+        <div class="fill-track">
+          <div class="fill-bar ${cls}" id="fb-${p.bar_id}"></div>
+        </div>
+        <div class="fill-meta">
+          <span class="fill-pct">${pctDisp}% capacity</span>
+          ${vt ? `<span class="vs-typical ${vt.cls}">${vt.label}</span>` : ''}
+        </div>
+        <div class="card-badges">
+          <span class="${confBadge}">${p.confidence} conf</span>
+          <span class="badge badge-${modelKey}">${modelLabel}</span>
+        </div>
+      `;
+      grid.appendChild(card);
+
+      // animate after paint
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          countUp(document.getElementById(`wn-${p.bar_id}`), waitRnd);
+          const fb = document.getElementById(`fb-${p.bar_id}`);
+          if (fb) fb.style.width = `${pctDisp}%`;
+        }, 80 + i * 90);
+      });
+    });
+  }
+
+  /* ── RENDER SIGNALS ────────────────────────────────────── */
+  function renderSignals(signals) {
+    const ts = signals.fetched_at
+      ? `as of ${new Date(signals.fetched_at).toLocaleTimeString()}`
+      : '—';
+    document.getElementById('signals-ts').textContent = ts;
+
+    const cols = document.getElementById('signals-cols');
+    cols.innerHTML = '';
+
+    /* ── Weather ── */
+    const w = signals.weather || {};
+    const tempC   = w.temperature_c   != null ? `${w.temperature_c.toFixed(1)}°C`   : '—';
+    const feelsC  = w.wind_chill_c    != null ? `${w.wind_chill_c.toFixed(1)}°C`    : '—';
+    const windMs  = w.wind_speed_ms   != null ? `${w.wind_speed_ms.toFixed(1)} m/s` : '—';
+    const precipM = w.precipitation_mm!= null ? `${w.precipitation_mm.toFixed(1)} mm`:'—';
+    const cloudPc = w.cloud_cover     != null ? `${Math.round(w.cloud_cover)}%`     : '—';
+    const snowM   = w.snowfall_mm     != null && w.snowfall_mm > 0
+                    ? `${w.snowfall_mm.toFixed(1)} mm` : 'None';
+    const sevWx   = w.is_severe_weather;
+    const niceDay = w.is_first_nice_day;
+
+    cols.appendChild(makeCol('Weather', [
+      ['Temperature', tempC,  'neutral'],
+      ['Feels Like',  feelsC, 'neutral'],
+      ['Wind',        windMs, 'neutral'],
+      ['Precip',      precipM,'neutral'],
+      ['Snow',        snowM,  snowM !== 'None' ? 'active' : 'dim'],
+      ['Cloud Cover', cloudPc,'neutral'],
+      ['Severe Wx',   sevWx  ? 'YES' : 'No', sevWx  ? 'hot'  : 'dim'],
+      ['First Nice Day', niceDay ? 'YES' : 'No', niceDay ? 'good' : 'dim'],
+    ]));
+
+    /* ── Sports & Events ── */
+    const s = signals.sports || {};
+    const e = signals.events || {};
+
+    const games = [
+      [s.is_football_home,     'Gophers Football'],
+      [s.is_basketball_home,   'Gophers B-Ball'],
+      [s.is_hockey_home,       'Gophers Hockey'],
+      [s.is_wild_game,         'Wild'],
+      [s.is_timberwolves_game, 'T-Wolves'],
+      [s.is_vikings_game,      'Vikings'],
+      [s.is_nfl_game_day,      'NFL Sunday'],
+      [s.is_cfb_saturday,      'CFB Saturday'],
+      [s.is_super_bowl,        'SUPER BOWL'],
+      [s.is_march_madness,     'March Madness'],
+    ].filter(([flag]) => flag).map(([, name]) => name);
+
+    const gamesStr  = games.length ? games.join(', ') : 'None';
+    const tvWeight  = s.tv_game_weight != null ? s.tv_game_weight.toFixed(2) : '0.00';
+    const evCount   = e.event_count_nearby ?? '—';
+    const evNames   = (e.event_names && e.event_names.length)
+                      ? e.event_names.slice(0,2).join(', ')
+                      : 'None';
+    const evConcert = e.is_major_concert;
+    const evUmn     = e.is_umn_campus_event;
+
+    cols.appendChild(makeCol('Sports & Events', [
+      ['Active Games',  gamesStr, games.length  ? 'active' : 'dim'],
+      ['TV Weight',     tvWeight, 'neutral'],
+      ['NHL Playoffs',  s.is_nhl_playoffs  ? 'YES' : 'No', s.is_nhl_playoffs  ? 'active' : 'dim'],
+      ['NBA Playoffs',  s.is_nba_playoffs  ? 'YES' : 'No', s.is_nba_playoffs  ? 'active' : 'dim'],
+      ['Nearby Events', String(evCount),    evCount > 0 ? 'active' : 'dim'],
+      ['Concert',       evConcert ? 'YES' : 'No', evConcert ? 'hot' : 'dim'],
+      ['UMN Campus',    evUmn     ? 'YES' : 'No', evUmn     ? 'active' : 'dim'],
+      ['Event Names',   evNames,  'neutral'],
+    ]));
+
+    /* ── Academic ── */
+    const c = signals.calendar || {};
+    const period =
+      c.is_finals_week    ? 'FINALS'
+      : c.is_midterms_week  ? 'MIDTERMS'
+      : c.is_welcome_week   ? 'WELCOME WEEK'
+      : c.is_study_days     ? 'STUDY DAYS'
+      : c.is_syllabus_week  ? 'SYLLABUS WEEK'
+      : c.is_commencement   ? 'COMMENCEMENT'
+      : 'Normal';
+
+    const periodHot = ['FINALS','MIDTERMS','WELCOME WEEK'].includes(period);
+    const weekStr   = c.week_of_semester != null ? `Week ${c.week_of_semester}` : '—';
+    const breakStr  = c.days_until_break != null
+                      ? (c.days_until_break > 0 ? `${c.days_until_break} days` : 'BREAK NOW')
+                      : '—';
+
+    cols.appendChild(makeCol('Academic Calendar', [
+      ['Classes',       c.classes_in_session ? 'In Session' : 'Not in Session',
+                        c.classes_in_session ? 'active' : 'dim'],
+      ['Period',        period,               periodHot ? 'hot' : period !== 'Normal' ? 'active' : 'dim'],
+      ['Semester Week', weekStr,              'neutral'],
+      ['Break In',      breakStr,             'neutral'],
+      ['Summer',        c.is_summer_session   ? 'Yes' : 'No', c.is_summer_session ? 'active' : 'dim'],
+      ['Bar Crawl',     c.is_bar_crawl        ? 'YES' : 'No', c.is_bar_crawl     ? 'hot'    : 'dim'],
+      ["St. Patrick's", c.is_st_patricks      ? 'YES' : 'No', c.is_st_patricks   ? 'hot'    : 'dim'],
+      ['Blackout Wed',  c.is_blackout_wednesday ? 'YES':'No', c.is_blackout_wednesday ? 'hot':'dim'],
+    ]));
+  }
+
+  function makeCol(title, rows) {
+    const div = document.createElement('div');
+    div.className = 'sig-col';
+    div.innerHTML =
+      `<div class="sig-col-title">${title}</div>` +
+      rows.map(([k, v, cls]) =>
+        `<div class="sig-row">
+          <span class="sig-k">${k}</span>
+          <span class="sig-v ${cls}">${v}</span>
+        </div>`
+      ).join('');
+    return div;
+  }
+
+  /* ── FETCH ─────────────────────────────────────────────── */
+  async function fetchAll() {
+    const pill  = document.getElementById('api-pill');
+    const errEl = document.getElementById('error-banner');
+    pill.className = 'api-pill loading';
+    pill.textContent = 'Loading';
+
+    try {
+      const [predsRes, sigsRes] = await Promise.all([
+        fetch(`${API}/api/v1/predict/all`),
+        fetch(`${API}/api/v1/signals/live`),
+      ]);
+
+      if (!predsRes.ok) throw new Error(`predict/all ${predsRes.status}`);
+      if (!sigsRes.ok)  throw new Error(`signals/live ${sigsRes.status}`);
+
+      const preds   = await predsRes.json();
+      const signals = await sigsRes.json();
+
+      renderBars(preds, signals.popular_times);
+      renderSignals(signals);
+
+      pill.className   = 'api-pill online';
+      pill.textContent = 'Online';
+      errEl.classList.remove('show');
+
+      document.getElementById('last-updated').textContent =
+        `Updated ${new Date().toLocaleTimeString()}`;
+
+    } catch (err) {
+      console.error(err);
+      pill.className   = 'api-pill offline';
+      pill.textContent = 'Offline';
+      document.getElementById('error-msg').textContent =
+        `Cannot reach API (${err.message}) — run: uvicorn platform.backend.main:app --reload --port 8001`;
+      errEl.classList.add('show');
+    }
+
+    startCountdown();
+  }
+
+  /* ── INIT ──────────────────────────────────────────────── */
+  fetchAll();
+</script>
+</body>
+</html>
