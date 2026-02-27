@@ -112,18 +112,40 @@
       color: var(--cream-30);
     }
 
-    .hd-center {
-      position: absolute; left: 50%; transform: translateX(-50%);
-      font-size: 0.58rem;
-      letter-spacing: 0.32em;
-      text-transform: uppercase;
-      color: rgba(237,224,204,0.18);
-    }
-
     .hd-right {
       display: flex;
       align-items: center;
       gap: 1.4rem;
+    }
+
+    /* ── NAV ────────────────────────────────────────────────── */
+    .hd-nav {
+      position: absolute; left: 50%; transform: translateX(-50%);
+      display: flex;
+      gap: 0.15rem;
+    }
+
+    .nav-tab {
+      font-family: var(--fm);
+      font-size: 0.58rem;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      padding: 0.32rem 0.9rem;
+      color: var(--cream-30);
+      text-decoration: none;
+      border: 1px solid transparent;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .nav-tab:hover {
+      color: var(--cream-60);
+      border-color: var(--border);
+    }
+
+    .nav-tab.active {
+      color: var(--amber);
+      border-color: var(--border);
+      background: var(--amber-glow);
     }
 
     .live-badge {
@@ -501,7 +523,7 @@
       .signals-cols { grid-template-columns: 1fr; }
       .sig-col { border-right: none; border-bottom: 1px solid var(--border); }
       .sig-col:last-child { border-bottom: none; }
-      .hd-center { display: none; }
+      .hd-nav { display: none; }
     }
   </style>
 </head>
@@ -511,10 +533,13 @@
   <!-- ── HEADER ── -->
   <header>
     <div class="hd-left">
-      <span class="logo">CROWD INTEL</span>
+      <a href="index.html" class="logo" style="text-decoration:none">CROWD INTEL</a>
       <span class="logo-sub">UMN Bar Tracker</span>
     </div>
-    <span class="hd-center">Minneapolis · Stadium Village · Dinkytown</span>
+    <nav class="hd-nav">
+      <a class="nav-tab active" href="index.html">Live Forecast</a>
+      <a class="nav-tab" href="pipeline.html">Data Pipeline</a>
+    </nav>
     <div class="hd-right">
       <div class="live-badge"><span class="live-dot"></span>Live</div>
       <span class="clock" id="clock">--:--:--</span>
