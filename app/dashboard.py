@@ -14,19 +14,20 @@ _ROOT = Path(__file__).resolve().parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from datetime import datetime, timezone
-
 import altair as alt
 import pandas as pd
 import streamlit as st
+from datetime import datetime, timezone
 
 from config.settings import BARS
-from data.db import get_connection, init_db
+from data.db import init_db
 from features.builder import FeatureBuilder
-from models.train import load_observations, run_training
-from providers.calendar import compute_academic_flags, compute_event_flags
-from providers.sports import fetch_umn_games, fetch_tv_sports
-from providers.weather import fetch_current_weather
+from models.train import run_training
+from app.utils import (
+    get_weather, get_today_signals, insert_observation,
+    recent_observations, fetch_observation, update_observation,
+    delete_observations
+)
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -34,33 +35,6 @@ st.set_page_config(
     page_icon="🍺",
     layout="wide",
 )
-
-# ── Session-state caching for heavy objects ───────────────────────────────────
-
-@st.cache_resource(show_spinner="Training models…")
-def _get_models():
-    """Train all 3 model pairs once per session."""
-    try:
-        return run_training()
-    except RuntimeError as exc:
-        return {"error": str(exc)}
-
-
-@st.cache_data(ttl=600, show_spinner="Fetching weather…")
-def _get_weather():
-    return fetch_current_weather()
-
-
-@st.cache_data(ttl=3600, show_spinner="Fetching today's signals…")
-def _get_today_signals(pred_date):
-    """Auto-detect all non-weather signals for pred_date. Cached 1 hour."""
-    dt     = datetime(pred_date.year, pred_date.month, pred_date.day, 20, 0, 0)
-    acad   = compute_academic_flags(dt)
-    events = compute_event_flags(dt)
-    games  = fetch_umn_games(pred_date)
-    tv     = fetch_tv_sports(pred_date)
-    return {**acad, **events, **games, **tv}
-
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -71,181 +45,13 @@ def _bar_name_to_id(name: str, df: pd.DataFrame) -> int | None:
     return int(rows.iloc[0]["bar_id"])
 
 
-def _insert_observation(
-    bar_id: int,
-    observed_at: datetime,
-    wait_minutes: float,
-    pct_full: float | None,
-    drink_wait_minutes: float | None,
-    cover_charge: float | None,
-    notes: str,
-    temperature_c: float | None,
-    precipitation_mm: float | None,
-    is_game_day: bool,
-    is_holiday: bool,
-) -> str | None:
-    """Insert one observation + signals row. Returns error string or None."""
+@st.cache_resource(show_spinner="Training models…")
+def _get_models():
+    """Train all 3 model pairs once per session."""
     try:
-        conn = get_connection()
-        with conn:
-            cur = conn.execute(
-                """
-                INSERT INTO observations
-                    (bar_id, observed_at, wait_minutes, pct_full, drink_wait_minutes,
-                     cover_charge, notes)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    bar_id,
-                    observed_at.isoformat(),
-                    wait_minutes,
-                    pct_full,
-                    drink_wait_minutes,
-                    cover_charge if cover_charge is not None and cover_charge >= 0 else None,
-                    notes.strip() or None,
-                ),
-            )
-            obs_id = cur.lastrowid
-            conn.execute(
-                """
-                INSERT INTO signals
-                    (observation_id, temperature_c, precipitation_mm, is_game_day, is_holiday)
-                VALUES (?, ?, ?, ?, ?)
-                """,
-                (obs_id, temperature_c, precipitation_mm, int(is_game_day), int(is_holiday)),
-            )
-        conn.close()
-        return None
-    except Exception as exc:
-        return str(exc)
-
-
-def _recent_observations(limit: int = 15) -> pd.DataFrame:
-    """Return the most recently inserted observations across all bars."""
-    conn = get_connection()
-    df = pd.read_sql_query(
-        """
-        SELECT
-            o.id                AS observation_id,
-            b.name              AS bar,
-            o.observed_at,
-            o.wait_minutes,
-            o.pct_full,
-            o.drink_wait_minutes,
-            o.cover_charge,
-            o.notes,
-            s.temperature_c,
-            s.precipitation_mm,
-            s.is_game_day,
-            s.is_holiday,
-            o.created_at
-        FROM observations o
-        JOIN bars b ON b.id = o.bar_id
-        LEFT JOIN signals s ON s.observation_id = o.id
-        ORDER BY o.created_at DESC
-        LIMIT ?
-        """,
-        conn,
-        params=(limit,),
-    )
-    conn.close()
-    return df
-
-
-def _fetch_observation(obs_id: int) -> dict | None:
-    """Return a single observation (with signals) as a dict, or None if not found."""
-    conn = get_connection()
-    row = conn.execute(
-        """
-        SELECT
-            o.id, o.bar_id, b.name AS bar_name,
-            o.observed_at, o.wait_minutes, o.pct_full, o.drink_wait_minutes,
-            o.cover_charge, o.notes,
-            s.temperature_c, s.precipitation_mm,
-            COALESCE(s.is_game_day, 0) AS is_game_day,
-            COALESCE(s.is_holiday, 0)  AS is_holiday
-        FROM observations o
-        JOIN bars b ON b.id = o.bar_id
-        LEFT JOIN signals s ON s.observation_id = o.id
-        WHERE o.id = ?
-        """,
-        (obs_id,),
-    ).fetchone()
-    conn.close()
-    return dict(row) if row else None
-
-
-def _update_observation(
-    obs_id: int,
-    bar_id: int,
-    observed_at: datetime,
-    wait_minutes: float,
-    pct_full: float | None,
-    drink_wait_minutes: float | None,
-    cover_charge: float | None,
-    notes: str,
-    temperature_c: float | None,
-    precipitation_mm: float | None,
-    is_game_day: bool,
-    is_holiday: bool,
-) -> str | None:
-    """UPDATE an existing observation + its signals row. Returns error or None."""
-    try:
-        conn = get_connection()
-        with conn:
-            conn.execute(
-                """
-                UPDATE observations
-                SET bar_id = ?, observed_at = ?, wait_minutes = ?,
-                    pct_full = ?, drink_wait_minutes = ?,
-                    cover_charge = ?, notes = ?
-                WHERE id = ?
-                """,
-                (
-                    bar_id,
-                    observed_at.isoformat(),
-                    wait_minutes,
-                    pct_full,
-                    drink_wait_minutes,
-                    cover_charge if cover_charge is not None and cover_charge >= 0 else None,
-                    notes.strip() or None,
-                    obs_id,
-                ),
-            )
-            conn.execute(
-                """
-                INSERT INTO signals
-                    (observation_id, temperature_c, precipitation_mm, is_game_day, is_holiday)
-                VALUES (?, ?, ?, ?, ?)
-                ON CONFLICT(observation_id) DO UPDATE SET
-                    temperature_c    = excluded.temperature_c,
-                    precipitation_mm = excluded.precipitation_mm,
-                    is_game_day      = excluded.is_game_day,
-                    is_holiday       = excluded.is_holiday
-                """,
-                (obs_id, temperature_c, precipitation_mm, int(is_game_day), int(is_holiday)),
-            )
-        conn.close()
-        return None
-    except Exception as exc:
-        return str(exc)
-
-
-def _delete_observations(ids: list[int]) -> str | None:
-    """Delete observations by ID (cascade removes signals). Returns error or None."""
-    if not ids:
-        return None
-    try:
-        conn = get_connection()
-        with conn:
-            conn.executemany(
-                "DELETE FROM observations WHERE id = ?",
-                [(i,) for i in ids],
-            )
-        conn.close()
-        return None
-    except Exception as exc:
-        return str(exc)
+        return run_training()
+    except RuntimeError as exc:
+        return {"error": str(exc)}
 
 
 _FACTOR_LABELS: dict[str, str] = {
@@ -468,7 +274,7 @@ with st.sidebar:
 
     st.divider()
     st.subheader("Current weather")
-    weather = _get_weather()
+    weather = get_weather()
     temp   = weather.get("temperature_c")
     precip = weather.get("precipitation_mm")
     if temp is not None:
@@ -479,7 +285,7 @@ with st.sidebar:
 
     st.divider()
     st.subheader("Auto-detected signals")
-    today_signals = _get_today_signals(pred_date)
+    today_signals = get_today_signals(pred_date)
 
     _SIGNAL_DISPLAY: list[tuple[str, str]] = [
         # Academic
@@ -772,7 +578,7 @@ st.divider()
 
 with st.expander("Historical observations (raw data)"):
     bar_hist = df_feat[df_feat["bar_id"] == bar_id].copy()
-    bar_hist["observed_at"] = pd.to_datetime(bar_hist["observed_at"]).dt.tz_convert("US/Central")
+    bar_hist["observed_at"] = pd.to_datetime(bar_hist["observed_at"], format="ISO8601", utc=True).dt.tz_convert("US/Central")
     cols_to_show = [
         c for c in
         ["observed_at", "wait_minutes", "pct_full", "drink_wait_minutes",
@@ -854,7 +660,7 @@ if submitted:
             f_date.year, f_date.month, f_date.day,
             f_hour, f_minute, 0, tzinfo=timezone.utc,
         )
-        err = _insert_observation(
+        err = insert_observation(
             bar_id=f_bar_id,
             observed_at=obs_dt,
             wait_minutes=f_wait,
@@ -881,12 +687,12 @@ st.subheader("Recently logged observations")
 if "obs_table_version" not in st.session_state:
     st.session_state["obs_table_version"] = 0
 
-df_recent = _recent_observations(15)
+df_recent = recent_observations(15)
 if df_recent.empty:
     st.info("No observations logged yet.")
 else:
-    df_recent["observed_at"] = pd.to_datetime(df_recent["observed_at"]).dt.strftime("%Y-%m-%d %H:%M")
-    df_recent["created_at"]  = pd.to_datetime(df_recent["created_at"]).dt.strftime("%Y-%m-%d %H:%M")
+    df_recent["observed_at"] = pd.to_datetime(df_recent["observed_at"], format="ISO8601", utc=True).dt.strftime("%Y-%m-%d %H:%M")
+    df_recent["created_at"]  = pd.to_datetime(df_recent["created_at"], format="ISO8601", utc=True).dt.strftime("%Y-%m-%d %H:%M")
 
     df_display = df_recent.copy()
     df_display.insert(0, "edit",   False)
@@ -954,7 +760,7 @@ else:
             confirm_col, cancel_col = st.columns([1, 1])
             with confirm_col:
                 if st.button("Yes, delete", type="primary", use_container_width=True):
-                    err = _delete_observations(pending)
+                    err = delete_observations(pending)
                     if err:
                         st.error(f"Delete failed: {err}")
                     else:
@@ -971,7 +777,7 @@ else:
 
 editing_id = st.session_state.get("editing_obs_id")
 if editing_id:
-    obs = _fetch_observation(editing_id)
+    obs = fetch_observation(editing_id)
     if obs is None:
         st.error(f"Observation {editing_id} not found.")
         st.session_state.pop("editing_obs_id", None)
@@ -1065,7 +871,7 @@ if editing_id:
                         ef_date.year, ef_date.month, ef_date.day,
                         ef_hour, ef_minute, 0, tzinfo=timezone.utc,
                     )
-                    err = _update_observation(
+                    err = update_observation(
                         obs_id=editing_id,
                         bar_id=ef_bar_id,
                         observed_at=updated_dt,

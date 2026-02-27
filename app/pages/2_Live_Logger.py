@@ -154,7 +154,7 @@ st.caption("Showing the last 10 entries across all bars.")
 
 df_recent = recent_observations(10)
 if not df_recent.empty:
-    df_recent["observed_at"] = pd.to_datetime(df_recent["observed_at"]).dt.strftime("%H:%M")
+    df_recent["observed_at"] = pd.to_datetime(df_recent["observed_at"], format="ISO8601", utc=True).dt.strftime("%H:%M")
     st.dataframe(
         df_recent[["bar", "observed_at", "wait_minutes", "pct_full", "notes"]],
         use_container_width=True,

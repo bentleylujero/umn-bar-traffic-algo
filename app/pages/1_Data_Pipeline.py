@@ -146,7 +146,7 @@ with col_b:
         latest = recent[0]
         st.success(f"✅ Recent report found ({latest['observed_at']})")
         st.metric("Live Wait Time", f"{latest['wait_minutes']} min")
-        st.metric("Reported Fullness", f"{latest['pct_full']*100:.0f}%" if latest['pct_full'] is not None else "—")
+        st.metric("Reported Fullness", f"{latest['pct_full']:.0f}%" if latest['pct_full'] is not None else "—")
     else:
         st.info("No crowd reports in the last hour")
         st.caption("Algorithm is relying on historical baselines and environmental signals.")
