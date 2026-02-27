@@ -7,6 +7,7 @@ import time
 from typing import Any
 
 from platform.backend.engine.dag import get_node_inputs, topological_sort
+from platform.backend.engine.nodes.crowd_node import CrowdReportNode
 from platform.backend.engine.nodes.data_source import NODE_REGISTRY
 from platform.backend.engine.nodes.feature_node import FeatureExtractorNode
 from platform.backend.engine.nodes.predictor_node import PredictorNode
@@ -18,6 +19,7 @@ log = logging.getLogger(__name__)
 _ALL_NODES: dict[str, type] = {
     **NODE_REGISTRY,
     "feature_extractor": FeatureExtractorNode,
+    "crowd_reports":     CrowdReportNode,
     "predictor":         PredictorNode,
 }
 

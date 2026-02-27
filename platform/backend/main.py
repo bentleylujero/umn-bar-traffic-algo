@@ -12,7 +12,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from platform.backend.api import pipeline, predict, signals
+from platform.backend.api import pipeline, predict, reports, signals
 
 logging.basicConfig(
     level=logging.INFO,
@@ -55,6 +55,7 @@ app.add_middleware(
 
 app.include_router(predict.router,  prefix="/api/v1")
 app.include_router(signals.router,  prefix="/api/v1")
+app.include_router(reports.router, prefix="/api/v1")
 app.include_router(pipeline.router, prefix="/api/v1")
 
 

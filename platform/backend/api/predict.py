@@ -62,6 +62,11 @@ def _build_live_pipeline(bar_ids: Optional[list[int]] = None) -> PipelineDef:
             config={"datetime": now_str},
         ),
         NodeDef(
+            node_id="crowd_reports",
+            node_type="crowd_reports",
+            config={"window_minutes": 60},
+        ),
+        NodeDef(
             node_id="features",
             node_type="feature_extractor",
             config={"datetime": now_str, "bar_ids": bar_ids or [1, 2, 3]},
@@ -74,6 +79,7 @@ def _build_live_pipeline(bar_ids: Optional[list[int]] = None) -> PipelineDef:
         EdgeDef(source="calendar",  target="features"),
         EdgeDef(source="events",    target="features"),
         EdgeDef(source="pop_times", target="features"),
+        EdgeDef(source="crowd_reports", target="features"),
         EdgeDef(source="features",  target="predictor"),
     ]
     return PipelineDef(

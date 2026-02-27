@@ -96,7 +96,9 @@ def load_observations(conn: sqlite3.Connection) -> pd.DataFrame:
         LEFT JOIN signals s ON s.observation_id = o.id
         ORDER BY o.observed_at
     """
-    return pd.read_sql_query(query, conn, parse_dates=["observed_at"])
+    df = pd.read_sql_query(query, conn)
+    df["observed_at"] = pd.to_datetime(df["observed_at"], format="ISO8601", utc=True)
+    return df
 
 
 def run_training(add_lag_features: bool = False) -> dict:

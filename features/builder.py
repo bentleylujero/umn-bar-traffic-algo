@@ -119,6 +119,9 @@ SIGNAL_FEATURES = [
     # Aggregates is_st_patricks, is_halloween, etc. into a single continuous signal
     # so the RF can split strongly on holiday magnitude rather than each sparse flag.
     "drinking_holiday_weight",
+    # Live ingestion signals
+    "live_wait_minutes",
+    "live_pct_full",
 ]
 
 ALL_FEATURES = TIME_FEATURES + ["bar_id"] + SIGNAL_FEATURES
@@ -151,6 +154,12 @@ class FeatureBuilder:
         The original columns are preserved; engineered columns are added.
         The returned DataFrame is sorted by observed_at.
         """
+        # Ensure all signal features are present (default to 0.0 for live signals)
+        from features.builder import SIGNAL_FEATURES
+        for col in SIGNAL_FEATURES:
+            if col not in df.columns:
+                df[col] = 0.0 if col.startswith("live_") else np.nan
+        
         df = df.copy()
         df = self._ensure_datetime(df)
         df = df.sort_values("observed_at").reset_index(drop=True)
@@ -175,7 +184,7 @@ class FeatureBuilder:
     @staticmethod
     def _ensure_datetime(df: pd.DataFrame) -> pd.DataFrame:
         if not pd.api.types.is_datetime64_any_dtype(df["observed_at"]):
-            df["observed_at"] = pd.to_datetime(df["observed_at"], utc=True)
+            df["observed_at"] = pd.to_datetime(df["observed_at"], format="ISO8601", utc=True)
         return df
 
     @staticmethod

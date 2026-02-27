@@ -7,6 +7,12 @@ from typing import Any, Optional
 
 from pydantic import BaseModel
 
+class CrowdReport(BaseModel):
+    bar_id: int
+    wait_minutes: float
+    pct_full: Optional[float] = None
+    cover_charge: Optional[float] = None
+    notes: Optional[str] = None
 
 class PredictionRequest(BaseModel):
     bar_id: int

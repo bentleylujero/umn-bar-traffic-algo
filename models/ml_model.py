@@ -74,6 +74,10 @@ class WaitTimeModel:
         train_mask = df["observed_at"] <= cutoff
         train = df[train_mask]
         test = df[~train_mask]
+        
+        # Drop rows with NaN targets (imputer only handles features X, not target y)
+        train = train.dropna(subset=[self.target_col])
+        test = test.dropna(subset=[self.target_col])
 
         if len(train) < 10:
             log.warning(
@@ -82,7 +86,12 @@ class WaitTimeModel:
 
         X_train = train[self.feature_cols]
         y_train = train[self.target_col]
-        w_train = sample_weight[train_mask.values] if sample_weight is not None else None
+        
+        # Ensure sample_weight matches the (potentially reduced) train length
+        if sample_weight is not None:
+            w_train = sample_weight[train.index]
+        else:
+            w_train = None
 
         self._pipeline = Pipeline([
             ("imputer", SimpleImputer(strategy="median", keep_empty_features=True)),
@@ -93,10 +102,12 @@ class WaitTimeModel:
                 n_jobs=-1,
             )),
         ])
+        
         # Pass sample_weight through the pipeline via the rf step name
         fit_params = {}
         if w_train is not None:
             fit_params["rf__sample_weight"] = w_train
+            
         self._pipeline.fit(X_train, y_train, **fit_params)
 
         # Training metrics

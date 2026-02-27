@@ -50,6 +50,10 @@ class FeatureExtractorNode:
                     if not isinstance(v, dict):
                         signals[k] = v
                     # leave bar-keyed popular times dicts out of flat signals
+                    pass
+            
+            # Handle crowd_reports specifically (they are bar-specific)
+            crowd_reports = inputs.get("crowd_reports", {}).get("crowd_reports", {})
 
         fb = FeatureBuilder()
         results: dict[int, dict] = {}
@@ -63,6 +67,7 @@ class FeatureExtractorNode:
                 "bar_id":      bar_id,
                 "wait_minutes": 0.0,  # placeholder — not used for prediction
                 **signals,
+                **crowd_reports.get(bar_id, {}),
             }
             df = pd.DataFrame([row])
             df = fb.build(df)
