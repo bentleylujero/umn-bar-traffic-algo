@@ -23,25 +23,31 @@ np.random.seed(SEED)
 # How many days of synthetic history to generate
 HISTORY_DAYS = 60
 
-# Realistic wait-time distributions per bar (mean, std) in minutes
+# Realistic wait-time distributions per bar (mean, std) in minutes.
+# These are BASE values before signal multipliers.  At peak hours with no
+# special events the mean represents a typical-evening baseline; the
+# multiplier stack (specials, games, academic flags, etc.) pushes values up.
 BAR_PROFILES = {
-    1: {"mean": 14, "std": 9},   # Blarney's Pub and Grill
-    2: {"mean": 10, "std": 6},   # Sally's Saloon
-    3: {"mean": 18, "std": 11},  # Kollege Klub
+    1: {"mean": 4,  "std": 4},   # Blarney's — rarely a line except karaoke Thu
+    2: {"mean": 3,  "std": 3},   # Sally's — short waits, quick turnover
+    3: {"mean": 6,  "std": 5},   # KK — slightly longer; busy Tue/Thu specials
 }
 
-# % of capacity (0–100)
+# % of capacity (0–100).
+# These represent realistic PEAK-hour baselines on a normal night.
+# Event/special multipliers layer on top.  Observed: Blarney's ~5% on a
+# typical weekday evening → base ~15 still lands 5–30% after ramp factors.
 BAR_PCT_PROFILES = {
-    1: {"mean": 55, "std": 20},  # Blarney's Pub and Grill
-    2: {"mean": 45, "std": 18},  # Sally's Saloon
-    3: {"mean": 65, "std": 18},  # Kollege Klub
+    1: {"mean": 15, "std": 10},  # Blarney's — usually quiet; karaoke Thu spikes
+    2: {"mean": 12, "std":  8},  # Sally's — moderate baseline
+    3: {"mean": 20, "std": 12},  # KK — busier, cover keeps crowd up on Tue/Thu
 }
 
-# Time to get a drink at the bar (minutes)
+# Time to get a drink (minutes); scales with pct_full.
 BAR_DRINK_PROFILES = {
-    1: {"mean": 8,  "std": 4},   # Blarney's Pub and Grill
-    2: {"mean": 6,  "std": 3},   # Sally's Saloon
-    3: {"mean": 12, "std": 6},   # Kollege Klub
+    1: {"mean": 3,  "std": 2},   # Blarney's
+    2: {"mean": 2,  "std": 2},   # Sally's
+    3: {"mean": 4,  "std": 3},   # KK
 }
 
 # Hours during which the bar is open (inclusive)
@@ -514,11 +520,11 @@ def _wait(bar_id: int, hour: int, is_weekend: bool, is_late_night: bool) -> floa
     p    = BAR_PROFILES[bar_id]
     base = np.random.normal(p["mean"], p["std"])
     if hour in (22, 23, 0, 1):
-        base *= 1.5
+        base *= 1.3   # prime hours slight boost (was 1.5 — too generous)
     if is_weekend:
-        base *= 1.4
+        base *= 1.2   # weekend premium (was 1.4)
     if is_late_night:
-        base *= 1.2
+        base *= 1.1
     return max(0.0, round(base, 1))
 
 
@@ -526,11 +532,11 @@ def _pct_full(bar_id: int, hour: int, is_weekend: bool, is_late_night: bool) -> 
     p    = BAR_PCT_PROFILES[bar_id]
     base = np.random.normal(p["mean"], p["std"])
     if hour in (22, 23, 0, 1):
-        base *= 1.3
+        base *= 1.2   # (was 1.3)
     if is_weekend:
-        base *= 1.2
+        base *= 1.15  # (was 1.2)
     if is_late_night:
-        base *= 1.1
+        base *= 1.05  # (was 1.1)
     return max(0.0, min(100.0, round(base, 1)))
 
 
@@ -538,11 +544,11 @@ def _drink_wait(bar_id: int, hour: int, is_weekend: bool, is_late_night: bool) -
     p    = BAR_DRINK_PROFILES[bar_id]
     base = np.random.normal(p["mean"], p["std"])
     if hour in (22, 23, 0, 1):
-        base *= 1.5
+        base *= 1.3
     if is_weekend:
-        base *= 1.4
-    if is_late_night:
         base *= 1.2
+    if is_late_night:
+        base *= 1.1
     return max(0.0, round(base, 1))
 
 

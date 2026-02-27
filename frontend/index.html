@@ -483,6 +483,174 @@
     .sig-v.dim     { color: rgba(237,224,204,0.22); }
     .sig-v.neutral { color: var(--cream-60); }
 
+    /* ── HEADCOUNT PANEL ────────────────────────────────────── */
+    .checkin-wrap {
+      border: 1px solid var(--border);
+      background: var(--card);
+    }
+
+    .checkin-topbar {
+      padding: 0.65rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s;
+    }
+
+    .checkin-topbar:hover { background: var(--card-h); }
+
+    .checkin-topbar-title {
+      font-size: 0.56rem;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--amber);
+    }
+
+    .checkin-toggle {
+      font-size: 0.58rem;
+      color: var(--cream-30);
+      letter-spacing: 0.1em;
+    }
+
+    .checkin-body {
+      display: none;
+      padding: 1.25rem 1.5rem;
+    }
+
+    .checkin-body.open { display: block; }
+
+    .checkin-hint {
+      font-size: 0.62rem;
+      color: var(--cream-30);
+      letter-spacing: 0.06em;
+      margin-bottom: 1.1rem;
+      line-height: 1.6;
+    }
+
+    .checkin-bars {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .checkin-bar {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      padding: 1rem 1.1rem;
+    }
+
+    .checkin-bar-name {
+      font-family: var(--fd);
+      font-size: 1rem;
+      color: var(--amber-bright);
+      letter-spacing: 0.04em;
+      margin-bottom: 0.75rem;
+    }
+
+    .checkin-field {
+      margin-bottom: 0.65rem;
+    }
+
+    .checkin-label {
+      display: block;
+      font-size: 0.54rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--cream-30);
+      margin-bottom: 0.3rem;
+    }
+
+    .checkin-slider-row {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .checkin-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      flex: 1;
+      height: 4px;
+      background: var(--cream-12);
+      outline: none;
+      border-radius: 2px;
+    }
+
+    .checkin-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--amber);
+      cursor: pointer;
+      box-shadow: 0 0 6px var(--amber-dim);
+    }
+
+    .checkin-slider-val {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--cream-60);
+      min-width: 2.5rem;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .checkin-input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--cream);
+      font-family: var(--fm);
+      font-size: 0.72rem;
+      padding: 0.3rem 0.5rem;
+      outline: none;
+    }
+
+    .checkin-input:focus { border-color: var(--amber); }
+
+    .checkin-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .checkin-submit {
+      font-family: var(--fm);
+      font-size: 0.6rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      padding: 0.45rem 1.1rem;
+      background: transparent;
+      border: 1px solid var(--amber);
+      color: var(--amber);
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .checkin-submit:hover {
+      background: var(--amber-glow);
+    }
+
+    .checkin-submit:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .checkin-status {
+      font-size: 0.62rem;
+      letter-spacing: 0.08em;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .checkin-status.show { opacity: 1; }
+    .checkin-status.ok   { color: var(--green); }
+    .checkin-status.err  { color: var(--red); }
+
     /* ── FOOTER ─────────────────────────────────────────────── */
     footer {
       padding: 0.55rem 2rem;
@@ -521,6 +689,7 @@
     @media (max-width: 860px) {
       .bars-grid    { grid-template-columns: 1fr; }
       .signals-cols { grid-template-columns: 1fr; }
+      .checkin-bars { grid-template-columns: 1fr; }
       .sig-col { border-right: none; border-bottom: 1px solid var(--border); }
       .sig-col:last-child { border-bottom: none; }
       .hd-nav { display: none; }
@@ -563,6 +732,78 @@
         <div class="bar-card"><div class="skel" style="height:240px"></div></div>
         <div class="bar-card"><div class="skel" style="height:240px"></div></div>
         <div class="bar-card"><div class="skel" style="height:240px"></div></div>
+      </div>
+    </div>
+
+    <!-- Headcount check-in -->
+    <div>
+      <div class="section-label">Headcount Check-in</div>
+      <div class="checkin-wrap">
+        <div class="checkin-topbar" id="checkin-topbar">
+          <span class="checkin-topbar-title">Log Actual Bar Capacity</span>
+          <span class="checkin-toggle" id="checkin-toggle">▼ Open</span>
+        </div>
+        <div class="checkin-body" id="checkin-body">
+          <p class="checkin-hint">
+            Enter the real headcount you observe right now. Each submission is
+            written to the database as a ground-truth observation, improving
+            future model accuracy. Provide % full — or leave at 0 to skip that bar.
+          </p>
+          <div class="checkin-bars">
+            <!-- Bar 1 — Blarney's -->
+            <div class="checkin-bar">
+              <div class="checkin-bar-name">Blarney's</div>
+              <div class="checkin-field">
+                <label class="checkin-label" for="pct-1">% Full</label>
+                <div class="checkin-slider-row">
+                  <input type="range" class="checkin-slider" id="pct-1" min="0" max="100" value="0"
+                    oninput="document.getElementById('pct-val-1').textContent=this.value+'%'">
+                  <span class="checkin-slider-val" id="pct-val-1">0%</span>
+                </div>
+              </div>
+              <div class="checkin-field">
+                <label class="checkin-label" for="wait-1">Visible Line (min)</label>
+                <input type="number" class="checkin-input" id="wait-1" min="0" max="120" value="0" placeholder="0">
+              </div>
+            </div>
+            <!-- Bar 2 — Sally's -->
+            <div class="checkin-bar">
+              <div class="checkin-bar-name">Sally's</div>
+              <div class="checkin-field">
+                <label class="checkin-label" for="pct-2">% Full</label>
+                <div class="checkin-slider-row">
+                  <input type="range" class="checkin-slider" id="pct-2" min="0" max="100" value="0"
+                    oninput="document.getElementById('pct-val-2').textContent=this.value+'%'">
+                  <span class="checkin-slider-val" id="pct-val-2">0%</span>
+                </div>
+              </div>
+              <div class="checkin-field">
+                <label class="checkin-label" for="wait-2">Visible Line (min)</label>
+                <input type="number" class="checkin-input" id="wait-2" min="0" max="120" value="0" placeholder="0">
+              </div>
+            </div>
+            <!-- Bar 3 — KK -->
+            <div class="checkin-bar">
+              <div class="checkin-bar-name">Kollege Klub</div>
+              <div class="checkin-field">
+                <label class="checkin-label" for="pct-3">% Full</label>
+                <div class="checkin-slider-row">
+                  <input type="range" class="checkin-slider" id="pct-3" min="0" max="100" value="0"
+                    oninput="document.getElementById('pct-val-3').textContent=this.value+'%'">
+                  <span class="checkin-slider-val" id="pct-val-3">0%</span>
+                </div>
+              </div>
+              <div class="checkin-field">
+                <label class="checkin-label" for="wait-3">Visible Line (min)</label>
+                <input type="number" class="checkin-input" id="wait-3" min="0" max="120" value="0" placeholder="0">
+              </div>
+            </div>
+          </div>
+          <div class="checkin-actions">
+            <button class="checkin-submit" id="checkin-submit" onclick="submitCheckin()">Submit Headcount</button>
+            <span class="checkin-status" id="checkin-status"></span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -869,6 +1110,76 @@
 
   /* ── INIT ──────────────────────────────────────────────── */
   fetchAll();
+
+  /* ── CHECKIN TOGGLE ────────────────────────────────────── */
+  document.getElementById('checkin-topbar').addEventListener('click', () => {
+    const body   = document.getElementById('checkin-body');
+    const toggle = document.getElementById('checkin-toggle');
+    const open   = body.classList.toggle('open');
+    toggle.textContent = open ? '▲ Close' : '▼ Open';
+  });
+
+  /* ── CHECKIN SUBMIT ────────────────────────────────────── */
+  async function submitCheckin() {
+    const btn    = document.getElementById('checkin-submit');
+    const status = document.getElementById('checkin-status');
+
+    const bars = [
+      { bar_id: 1, pctEl: 'pct-1', waitEl: 'wait-1' },
+      { bar_id: 2, pctEl: 'pct-2', waitEl: 'wait-2' },
+      { bar_id: 3, pctEl: 'pct-3', waitEl: 'wait-3' },
+    ];
+
+    // Filter to bars where the user moved the slider or entered a wait > 0
+    const reports = bars
+      .map(b => ({
+        bar_id:       b.bar_id,
+        pct_full:     parseInt(document.getElementById(b.pctEl).value, 10),
+        wait_minutes: parseFloat(document.getElementById(b.waitEl).value) || 0,
+      }))
+      .filter(r => r.pct_full > 0 || r.wait_minutes > 0);
+
+    if (!reports.length) {
+      status.textContent = '⚠ Move at least one slider before submitting.';
+      status.className   = 'checkin-status show err';
+      setTimeout(() => status.classList.remove('show'), 3000);
+      return;
+    }
+
+    btn.disabled = true;
+    status.className = 'checkin-status';
+
+    try {
+      await Promise.all(reports.map(r =>
+        fetch(`${API}/api/v1/reports/submit`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({
+            bar_id:       r.bar_id,
+            wait_minutes: r.wait_minutes,
+            pct_full:     r.pct_full,   // DB stores 0–100 (matches observations schema)
+            notes:        'manual-checkin',
+          }),
+        }).then(res => { if (!res.ok) throw new Error(`bar ${r.bar_id}: ${res.status}`); })
+      ));
+
+      // Reset sliders
+      [1, 2, 3].forEach(id => {
+        document.getElementById(`pct-${id}`).value = 0;
+        document.getElementById(`pct-val-${id}`).textContent = '0%';
+        document.getElementById(`wait-${id}`).value = 0;
+      });
+
+      status.textContent = `✓ ${reports.length} report${reports.length > 1 ? 's' : ''} submitted — thanks!`;
+      status.className   = 'checkin-status show ok';
+      setTimeout(() => status.classList.remove('show'), 4000);
+    } catch (err) {
+      status.textContent = `✗ Submit failed: ${err.message}`;
+      status.className   = 'checkin-status show err';
+    } finally {
+      btn.disabled = false;
+    }
+  }
 </script>
 </body>
 </html>
