@@ -1,132 +1,168 @@
-# UMN Bar Line Forecasting Dashboard
+# UMN Bar Traffic Algo
 
-**Repository:** https://github.com/bentleylujero/umn-bar-traffic-algo
-
-Predicts wait times at bars near the University of Minnesota using historical observations, weather data, and machine learning.
+Predicts wait times at **Blarney's**, **Sally's**, and **Kollege Klub** near the University of Minnesota. Combines a RandomForest ML model with live data from weather, sports, academic calendar, and local events — all wrapped in a Palantir Foundry-style pipeline API and a real-time dashboard.
 
 ---
 
-## Project structure
+## Architecture
+
+```
+providers/          Real data (weather, sports, calendar, events, popular times)
+features/           Feature engineering (time + signal features → 68 columns)
+models/             Baseline (median) + ML (RandomForest) models
+platform/           FastAPI backend — DAG execution engine + REST API
+frontend/           Crowd Intel dashboard (HTML/CSS/JS)
+app/                Legacy Streamlit dashboard
+data/               SQLite DB, schema, synthetic data seeder
+config/             Central config (bars, schedules, model params)
+```
+
+### Pipeline DAG
+
+```
+WeatherNode ──┐
+SportsNode ───┤
+CalendarNode ─┼──► FeatureExtractorNode ──► PredictorNode
+EventsNode ───┤
+PopularTimesNode┘
+```
+
+Each pipeline run fetches live signals, assembles per-bar feature vectors, and produces ML predictions with baseline fallback.
+
+---
+
+## Quick Start
+
+```bash
+# 1. Create virtualenv and install deps
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# 2. Seed DB with synthetic data
+python -m data.seed
+
+# 3. Start the API backend  (terminal 1)
+python -m uvicorn platform.backend.main:app --reload --port 8001
+
+# 4. Start the frontend     (terminal 2)
+python -m http.server 3000 --directory frontend
+```
+
+Open **http://localhost:3000** for the Crowd Intel dashboard.
+Open **http://localhost:8001/docs** for the interactive API docs.
+
+> **Note:** Use `python -m uvicorn`, not bare `uvicorn`. The `platform/` package
+> name shadows Python's stdlib `platform` module; `python -m uvicorn` adds CWD
+> to `sys.path` first and resolves the conflict.
+
+---
+
+## API Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/v1/predict/all` | Predictions for all 3 bars |
+| `GET` | `/api/v1/predict/{bar_id}` | Prediction for one bar |
+| `GET` | `/api/v1/signals/live` | All live signals aggregated |
+| `POST` | `/api/v1/pipeline/run` | Run a custom pipeline DAG |
+| `GET` | `/api/v1/pipeline/definitions` | List built-in pipelines |
+| `GET` | `/health` | Health check |
+| `GET` | `/docs` | Swagger UI |
+
+### Example response — `GET /api/v1/predict/all`
+
+```json
+[
+  {
+    "bar_id": 3,
+    "bar_name": "Kollege Klub",
+    "predicted_wait_minutes": 35.7,
+    "predicted_pct_full": 0.794,
+    "confidence": "high",
+    "model_used": "ml",
+    "signals_used": {}
+  }
+]
+```
+
+---
+
+## Data Sources
+
+| Source | Provider | Key |
+|--------|----------|-----|
+| Weather | [Open-Meteo](https://open-meteo.com/) | None required |
+| UMN + TV sports | ESPN (unofficial) | None required |
+| Academic calendar | Hardcoded semester dates | — |
+| Local events | SeatGeek API | None for basic queries |
+| Popular times baseline | Google Places API | Optional (`GOOGLE_PLACES_API_KEY`) |
+
+All providers degrade gracefully — safe defaults are returned on network failure. Results are cached in-memory (weather: 10 min, sports/events: 1 hr).
+
+---
+
+## Bars
+
+| ID | Name | Notable nights |
+|----|------|----------------|
+| 1 | Blarney's Pub and Grill | Karaoke Thu (+55%), Thirsty Wed (+25%) |
+| 2 | Sally's Saloon | $2 Tuesday (+30%), Late HH nightly 10pm–midnight (+20%) |
+| 3 | Kollege Klub | KK Tuesday (+70%), KK Thursday (+40%), Friday After Class (+35%) |
+
+---
+
+## Feature Engineering
+
+68 features across six groups:
+
+- **Time** — hour, day_of_week, cyclical sin/cos encodings, is_weekend, is_late_night
+- **Weather** — temperature, wind chill, precipitation, snowfall, cloud cover, severe weather flag
+- **Athletics** — Gophers football/basketball/hockey home games, rivalry flag, hours until game
+- **TV sports** — NFL, Vikings, CFB, March Madness, NBA/NHL playoffs, weighted TV game signal
+- **Academic** — classes in session, finals/midterms/welcome week, days until break, semester week
+- **Events** — St. Patrick's, Halloween, homecoming, bar crawl, Blackout Wednesday, drinking holiday weight
+
+---
+
+## Models
+
+**Baseline** — median wait time by `(bar_id, day_of_week, hour)` with 3-level cascade fallback.
+
+**ML** — `RandomForestRegressor` trained on a time-based split (last 14 days held out). Holiday rows are up-weighted 10× during training. The platform calls `run_training()` once per pipeline execution and reuses the fitted model across all bars.
+
+---
+
+## Project Structure
 
 ```
 umn-bar-traffic-algo/
-├── app/
-│   └── dashboard.py        # Streamlit dashboard (entry point)
-├── config/
-│   └── settings.py         # Central config (paths, bar list, model params)
-├── data/
-│   ├── schema.sql          # SQLite table definitions
-│   ├── db.py               # Connection helper + schema init
-│   └── seed.py             # Synthetic data generator (dev/demo)
-├── features/
-│   └── builder.py          # Time features + optional lag features
-├── models/
-│   ├── baseline.py         # Median wait by (bar, day_of_week, hour)
-│   ├── ml_model.py         # RandomForest regressor (time-split eval)
-│   └── train.py            # Full training pipeline
+├── frontend/
+│   └── index.html                  # Crowd Intel dashboard
+├── platform/
+│   └── backend/
+│       ├── main.py                 # FastAPI app
+│       ├── schemas.py              # Pydantic models
+│       ├── api/                    # predict, signals, pipeline routers
+│       └── engine/                 # DAG, executor, nodes
 ├── providers/
-│   └── weather.py          # Open-Meteo weather fetcher (no API key needed)
-├── requirements.txt
-└── README.md
+│   ├── weather.py                  # Open-Meteo
+│   ├── sports.py                   # ESPN
+│   ├── calendar.py                 # UMN academic calendar
+│   ├── events.py                   # SeatGeek + UMN Events
+│   └── popular_times.py            # Google Places / calibrated fallback
+├── features/
+│   └── builder.py                  # FeatureBuilder
+├── models/
+│   ├── baseline.py                 # BaselineModel
+│   ├── ml_model.py                 # WaitTimeModel (RandomForest)
+│   └── train.py                    # run_training()
+├── data/
+│   ├── schema.sql
+│   ├── db.py
+│   └── seed.py
+├── config/
+│   └── settings.py                 # BARS, BAR_SCHEDULES, model params
+└── app/
+    └── dashboard.py                # Legacy Streamlit dashboard
 ```
-
----
-
-## Setup
-
-### 1. Create and activate a virtual environment
-
-```bash
-python -m venv venv
-source venv/bin/activate          # macOS / Linux
-# venv\Scripts\activate           # Windows
-```
-
-### 2. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 3. Seed the database with synthetic data
-
-```bash
-python -m data.seed
-```
-
-This writes 60 days of synthetic observations for 5 Dinkytown bars into `data/bar_traffic.db`.
-
-### 4. (Optional) Verify model training
-
-```bash
-python -m models.train
-```
-
-### 5. Launch the dashboard
-
-```bash
-streamlit run app/dashboard.py
-```
-
-Open [http://localhost:8501](http://localhost:8501) in your browser.
-
----
-
-## Adding real observations
-
-Insert rows directly via SQLite or write a collection script:
-
-```python
-from data.db import get_connection
-
-conn = get_connection()
-with conn:
-    conn.execute(
-        "INSERT INTO observations (bar_id, observed_at, wait_minutes) VALUES (?,?,?)",
-        (1, "2026-02-25T22:00:00+00:00", 12.0),
-    )
-conn.close()
-```
-
----
-
-## Database schema
-
-| Table        | Key columns                                           |
-|--------------|-------------------------------------------------------|
-| `bars`       | `id`, `name`, `neighborhood`                          |
-| `observations` | `bar_id`, `observed_at`, `wait_minutes`, `cover_charge` |
-| `signals`    | `observation_id`, `temperature_c`, `precipitation_mm`, `is_game_day`, `is_holiday` |
-
----
-
-## Configuration
-
-Edit `config/settings.py` to:
-- Add/remove bars (`BARS` list)
-- Change the train/test split window (`TEST_SPLIT_DAYS`)
-- Tune the RandomForest (`RF_N_ESTIMATORS`, `RF_MAX_DEPTH`)
-- Adjust the location for weather fetching (`LATITUDE`, `LONGITUDE`)
-
----
-
-## Weather data
-
-Weather is fetched from [Open-Meteo](https://open-meteo.com/) — free, no API key required. Results are cached in-memory for 10 minutes.
-
----
-
-## Extending the model
-
-### Adding lag features
-
-```python
-from features.builder import FeatureBuilder
-
-fb = FeatureBuilder(add_lag_features=True, lag_hours=[1, 2, 4, 168])
-df = fb.build(df_raw)
-```
-
-### Swapping in a different regressor
-
-Replace `RandomForestRegressor` in `models/ml_model.py` with any scikit-learn compatible estimator.
