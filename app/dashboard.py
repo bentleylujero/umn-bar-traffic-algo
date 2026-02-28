@@ -510,7 +510,14 @@ chart = (
     .encode(
         x=alt.X("hour:N", title="Hour", sort=list(df_tonight["hour"].unique())),
         y=alt.Y(f"{_col_for_chart}:Q", title=_y_label, scale=alt.Scale(zero=True)),
-        color=alt.Color("bar:N", title="Bar"),
+        color=alt.Color(
+            "bar:N",
+            title="Bar",
+            scale=alt.Scale(
+                domain=["Blarney's Pub and Grill", "Sally's Saloon", "Kollege Klub"],
+                range=["#1cb864", "#7A0019", "#CC8800"],
+            ),
+        ),
         tooltip=[
             alt.Tooltip("bar:N", title="Bar"),
             alt.Tooltip("hour:N", title="Hour"),

@@ -260,19 +260,45 @@
     }
 
     .bar-card:hover {
-      border-color: var(--border-hot);
-      box-shadow: 0 0 36px var(--amber-glow), inset 0 0 24px var(--amber-glow);
+      border-color: var(--bar-hover-border, var(--border-hot));
+      box-shadow: 0 0 36px var(--bar-hover-glow, var(--amber-glow)), inset 0 0 24px var(--bar-hover-glow, var(--amber-glow));
     }
 
-    /* amber corner notch */
+    /* corner notch — color per bar theme */
     .bar-card::before {
       content: '';
       position: absolute; top: 0; right: 0;
       border-style: solid;
       border-width: 0 24px 24px 0;
-      border-color: transparent var(--amber) transparent transparent;
-      opacity: 0.35;
+      border-color: transparent var(--bar-notch-color, var(--amber)) transparent transparent;
+      opacity: 0.45;
       transition: opacity 0.3s;
+    }
+
+    /* ── Per-bar color themes ─────────────────────────────────────────────── */
+    /* Blarney's — Irish green + orange */
+    .bar-card[data-bar-id="1"] {
+      --bar-name-color:   #1cb864;
+      --bar-name-glow:    rgba(28,184,100,0.28);
+      --bar-notch-color:  #FF8300;
+      --bar-hover-border: #1cb864;
+      --bar-hover-glow:   rgba(28,184,100,0.20);
+    }
+    /* Sally's — maroon primary, gold accent */
+    .bar-card[data-bar-id="2"] {
+      --bar-name-color:   #CC1A3A;
+      --bar-name-glow:    rgba(204,26,58,0.28);
+      --bar-notch-color:  #FFCC33;
+      --bar-hover-border: #CC1A3A;
+      --bar-hover-glow:   rgba(204,26,58,0.22);
+    }
+    /* Kollege Klub — gold primary, maroon accent */
+    .bar-card[data-bar-id="3"] {
+      --bar-name-color:   #FFD700;
+      --bar-name-glow:    rgba(255,215,0,0.28);
+      --bar-notch-color:  #7A0019;
+      --bar-hover-border: #FFD700;
+      --bar-hover-glow:   rgba(255,215,0,0.20);
     }
 
     .bar-card:hover::before { opacity: 0.85; }
@@ -300,11 +326,11 @@
     .bar-name {
       font-family: var(--fd);
       font-size: 1.65rem;
-      color: var(--amber-bright);
+      color: var(--bar-name-color, var(--amber-bright));
       letter-spacing: 0.03em;
       line-height: 1;
       margin-bottom: 1.4rem;
-      text-shadow: 0 0 18px rgba(255,181,51,0.22);
+      text-shadow: 0 0 18px var(--bar-name-glow, rgba(255,181,51,0.22));
     }
 
     .wait-row {
@@ -990,6 +1016,7 @@
 
       const card = document.createElement('div');
       card.className = 'bar-card';
+      card.dataset.barId = p.bar_id;
       card.style.animationDelay = `${i * 0.1}s`;
       card.innerHTML = `
         <div class="card-watermark">${p.bar_id}</div>
@@ -1217,8 +1244,8 @@
       // API offline — use hardcoded fallback so the form still works
       obsBars = [
         { id: 1, name: "Blarney's", capacity: 200 },
-        { id: 2, name: "Sally's",   capacity: 150 },
-        { id: 3, name: "KK",        capacity: 300 },
+        { id: 2, name: "Sally's",   capacity: 1000 },
+        { id: 3, name: "KK",        capacity: 500 },
       ];
       obsRenderBarTabs();
       obsRenderDealChips(Object.keys(DEAL_LABELS));
