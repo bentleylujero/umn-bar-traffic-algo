@@ -275,31 +275,8 @@
 
     <!-- LIVE CONTEXT -->
     <div id="ob-ctx" class="onto-body ob-hidden">
-      <div class="onto-ctx-feed">
-        <div class="ctx-item" style="--ic:#56a85c">
-          <div class="ctx-dot"></div>
-          <div class="ctx-text"><strong>ACADEMIC —</strong> Classes in session, Week 6 of 16. No finals suppression, no welcome-week surge. Typical mid-semester baseline: bars at 55–70% of peak Thursday capacity. Next suppressor: midterms begin week 7.</div>
-        </div>
-        <div class="ctx-item" style="--ic:#d868a0">
-          <div class="ctx-dot"></div>
-          <div class="ctx-text"><strong>GREEK LIFE —</strong> Week 6, active semester. No Rush Week suppression (rush ended week 4). Greek Thursday active — IFC chapter mixers running tonight. Pregame window (7–10 PM) will drive KK toward 80%+ capacity. KK greek_proximity 0.90 = highest impact bar. Formal season begins October.</div>
-        </div>
-        <div class="ctx-item" style="--ic:#00cfff">
-          <div class="ctx-dot"></div>
-          <div class="ctx-text"><strong>WEATHER —</strong> −2.1°C with 1.2 mm snowfall, wind chill −8.4°C, winds 6.8 m/s. Cold snap driving foot traffic indoors. Blarney's late_night_draw elevated — people migrate inside after 10 PM. Expect +10–15% indoor crowd vs a mild night.</div>
-        </div>
-        <div class="ctx-item" style="--ic:#ffb533">
-          <div class="ctx-dot"></div>
-          <div class="ctx-text"><strong>ATHLETICS —</strong> Basketball home game tonight, tipoff in ~5.5 h. Sally's TV crowd will build through the 2nd half (8–10 PM peak). is_rivalry_game: false — standard multiplier. Bars see pre-game foot traffic in the 3–5 h window before tipoff.</div>
-        </div>
-        <div class="ctx-item" style="--ic:#ff8844">
-          <div class="ctx-dot"></div>
-          <div class="ctx-text"><strong>TV SPORTS —</strong> tv_game_weight: 0.65 (moderate). Basketball home is the dominant sports signal tonight. No Super Bowl, no March Madness, no Vikings game. Minor MN pro sports signal only (Wild: false, Timberwolves: false).</div>
-        </div>
-        <div class="ctx-item" style="--ic:#e8a020">
-          <div class="ctx-dot"></div>
-          <div class="ctx-text"><strong>COMBINED OUTLOOK —</strong> HIGH CONFIDENCE night. Greek Thursday + cold weather + basketball home = elevated, stacked demand. <strong>KK leads at 81% full, ~22 min wait</strong> (KK Thu special +40%; Greek pregame). <strong>Blarney's 68%, ~14 min</strong> (Karaoke Thu +55%; cold migration draw). <strong>Sally's 52%, ~8 min</strong> (basketball TV crowd building). All three bars using RandomForest at HIGH confidence.</div>
-        </div>
+      <div class="onto-ctx-feed" id="live-insights-feed">
+        <div class="ctx-item" style="--ic:#e8a020"><div class="ctx-dot"></div><div class="ctx-text">Loading live context from models...</div></div>
       </div>
     </div>
   `;
@@ -335,12 +312,55 @@
       const body = document.getElementById('ob-' + id);
       if (body) body.classList.toggle('ob-hidden', id !== tab);
     });
+    // Refresh live context every time the tab is opened
+    if (tab === 'ctx') fetchLiveInsights();
   };
 
-  // Wait for DOM then inject nav tab
+  // Wait for DOM then inject nav tab and fetch live context
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', injectNavTab);
+    document.addEventListener('DOMContentLoaded', () => {
+      injectNavTab();
+      fetchLiveInsights();
+    });
   } else {
     injectNavTab();
+    fetchLiveInsights();
+  }
+
+  /* ── 5. FETCH INSIGHTS ───────────────────────────────────────── */
+  async function fetchLiveInsights() {
+    try {
+      const feed = document.getElementById('live-insights-feed');
+      if (!feed) return;
+      const apiBase = window.API || 'http://localhost:8001';
+      const res = await fetch(`${apiBase}/api/v1/signals/insights`);
+      if (res.ok) {
+        const data = await res.json();
+        feed.innerHTML = `
+          <div class="ctx-item" style="--ic:#56a85c">
+            <div class="ctx-dot"></div><div class="ctx-text"><strong>ACADEMIC —</strong> ${data.academic}</div>
+          </div>
+          <div class="ctx-item" style="--ic:#d868a0">
+            <div class="ctx-dot"></div><div class="ctx-text"><strong>GREEK LIFE —</strong> ${data.greek_life}</div>
+          </div>
+          <div class="ctx-item" style="--ic:#00cfff">
+            <div class="ctx-dot"></div><div class="ctx-text"><strong>WEATHER —</strong> ${data.weather}</div>
+          </div>
+          <div class="ctx-item" style="--ic:#ffb533">
+            <div class="ctx-dot"></div><div class="ctx-text"><strong>ATHLETICS —</strong> ${data.athletics}</div>
+          </div>
+          <div class="ctx-item" style="--ic:#ff8844">
+            <div class="ctx-dot"></div><div class="ctx-text"><strong>TV SPORTS —</strong> ${data.tv_sports}</div>
+          </div>
+          <div class="ctx-item" style="--ic:#e8a020">
+            <div class="ctx-dot"></div><div class="ctx-text"><strong>OUTLOOK —</strong> ${data.outlook}</div>
+          </div>
+        `;
+      }
+    } catch (err) {
+      console.error('Failed to fetch live ontology insights', err);
+      const feed = document.getElementById('live-insights-feed');
+      if (feed) feed.innerHTML = '<div class="ctx-item" style="--ic:#ff3333"><div class="ctx-dot"></div><div class="ctx-text">Failed to load real-time insights from backend.</div></div>';
+    }
   }
 })();

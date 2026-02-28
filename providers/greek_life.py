@@ -167,6 +167,13 @@ def compute_greek_life_flags(dt: datetime) -> dict:
         (in_semester and d.month in (3, 4))
     )
 
+    active_date_party = None
+    if is_greek_formal_season and dow in (4, 5):  # Friday or Saturday
+        import hashlib
+        # Deterministically pick a fraternity based on the date
+        h = int(hashlib.md5(str(d).encode()).hexdigest(), 16)
+        active_date_party = IFC_FRATERNITIES[h % len(IFC_FRATERNITIES)]
+
     # ── 4. Greek Week (spring only) ───────────────────────────────────────────
     # The last 2 full weeks before spring finals — competitions + socials every night
     is_greek_week = 0
@@ -242,6 +249,7 @@ def compute_greek_life_flags(dt: datetime) -> dict:
         "is_greek_rush_week":      is_greek_rush_week,
         "is_greek_bid_day":        is_greek_bid_day,
         "is_greek_formal_season":  is_greek_formal_season,
+        "active_date_party":       active_date_party,
         "is_greek_week":           is_greek_week,
         "is_greek_thursday":       is_greek_thursday,
         "is_greek_pregame_window": is_greek_pregame_window,

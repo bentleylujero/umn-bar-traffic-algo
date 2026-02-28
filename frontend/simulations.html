@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Simulations — UMN Bar Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inconsolata:wght@400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        :root {
+            --bg: #080508;
+            --card: #110d14;
+            --card2: #0d0a0e;
+            --amber: #e8a020;
+            --amber-b: #ffb533;
+            --amber-dim: rgba(232, 160, 32, .35);
+            --amber-glow: rgba(232, 160, 32, .10);
+            --green: #44cc66;
+            --red: #dd4444;
+            --red-dim: rgba(221, 68, 68, .25);
+            --cream: #ede0cc;
+            --c60: rgba(237, 224, 204, .60);
+            --c30: rgba(237, 224, 204, .30);
+            --c12: rgba(237, 224, 204, .12);
+            --border: rgba(232, 160, 32, .14);
+            --border-hot: rgba(232, 160, 32, .55);
+            --fd: 'Anton', sans-serif;
+            --fm: 'Inconsolata', monospace;
+        }
+
+        html,
+        body {
+            height: 100%;
+            background: var(--bg);
+            color: var(--cream);
+            font-family: var(--fm);
+            overflow-x: hidden
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.032'/%3E%3C/svg%3E");
+            opacity: .6
+        }
+
+        /* ── HEADER ── */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            height: 56px;
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(8, 5, 8, .94);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(8px)
+        }
+
+        .hd-left {
+            display: flex;
+            align-items: baseline;
+            gap: .8rem
+        }
+
+        .logo {
+            font-family: var(--fd);
+            font-size: 1.7rem;
+            letter-spacing: .05em;
+            color: var(--amber);
+            text-shadow: 0 0 18px var(--amber-dim)
+        }
+
+        .logo-sub {
+            font-size: .55rem;
+            letter-spacing: .22em;
+            text-transform: uppercase;
+            color: var(--c30)
+        }
+
+        .hd-nav {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: .15rem
+        }
+
+        .nav-tab {
+            font-family: var(--fm);
+            font-size: .58rem;
+            letter-spacing: .22em;
+            text-transform: uppercase;
+            padding: .3rem .85rem;
+            color: var(--c30);
+            text-decoration: none;
+            border: 1px solid transparent;
+            transition: color .2s, border-color .2s
+        }
+
+        .nav-tab:hover {
+            color: var(--c60);
+            border-color: var(--border)
+        }
+
+        .nav-tab.active {
+            color: var(--amber);
+            border-color: var(--border);
+            background: var(--amber-glow)
+        }
+
+        .hd-right {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem
+        }
+
+        .live-badge {
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+            font-size: .6rem;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+            color: var(--amber)
+        }
+
+        .live-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--amber);
+            box-shadow: 0 0 5px var(--amber);
+            animation: blink 2.2s ease-in-out infinite
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .3
+            }
+        }
+
+        .api-pill {
+            font-size: .55rem;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            padding: .2rem .6rem;
+            border: 1px solid;
+            border-radius: 2px
+        }
+
+        .api-pill.online {
+            color: var(--green);
+            border-color: rgba(68, 204, 102, .35)
+        }
+
+        .api-pill.offline {
+            color: var(--red);
+            border-color: var(--red-dim)
+        }
+
+        /* ── LAYOUT ── */
+        .app {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            padding: 72px 2rem 2rem
+        }
+
+        .page-title {
+            font-family: var(--fd);
+            font-size: 2rem;
+            color: var(--amber-b);
+            letter-spacing: .04em;
+            margin-bottom: .3rem
+        }
+
+        .page-sub {
+            font-size: .7rem;
+            color: var(--c30);
+            letter-spacing: .08em;
+            margin-bottom: 1.5rem
+        }
+
+        /* ── TABS ── */
+        .sim-tabs {
+            display: flex;
+            gap: .15rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: .5rem
+        }
+
+        .sim-tab {
+            font-family: var(--fm);
+            font-size: .62rem;
+            letter-spacing: .2em;
+            text-transform: uppercase;
+            padding: .35rem 1.1rem;
+            color: var(--c30);
+            background: none;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all .2s
+        }
+
+        .sim-tab:hover {
+            color: var(--c60);
+            border-color: var(--border)
+        }
+
+        .sim-tab.active {
+            color: var(--amber);
+            border-color: var(--border);
+            background: var(--amber-glow)
+        }
+
+        .sim-panel {
+            display: none
+        }
+
+        .sim-panel.active {
+            display: block
+        }
+
+        /* ── CONTROLS BAR ── */
+        .ctrl-bar {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            padding: 1rem;
+            background: var(--card);
+            border: 1px solid var(--border);
+            margin-bottom: 1.5rem
+        }
+
+        .ctrl-group {
+            display: flex;
+            flex-direction: column;
+            gap: .3rem
+        }
+
+        .ctrl-label {
+            font-size: .5rem;
+            letter-spacing: .22em;
+            text-transform: uppercase;
+            color: var(--amber)
+        }
+
+        .ctrl-select,
+        .ctrl-input {
+            font-family: var(--fm);
+            font-size: .72rem;
+            background: rgba(255, 255, 255, .04);
+            border: 1px solid var(--border);
+            color: var(--cream);
+            padding: .3rem .6rem;
+            outline: none
+        }
+
+        .ctrl-select:focus,
+        .ctrl-input:focus {
+            border-color: var(--amber)
+        }
+
+        .ctrl-range {
+            -webkit-appearance: none;
+            height: 3px;
+            background: var(--border);
+            outline: none;
+            width: 140px
+        }
+
+        .ctrl-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: var(--amber);
+            cursor: pointer;
+            border-radius: 50%
+        }
+
+        .range-val {
+            font-size: .65rem;
+            color: var(--amber);
+            min-width: 40px;
+            text-align: right
+        }
+
+        .run-btn {
+            font-family: var(--fm);
+            font-size: .58rem;
+            letter-spacing: .22em;
+            text-transform: uppercase;
+            padding: .4rem 1.2rem;
+            background: var(--amber-glow);
+            border: 1px solid var(--amber);
+            color: var(--amber);
+            cursor: pointer;
+            transition: all .2s;
+            margin-left: auto
+        }
+
+        .run-btn:hover {
+            background: var(--amber-dim);
+            color: #000
+        }
+
+        /* ── KPI CARDS ── */
+        .kpi-row {
+            display: grid;
+            gap: 1rem;
+            margin-bottom: 1.5rem
+        }
+
+        .kpi-row.cols-4 {
+            grid-template-columns: repeat(4, 1fr)
+        }
+
+        .kpi-row.cols-3 {
+            grid-template-columns: repeat(3, 1fr)
+        }
+
+        .kpi-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 1rem 1.2rem
+        }
+
+        .kpi-label {
+            font-size: .48rem;
+            letter-spacing: .22em;
+            text-transform: uppercase;
+            color: var(--amber);
+            margin-bottom: .4rem
+        }
+
+        .kpi-value {
+            font-family: var(--fd);
+            font-size: 2.2rem;
+            line-height: 1;
+            color: var(--cream)
+        }
+
+        .kpi-value.green {
+            color: var(--green);
+            text-shadow: 0 0 16px rgba(68, 204, 102, .3)
+        }
+
+        .kpi-value.red {
+            color: var(--red);
+            text-shadow: 0 0 16px var(--red-dim);
+            animation: throb 1.4s ease-in-out infinite
+        }
+
+        .kpi-value.amber {
+            color: var(--amber);
+            text-shadow: 0 0 16px var(--amber-dim)
+        }
+
+        @keyframes throb {
+
+            0%,
+            100% {
+                text-shadow: 0 0 16px var(--red-dim)
+            }
+
+            50% {
+                text-shadow: 0 0 28px rgba(221, 68, 68, .5)
+            }
+        }
+
+        .kpi-sub {
+            font-size: .55rem;
+            color: var(--c30);
+            margin-top: .3rem
+        }
+
+        /* ── CHARTS ── */
+        .chart-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 1.2rem;
+            margin-bottom: 1.2rem
+        }
+
+        .chart-title {
+            font-size: .52rem;
+            letter-spacing: .28em;
+            text-transform: uppercase;
+            color: var(--amber);
+            margin-bottom: .8rem
+        }
+
+        .chart-sub {
+            font-size: .5rem;
+            color: var(--c30);
+            margin-bottom: .8rem;
+            line-height: 1.5
+        }
+
+        canvas {
+            display: block;
+            width: 100% !important
+        }
+
+        /* ── TORNADO BARS ── */
+        .tornado-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: .5rem
+        }
+
+        .t-row {
+            display: grid;
+            grid-template-columns: 200px 1fr 60px;
+            align-items: center;
+            gap: .5rem
+        }
+
+        .t-label {
+            font-size: .55rem;
+            color: var(--c60);
+            text-align: right;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .t-bar-wrap {
+            position: relative;
+            height: 14px;
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid rgba(255, 255, 255, .05)
+        }
+
+        .t-bar-inner {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            transition: width .5s
+        }
+
+        .t-bar-inner.boost {
+            background: linear-gradient(90deg, rgba(68, 204, 102, .3), rgba(68, 204, 102, .7));
+            left: 0
+        }
+
+        .t-bar-inner.suppress {
+            background: linear-gradient(90deg, rgba(221, 68, 68, .7), rgba(221, 68, 68, .3));
+            right: 0
+        }
+
+        .t-swing {
+            font-size: .55rem;
+            color: var(--amber);
+            text-align: right;
+            font-weight: 700
+        }
+
+        /* ── SCENARIO CARDS ── */
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: .75rem;
+            margin-bottom: 1.2rem
+        }
+
+        .sc-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: .9rem 1rem;
+            cursor: pointer;
+            transition: all .2s;
+            position: relative
+        }
+
+        .sc-card:hover,
+        .sc-card.selected {
+            border-color: var(--amber);
+            background: var(--amber-glow)
+        }
+
+        .sc-card.selected::after {
+            content: '✓';
+            position: absolute;
+            top: .4rem;
+            right: .6rem;
+            color: var(--amber);
+            font-size: .7rem
+        }
+
+        .sc-name {
+            font-family: var(--fd);
+            font-size: .95rem;
+            color: var(--amber-b);
+            margin-bottom: .3rem
+        }
+
+        .sc-pct {
+            font-family: var(--fd);
+            font-size: 1.8rem;
+            line-height: 1;
+            margin-bottom: .2rem
+        }
+
+        .sc-sub {
+            font-size: .47rem;
+            letter-spacing: .12em;
+            color: var(--c30);
+            text-transform: uppercase
+        }
+
+        /* ── HEAT LANE ── */
+        .heat-grid {
+            display: grid;
+            gap: 2px
+        }
+
+        .heat-row {
+            display: flex;
+            gap: 2px;
+            align-items: center
+        }
+
+        .heat-bar-label {
+            font-size: .5rem;
+            color: var(--c60);
+            width: 100px;
+            text-align: right;
+            flex-shrink: 0;
+            letter-spacing: .06em
+        }
+
+        .heat-cells {
+            display: flex;
+            gap: 2px;
+            flex: 1
+        }
+
+        .heat-cell {
+            flex: 1;
+            height: 28px;
+            position: relative;
+            transition: opacity .2s
+        }
+
+        .heat-cell:hover {
+            outline: 1px solid var(--amber)
+        }
+
+        .heat-cell-label {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: .42rem;
+            color: var(--c30);
+            white-space: nowrap;
+            margin-bottom: 2px
+        }
+
+        .heat-hour-labels {
+            display: flex;
+            gap: 2px;
+            margin-left: 102px;
+            margin-bottom: 2px
+        }
+
+        .heat-hlabel {
+            flex: 1;
+            font-size: .42rem;
+            color: var(--c30);
+            text-align: center
+        }
+
+        /* ── FACTOR TABLE ── */
+        .ftable {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .62rem
+        }
+
+        .ftable th {
+            font-size: .47rem;
+            letter-spacing: .22em;
+            text-transform: uppercase;
+            color: var(--amber);
+            text-align: left;
+            padding: .4rem .6rem;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .ftable td {
+            padding: .35rem .6rem;
+            border-bottom: 1px solid rgba(255, 255, 255, .04);
+            color: var(--c60)
+        }
+
+        .ftable tr:hover td {
+            background: rgba(232, 160, 32, .03);
+            color: var(--cream)
+        }
+
+        .badge-b {
+            background: rgba(68, 204, 102, .12);
+            border: 1px solid rgba(68, 204, 102, .3);
+            color: var(--green);
+            padding: 1px 6px;
+            font-size: .48rem;
+            letter-spacing: .1em
+        }
+
+        .badge-s {
+            background: var(--red-dim);
+            border: 1px solid rgba(221, 68, 68, .35);
+            color: var(--red);
+            padding: 1px 6px;
+            font-size: .48rem;
+            letter-spacing: .1em
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid var(--border);
+            border-top-color: var(--amber);
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+            vertical-align: middle
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        .section-label {
+            font-size: .5rem;
+            letter-spacing: .3em;
+            text-transform: uppercase;
+            color: var(--amber);
+            margin-bottom: .8rem;
+            display: flex;
+            align-items: center;
+            gap: .6rem
+        }
+
+        .section-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border)
+        }
+
+        .note {
+            font-size: .55rem;
+            color: var(--c30);
+            line-height: 1.6;
+            margin-top: .5rem
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="hd-left">
+            <span class="logo">CROWD INTEL</span>
+            <span class="logo-sub">UMN Bar Tracker</span>
+        </div>
+        <nav class="hd-nav">
+            <a href="index.html" class="nav-tab">Dashboard</a>
+            <a href="map.html" class="nav-tab">Map</a>
+            <a href="pipeline.html" class="nav-tab">Pipeline</a>
+            <a href="simulations.html" class="nav-tab active">Simulations</a>
+        </nav>
+        <div class="hd-right">
+            <div class="live-badge"><span class="live-dot"></span>LIVE</div>
+            <span class="api-pill" id="api-pill">CONNECTING</span>
+        </div>
+    </header>
+
+    <div class="app">
+        <div class="page-title">SIMULATION ENGINE</div>
+        <div class="page-sub">Monte Carlo · Sensitivity · Scenario Comparison · Time-of-Night — all anchored to live
+            factor data</div>
+
+        <!-- TABS -->
+        <div class="sim-tabs">
+            <button class="sim-tab active" data-panel="mc">🎲 Monte Carlo</button>
+            <button class="sim-tab" data-panel="tornado">🌪 Sensitivity</button>
+            <button class="sim-tab" data-panel="scenarios">🔀 Scenarios</button>
+            <button class="sim-tab" data-panel="tonight">⏱ Time-of-Night</button>
+        </div>
+
+        <!-- SHARED CONTROLS -->
+        <div class="ctrl-bar">
+            <div class="ctrl-group">
+                <span class="ctrl-label">Bar</span>
+                <select class="ctrl-select" id="ctrl-bar">
+                    <option value="1">Blarney's</option>
+                    <option value="2">Sally's Saloon</option>
+                    <option value="3">Kollege Klub</option>
+                </select>
+            </div>
+            <div class="ctrl-group">
+                <span class="ctrl-label">Hour</span>
+                <select class="ctrl-select" id="ctrl-hour">
+                    <option value="14">14:00</option>
+                    <option value="15">15:00</option>
+                    <option value="16">16:00</option>
+                    <option value="17">17:00</option>
+                    <option value="18">18:00</option>
+                    <option value="19">19:00</option>
+                    <option value="20">20:00</option>
+                    <option value="21" selected>21:00</option>
+                    <option value="22">22:00</option>
+                    <option value="23">23:00</option>
+                    <option value="0">00:00</option>
+                    <option value="1">01:00</option>
+                    <option value="2">02:00</option>
+                </select>
+            </div>
+            <div class="ctrl-group">
+                <span class="ctrl-label">Iterations</span>
+                <select class="ctrl-select" id="ctrl-iters">
+                    <option value="500">500</option>
+                    <option value="1000">1 000</option>
+                    <option value="2000" selected>2 000</option>
+                    <option value="5000">5 000</option>
+                </select>
+            </div>
+            <div class="ctrl-group">
+                <span class="ctrl-label">Uncertainty σ &nbsp;<span class="range-val" id="sigma-val">0.25</span></span>
+                <input type="range" class="ctrl-range" id="ctrl-sigma" min="0.05" max="1.0" step="0.05" value="0.25" />
+            </div>
+            <button class="run-btn" id="run-btn">▶ RUN SIMULATION</button>
+        </div>
+
+        <!-- ════ MONTE CARLO ════ -->
+        <div class="sim-panel active" id="panel-mc">
+            <div class="section-label">Monte Carlo Distribution</div>
+            <p class="note" style="margin-bottom:1rem">Each iteration perturbs every active factor's weight by Gaussian
+                noise (σ), then computes a predicted bar fullness. The result is the full distribution of plausible
+                outcomes tonight.</p>
+            <div class="kpi-row cols-4" id="mc-kpis">
+                <div class="kpi-card">
+                    <div class="kpi-label">Median Fullness</div>
+                    <div class="kpi-value amber" id="mc-median">—</div>
+                    <div class="kpi-sub">50th percentile</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">90% CI Range</div>
+                    <div class="kpi-value" id="mc-ci" style="font-size:1.3rem;padding-top:.5rem">—</div>
+                    <div class="kpi-sub">5th – 95th pct</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">P(bar &gt; 90% full)</div>
+                    <div class="kpi-value" id="mc-risk90">—</div>
+                    <div class="kpi-sub">packed-bar probability</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">P(bar &gt; 70% full)</div>
+                    <div class="kpi-value" id="mc-risk70">—</div>
+                    <div class="kpi-sub">busy-bar probability</div>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">Fullness Distribution</div>
+                <div class="chart-sub">Green = boost-skewed · Red line = 90% capacity threshold · Gold line = ML point
+                    estimate</div>
+                <canvas id="mc-chart" height="220"></canvas>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">Active Factor Decomposition</div>
+                <table class="ftable" id="factor-table">
+                    <thead>
+                        <tr>
+                            <th>Factor</th>
+                            <th>Type</th>
+                            <th>Weight</th>
+                        </tr>
+                    </thead>
+                    <tbody id="factor-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ════ SENSITIVITY / TORNADO ════ -->
+        <div class="sim-panel" id="panel-tornado">
+            <div class="section-label">Sensitivity Analysis</div>
+            <p class="note" style="margin-bottom:1rem">Each factor is swung from −σ to +σ while all others are held
+                constant. Wider bar = this factor dominates tonight's uncertainty.</p>
+            <div class="chart-card">
+                <div class="chart-title">Tornado Chart — Factor Swing (percentage points fullness)</div>
+                <div id="tornado-chart"></div>
+            </div>
+        </div>
+
+        <!-- ════ SCENARIOS ════ -->
+        <div class="sim-panel" id="panel-scenarios">
+            <div class="section-label">Scenario Comparison</div>
+            <p class="note" style="margin-bottom:1rem">Presets simulate different night archetypes using the same factor
+                scoring logic. Click any card to compare details.</p>
+            <div class="scenario-grid" id="scenario-grid"></div>
+            <div class="chart-card">
+                <div class="chart-title">Boost vs. Suppress by Scenario</div>
+                <canvas id="sc-chart" height="200"></canvas>
+            </div>
+            <div class="chart-card" id="sc-heatmap-card">
+                <div class="chart-title">Factor Heatmap — which factors are active per scenario</div>
+                <div id="sc-heatmap"></div>
+            </div>
+        </div>
+
+        <!-- ════ TIME-OF-NIGHT ════ -->
+        <div class="sim-panel" id="panel-tonight">
+            <div class="section-label">Time-of-Night Fan Chart</div>
+            <p class="note" style="margin-bottom:1rem">Mini Monte Carlo at every hour from 14:00→02:00 for all bars.
+                Shaded band = 10th–90th percentile. Wider band = more uncertainty at that hour.</p>
+            <div class="chart-card">
+                <div class="chart-title">Full-Night Trajectory with Uncertainty Bands</div>
+                <canvas id="ton-chart" height="280"></canvas>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">Packed-Bar Probability Heat Lane — P(&gt;90% full) by hour</div>
+                <div class="heat-hour-labels" id="heat-hlabels"></div>
+                <div class="heat-grid" id="heat-grid"></div>
+            </div>
+        </div>
+
+    </div><!-- /app -->
+
+    <script>
+        const API = 'http://localhost:8001';
+
+        // ── FACTOR DEFINITIONS (mirrors Python algorithm weights) ─────────────────
+        // These are the same weights used in features/builder.py and config/tuning.py
+        const DRINKING_HOLIDAY_WEIGHTS = {
+            is_st_patricks: 5.0, is_new_years_eve: 4.5, is_halloween: 4.0,
+            is_bar_crawl: 3.5, is_blackout_wednesday: 3.5, is_homecoming: 3.0,
+            is_cinco_de_mayo: 3.0, is_commencement: 2.5, is_parents_weekend: 1.5
+        };
+        const TRAFFIC_BOOSTS = {
+            blarneys_karaoke_thursday: 0.55, blarneys_wednesday_deals: 0.25,
+            sallys_late_happy_hour: 0.20, sallys_tuesday_deal: 0.30,
+            kk_tuesday: 0.70, kk_thursday: 0.40, kk_friday_after_class: 0.35
+        };
+
+        function getFactorImpacts(sig, barId, hour) {
+            const impacts = [];
+            const dow = new Date().getDay(); // 0=Sun,1=Mon,...,6=Sat  →  0=Sun adjusted below
+            // JS getDay: 0=Sun,1=Mon…6=Sat. Python: 0=Mon…6=Sun.
+            const pyDow = (new Date().getDay() + 6) % 7; // convert to Mon=0
+
+            const add = (label, dir, weight) => impacts.push({ label, dir, weight: +weight.toFixed(3) });
+
+            // Time
+            const isWeekend = [4, 5, 6].includes(pyDow); // Fri=4,Sat=5,Sun=6
+            const isThu = pyDow === 3;
+            const isLateNight = hour >= 0 && hour <= 2;
+            if (isWeekend) add('Weekend (Fri–Sun)', 'boost', 1.5);
+            else if (isThu) add('Thursday night', 'boost', 0.8);
+            if (isLateNight) add('Late night (12–2 AM)', 'boost', 0.6);
+
+            // Academic
+            if (sig.classes_in_session) add('Classes in session', 'suppress', 0.5);
+            if (sig.is_syllabus_week) add('Syllabus week', 'boost', 1.2);
+            if (sig.is_welcome_week) add('Welcome week', 'boost', 1.0);
+            if (sig.is_midterms_week) add('Midterms week', 'suppress', 0.7);
+            if (sig.is_finals_week) add('Finals week', 'suppress', 1.5);
+            if (sig.is_study_days) add('Study/reading days', 'suppress', 0.8);
+            if (sig.is_break) add('Campus break', 'suppress', 2.0);
+            if (sig.is_summer_session) add('Summer session', 'suppress', 1.0);
+            if (sig.is_commencement) add('Commencement', 'boost', 2.5);
+            if (sig.is_parents_weekend) add("Parents' Weekend", 'boost', 1.5);
+
+            const dub = sig.days_until_break;
+            if (dub != null && dub > 0 && dub <= 7) {
+                const b = Math.max(0, ((7 - dub) / 7 * 0.8).toFixed(2));
+                if (b > 0) add(`Pre-break excitement (${Math.floor(dub)}d)`, 'boost', +b);
+            }
+
+            // Drinking holidays
+            for (const [col, w] of Object.entries(DRINKING_HOLIDAY_WEIGHTS)) {
+                if (sig[col]) add(col.replace('is_', '').replace(/_/g, ' '), 'boost', w);
+            }
+
+            // Athletics
+            if (sig.is_game_day) {
+                if (sig.is_football_home) add('Football home game', 'boost', 2.5);
+                else if (sig.is_basketball_home) add('Basketball home game', 'boost', 2.0);
+                else if (sig.is_hockey_home) add('Hockey home game', 'boost', 1.8);
+                else add('Gopher home game', 'boost', 2.0);
+                if (sig.is_rivalry_game) add('Rivalry game', 'boost', 1.0);
+            }
+
+            // TV sports
+            const tvw = sig.tv_game_weight || 0;
+            if (tvw > 0) {
+                if (sig.is_super_bowl) add('Super Bowl', 'boost', tvw);
+                else if (sig.is_march_madness_elite) add('March Madness Elite 8', 'boost', tvw);
+                else add(`TV Sports (${tvw.toFixed(1)}/4.0)`, 'boost', tvw);
+            }
+            if (sig.is_wild_game) add('Wild game', 'boost', 0.5);
+            if (sig.is_timberwolves_game) add('Timberwolves game', 'boost', 0.4);
+            if (sig.is_nhl_playoffs) add('NHL Playoffs', 'boost', 0.7);
+            if (sig.is_nba_playoffs) add('NBA Playoffs', 'boost', 0.6);
+
+            // Weather
+            const temp = sig.temperature_c;
+            if (temp != null) {
+                if (temp < 0) add(`Cold weather (${temp.toFixed(0)}°C)`, 'suppress', Math.min(2.0, Math.abs(temp) / 5 * 0.5));
+                else if (temp > 22) add(`Warm weather (${temp.toFixed(0)}°C)`, 'boost', 0.3);
+            }
+            if (sig.is_first_nice_day) add('First nice spring day', 'boost', 1.0);
+            const precip = sig.precipitation_mm;
+            if (precip != null && precip > 2) add(`Precipitation (${precip.toFixed(1)} mm/h)`, 'suppress', Math.min(1.5, precip / 10 * 1.5));
+            if (sig.snowfall_mm != null && sig.snowfall_mm > 5) add(`Snowfall`, 'suppress', 1.0);
+            if (sig.is_severe_weather) add('Severe weather', 'suppress', 2.0);
+
+            // Greek life
+            const gsi = sig.greek_social_intensity || 0;
+            if (gsi > 0) add(`Greek social intensity (${gsi.toFixed(2)})`, 'boost', gsi);
+            if (sig.is_greek_bid_day) add('Greek bid day', 'boost', 0.9);
+            if (sig.is_greek_rush_week) add('Greek rush week', 'suppress', 0.5);
+            if (sig.is_greek_thursday) add('Greek Thursday', 'boost', 0.4);
+            if (sig.is_greek_pregame_window) add('Greek pregame window', 'boost', 0.3);
+
+            return impacts;
+        }
+
+        // ── SIMULATION CORE ───────────────────────────────────────────────────────
+        const PCT_BASE = 30, PCT_SCALE = 11;
+        function scoreToPct(s) { return Math.max(0, Math.min(100, PCT_BASE + s * PCT_SCALE)); }
+
+        function runMonteCarlo(impacts, nSims, sigma) {
+            const weights = impacts.map(i => i.weight);
+            const signs = impacts.map(i => i.dir === 'boost' ? 1 : -1);
+            const results = new Float32Array(nSims);
+            for (let i = 0; i < nSims; i++) {
+                let net = 0;
+                for (let j = 0; j < weights.length; j++) {
+                    const noise = boxMuller() * sigma;
+                    const w = Math.max(0, weights[j] + noise);
+                    net += w * signs[j];
+                }
+                results[i] = scoreToPct(net);
+            }
+            return results;
+        }
+
+        function boxMuller() {
+            let u = 0, v = 0;
+            while (u === 0) u = Math.random();
+            while (v === 0) v = Math.random();
+            return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+        }
+
+        function percentile(arr, p) {
+            const sorted = [...arr].sort((a, b) => a - b);
+            const idx = Math.floor(p / 100 * (sorted.length - 1));
+            return sorted[idx];
+        }
+
+        // ── STATE ─────────────────────────────────────────────────────────────────
+        let liveSignals = null;
+        let lastSamples = null;
+        let lastImpacts = null;
+
+        // ── API ───────────────────────────────────────────────────────────────────
+        async function fetchSignals() {
+            try {
+                const r = await fetch(`${API}/api/v1/signals/live`);
+                if (!r.ok) throw new Error(r.status);
+                const data = await r.json();
+                // Flatten nested structure from LiveSignals schema
+                liveSignals = {
+                    ...data.weather,
+                    ...data.sports,
+                    ...data.calendar,
+                    greek_social_intensity: data.calendar?.greek_social_intensity,
+                    is_greek_bid_day: data.calendar?.is_greek_bid_day,
+                    is_greek_rush_week: data.calendar?.is_greek_rush_week,
+                    is_greek_thursday: data.calendar?.is_greek_thursday,
+                    is_greek_pregame_window: data.calendar?.is_greek_pregame_window,
+                    days_until_break: data.calendar?.days_until_break,
+                };
+                document.getElementById('api-pill').textContent = 'ONLINE';
+                document.getElementById('api-pill').className = 'api-pill online';
+            } catch (e) {
+                document.getElementById('api-pill').textContent = 'OFFLINE';
+                document.getElementById('api-pill').className = 'api-pill offline';
+                // Fallback signals for demo
+                liveSignals = { classes_in_session: 0, temperature_c: -6, is_basketball_home: 1, tv_game_weight: 2.0 };
+            }
+        }
+
+        // ── RENDER MONTE CARLO ────────────────────────────────────────────────────
+        function renderMC(samples, impacts, pointPct) {
+            lastSamples = samples;
+            lastImpacts = impacts;
+
+            const p05 = percentile(samples, 5), p50 = percentile(samples, 50), p95 = percentile(samples, 95);
+            const r90 = (samples.filter(x => x >= 90).length / samples.length * 100).toFixed(0);
+            const r70 = (samples.filter(x => x >= 70).length / samples.length * 100).toFixed(0);
+
+            const color = v => v >= 60 ? 'red' : v >= 35 ? 'amber' : 'green';
+            document.getElementById('mc-median').textContent = p50.toFixed(0) + '%';
+            document.getElementById('mc-median').className = 'kpi-value ' + color(p50);
+            document.getElementById('mc-ci').textContent = `${p05.toFixed(0)}% – ${p95.toFixed(0)}%`;
+            document.getElementById('mc-risk90').textContent = r90 + '%';
+            document.getElementById('mc-risk90').className = 'kpi-value ' + (r90 > 40 ? 'red' : r90 > 15 ? 'amber' : 'green');
+            document.getElementById('mc-risk70').textContent = r70 + '%';
+            document.getElementById('mc-risk70').className = 'kpi-value ' + (r70 > 60 ? 'red' : r70 > 30 ? 'amber' : 'green');
+
+            // Histogram
+            const bins = 20, min = 0, max = 100, step = (max - min) / bins;
+            const counts = new Array(bins).fill(0);
+            samples.forEach(v => { const b = Math.min(bins - 1, Math.floor((v - min) / step)); counts[b]++; });
+            const maxC = Math.max(...counts);
+            const labels = Array.from({ length: bins }, (_, i) => `${(min + i * step).toFixed(0)}%`);
+
+            const c = document.getElementById('mc-chart');
+            const ctx = c.getContext('2d');
+            c.width = c.parentElement.clientWidth;
+            ctx.clearRect(0, 0, c.width, c.height);
+            const W = c.width, H = c.height, pad = { l: 30, r: 20, t: 10, b: 30 };
+            const bw = (W - pad.l - pad.r) / bins;
+
+            counts.forEach((cnt, i) => {
+                const bh = (cnt / maxC) * (H - pad.t - pad.b);
+                const x = pad.l + i * bw, y = H - pad.b - bh;
+                const pct = (min + i * step + step / 2);
+                const g = ctx.createLinearGradient(x, y, x, H - pad.b);
+                g.addColorStop(0, pct >= 90 ? 'rgba(221,68,68,.85)' : pct >= 70 ? 'rgba(232,160,32,.85)' : 'rgba(68,204,102,.75)');
+                g.addColorStop(1, 'rgba(68,204,102,.15)');
+                ctx.fillStyle = g;
+                ctx.fillRect(x, y, bw - 1, bh);
+                if (i % 4 === 0) {
+                    ctx.fillStyle = 'rgba(237,224,204,.3)'; ctx.font = '9px Inconsolata'; ctx.textAlign = 'center';
+                    ctx.fillText(labels[i], x + bw / 2, H - pad.b + 12);
+                }
+            });
+
+            // 90% threshold line
+            const x90 = pad.l + (90 - min) / step * bw;
+            ctx.strokeStyle = 'rgba(221,68,68,.7)'; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(x90, pad.t); ctx.lineTo(x90, H - pad.b); ctx.stroke();
+
+            // Point estimate line
+            const xPt = pad.l + (pointPct - min) / step * bw;
+            ctx.strokeStyle = 'rgba(255,181,51,.9)'; ctx.setLineDash([8, 4]); ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(xPt, pad.t); ctx.lineTo(xPt, H - pad.b); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Factor table
+            const tbody = document.getElementById('factor-tbody');
+            tbody.innerHTML = '';
+            const boostSum = impacts.filter(i => i.dir === 'boost').reduce((a, i) => a + i.weight, 0);
+            const suppSum = impacts.filter(i => i.dir === 'suppress').reduce((a, i) => a + i.weight, 0);
+            const net = boostSum - suppSum;
+            [...impacts].sort((a, b) => b.weight - a.weight).forEach(imp => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${imp.label}</td>
+      <td><span class="${imp.dir === 'boost' ? 'badge-b' : 'badge-s'}">${imp.dir === 'boost' ? 'BOOST' : 'SUPPRESS'}</span></td>
+      <td style="color:var(--amber-b);font-weight:700">${(imp.dir === 'boost' ? '+' : '-')}${imp.weight.toFixed(3)}</td>`;
+                tbody.appendChild(tr);
+            });
+            // totals row
+            const tfoot = document.createElement('tr');
+            tfoot.style.cssText = 'border-top:1px solid var(--border);font-weight:700';
+            tfoot.innerHTML = `<td style="color:var(--amber)">NET SCORE</td><td></td><td style="color:${net >= 0 ? 'var(--green)' : 'var(--red)'}">${net >= 0 ? '+' : ''}${net.toFixed(2)} → ${pointPct.toFixed(0)}% full</td>`;
+            tbody.appendChild(tfoot);
+        }
+
+        // ── RENDER TORNADO ────────────────────────────────────────────────────────
+        function renderTornado(impacts, sigma) {
+            const weights = impacts.map(i => i.weight);
+            const signs = impacts.map(i => i.dir === 'boost' ? 1 : -1);
+            const baseNet = weights.reduce((s, w, j) => s + w * signs[j], 0);
+            const basePct = scoreToPct(baseNet);
+
+            const rows = impacts.map((imp, idx) => {
+                const wH = [...weights]; wH[idx] = weights[idx] + sigma;
+                const wL = [...weights]; wL[idx] = Math.max(0, weights[idx] - sigma);
+                const netH = wH.reduce((s, w, j) => s + w * signs[j], 0);
+                const netL = wL.reduce((s, w, j) => s + w * signs[j], 0);
+                const pctH = scoreToPct(netH), pctL = scoreToPct(netL);
+                return { label: imp.label, dir: imp.dir, swing: Math.abs(pctH - pctL), high: pctH, low: pctL };
+            }).sort((a, b) => b.swing - a.swing).slice(0, 25);
+
+            const maxSwing = Math.max(...rows.map(r => r.swing), 1);
+            const wrap = document.getElementById('tornado-chart');
+            wrap.innerHTML = '';
+            rows.forEach(r => {
+                const pct = (r.swing / maxSwing * 100).toFixed(1);
+                wrap.innerHTML += `
+      <div class="t-row" title="${r.label}: swings ${r.low.toFixed(1)}% → ${r.high.toFixed(1)}%">
+        <div class="t-label">${r.label}</div>
+        <div class="t-bar-wrap">
+          <div class="t-bar-inner ${r.dir}" style="width:${pct}%"></div>
+        </div>
+        <div class="t-swing">${r.swing.toFixed(1)}pp</div>
+      </div>`;
+            });
+        }
+
+        // ── SCENARIO PRESETS ──────────────────────────────────────────────────────
+        const SCENARIOS = [
+            { name: 'Normal Thu', flags: { is_thursday: 1, classes_in_session: 1 }, hour: 21 },
+            { name: 'Football Sat', flags: { is_weekend: 1, is_football_home: 1, is_game_day: 1, classes_in_session: 1 }, hour: 22 },
+            { name: "St. Pat's Day", flags: { is_st_patricks: 1, is_weekend: 1 }, hour: 21 },
+            { name: 'Finals Week', flags: { is_finals_week: 1, classes_in_session: 1, is_thursday: 1 }, hour: 20 },
+            { name: 'Blackout Wed', flags: { is_blackout_wednesday: 1 }, hour: 22 },
+            { name: 'KK Tuesday', flags: { classes_in_session: 1, is_tuesday: 1 }, hour: 22 },
+            { name: 'Halloween', flags: { is_halloween: 1, is_weekend: 1 }, hour: 22 },
+            { name: 'Winter Break', flags: { is_break: 1 }, hour: 21 },
+        ];
+
+        function buildScenarioImpacts(flags, hour) {
+            const sig = { ...flags };
+            const pyDow = (new Date().getDay() + 6) % 7;
+            sig.is_late_night = (hour === 0 || hour === 1 || hour === 2) ? 1 : 0;
+            sig.classes_in_session = sig.classes_in_session || 0;
+            // Force drinking holiday weights where needed
+            for (const k of Object.keys(DRINKING_HOLIDAY_WEIGHTS)) sig[k] = sig[k] || 0;
+            return getFactorImpacts(sig, 1, hour);
+        }
+
+        function renderScenarios() {
+            const grid = document.getElementById('scenario-grid');
+            grid.innerHTML = '';
+            const scData = SCENARIOS.map(sc => {
+                const imps = buildScenarioImpacts(sc.flags, sc.hour);
+                const boostSum = imps.filter(i => i.dir === 'boost').reduce((a, i) => a + i.weight, 0);
+                const suppSum = imps.filter(i => i.dir === 'suppress').reduce((a, i) => a + i.weight, 0);
+                const net = boostSum - suppSum;
+                const pct = scoreToPct(net);
+                return { name: sc.name, pct, net, boost: boostSum, suppress: suppSum, imps };
+            });
+
+            scData.forEach((sc, idx) => {
+                const colr = sc.pct >= 80 ? '#dd4444' : sc.pct >= 55 ? '#e8a020' : '#44cc66';
+                const div = document.createElement('div');
+                div.className = 'sc-card';
+                div.innerHTML = `<div class="sc-name">${sc.name}</div>
+      <div class="sc-pct" style="color:${colr}">${sc.pct.toFixed(0)}%</div>
+      <div class="sc-sub">Net ${sc.net >= 0 ? '+' : ''}${sc.net.toFixed(2)} · ${sc.imps.length} factors</div>`;
+                grid.appendChild(div);
+            });
+
+            // Grouped bar chart
+            const c = document.getElementById('sc-chart');
+            c.width = c.parentElement.clientWidth;
+            const ctx = c.getContext('2d');
+            ctx.clearRect(0, 0, c.width, c.height);
+            const W = c.width, H = c.height, pad = { l: 10, r: 10, t: 10, b: 60 };
+            const n = scData.length, bw = (W - pad.l - pad.r) / n, gbw = bw * .35;
+            const maxV = Math.max(...scData.map(s => Math.max(s.boost, s.suppress)), 1);
+
+            const drawBar = (x, val, color, h, centerY) => {
+                const barH = Math.abs(val) / maxV * (h / 2);
+                ctx.fillStyle = color;
+                if (val >= 0) ctx.fillRect(x, centerY - barH, gbw, barH);
+                else ctx.fillRect(x, centerY, gbw, barH);
+            };
+
+            const centerY = pad.t + (H - pad.t - pad.b) / 2;
+            ctx.strokeStyle = 'rgba(237,224,204,.12)'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(pad.l, centerY); ctx.lineTo(W - pad.r, centerY); ctx.stroke();
+
+            scData.forEach((sc, i) => {
+                const cx = pad.l + i * bw + bw / 2;
+                drawBar(cx - gbw - 2, sc.boost, 'rgba(68,204,102,.7)', H - pad.t - pad.b, centerY);
+                drawBar(cx + 2, -sc.suppress, 'rgba(221,68,68,.7)', H - pad.t - pad.b, centerY);
+                ctx.fillStyle = 'rgba(237,224,204,.3)'; ctx.font = '8px Inconsolata'; ctx.textAlign = 'center';
+                ctx.fillText(sc.name, cx, H - pad.b + 14);
+                ctx.fillText(`${sc.pct.toFixed(0)}%`, cx, H - pad.b + 26);
+            });
+
+            // Heatmap
+            renderScenarioHeatmap(scData);
+        }
+
+        function renderScenarioHeatmap(scData) {
+            const allFactors = [...new Set(scData.flatMap(s => s.imps.map(i => i.label)))];
+            const wrap = document.getElementById('sc-heatmap');
+            wrap.innerHTML = '';
+            // Header row
+            let headerHtml = '<div style="display:grid;grid-template-columns:140px repeat(' + scData.length + ',1fr);gap:2px;margin-bottom:3px">';
+            headerHtml += '<div></div>';
+            scData.forEach(s => { headerHtml += `<div style="font-size:.45rem;letter-spacing:.12em;color:var(--amber);text-align:center">${s.name}</div>`; });
+            headerHtml += '</div>';
+            wrap.innerHTML = headerHtml;
+
+            allFactors.slice(0, 20).forEach(factor => {
+                let row = `<div style="display:grid;grid-template-columns:140px repeat(${scData.length},1fr);gap:2px;margin-bottom:2px">`;
+                row += `<div style="font-size:.48rem;color:var(--c60);text-align:right;padding-right:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${factor}</div>`;
+                scData.forEach(sc => {
+                    const imp = sc.imps.find(i => i.label === factor);
+                    const val = imp ? (imp.dir === 'boost' ? imp.weight : -imp.weight) : 0;
+                    const alpha = Math.min(1, Math.abs(val) / 4);
+                    const bg = val > 0 ? `rgba(68,204,102,${alpha * 0.7})` : (val < 0 ? `rgba(221,68,68,${alpha * 0.7})` : 'rgba(255,255,255,.03)');
+                    const text = val !== 0 ? val.toFixed(2) : '';
+                    row += `<div style="background:${bg};text-align:center;font-size:.45rem;color:var(--cream);padding:4px 2px;border:1px solid rgba(255,255,255,.04)">${text}</div>`;
+                });
+                row += '</div>';
+                wrap.innerHTML += row;
+            });
+        }
+
+        // ── TIME-OF-NIGHT ─────────────────────────────────────────────────────────
+        function renderTimeOfNight(sigma, nSims) {
+            const hours = [14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2];
+            const BARS = [
+                { id: 1, name: "Blarney's", color: 'rgba(28,184,100,' },
+                { id: 2, name: "Sally's", color: 'rgba(153,68,204,' },
+                { id: 3, name: "KK", color: 'rgba(204,136,0,' },
+            ];
+
+            const barData = BARS.map(bar => {
+                const hourlyData = hours.map(h => {
+                    const imps = getFactorImpacts(liveSignals || {}, bar.id, h);
+                    // mini MC
+                    const miniN = Math.min(nSims, 200);
+                    const samps = runMonteCarlo(imps, miniN, sigma);
+                    return {
+                        h, p10: percentile(samps, 10), p25: percentile(samps, 25),
+                        p50: percentile(samps, 50), p75: percentile(samps, 75), p90: percentile(samps, 90),
+                        probPacked: samps.filter(x => x >= 90).length / samps.length * 100
+                    };
+                });
+                return { bar, hourData: hourlyData };
+            });
+
+            // Canvas fan chart
+            const c = document.getElementById('ton-chart');
+            c.width = c.parentElement.clientWidth;
+            const ctx = c.getContext('2d');
+            ctx.clearRect(0, 0, c.width, c.height);
+            const W = c.width, H = c.height, pad = { l: 35, r: 15, t: 15, b: 35 };
+            const xScale = (W - pad.l - pad.r) / (hours.length - 1);
+            const yScale = (H - pad.t - pad.b) / 100;
+
+            const toX = i => pad.l + i * xScale;
+            const toY = v => H - pad.b - v * yScale;
+
+            // Grid lines
+            [0, 25, 50, 75, 90, 100].forEach(v => {
+                ctx.strokeStyle = v === 90 ? 'rgba(221,68,68,.35)' : 'rgba(237,224,204,.06)';
+                ctx.setLineDash(v === 90 ? [5, 4] : []);
+                ctx.lineWidth = v === 90 ? 1.2 : 0.8;
+                ctx.beginPath(); ctx.moveTo(pad.l, toY(v)); ctx.lineTo(W - pad.r, toY(v)); ctx.stroke();
+                ctx.fillStyle = 'rgba(237,224,204,.25)'; ctx.font = '8px Inconsolata'; ctx.textAlign = 'right';
+                ctx.fillText(v + '%', pad.l - 4, toY(v) + 3);
+            });
+            ctx.setLineDash([]);
+
+            barData.forEach(({ bar, hourData }) => {
+                const col = bar.color;
+                // p10-p90 band
+                ctx.beginPath();
+                hourData.forEach((d, i) => i === 0 ? ctx.moveTo(toX(i), toY(d.p90)) : ctx.lineTo(toX(i), toY(d.p90)));
+                hourData.slice().reverse().forEach((d, i) => ctx.lineTo(toX(hours.length - 1 - i), toY(d.p10)));
+                ctx.closePath();
+                ctx.fillStyle = col + '0.12)'; ctx.fill();
+
+                // p25-p75 band
+                ctx.beginPath();
+                hourData.forEach((d, i) => i === 0 ? ctx.moveTo(toX(i), toY(d.p75)) : ctx.lineTo(toX(i), toY(d.p75)));
+                hourData.slice().reverse().forEach((d, i) => ctx.lineTo(toX(hours.length - 1 - i), toY(d.p25)));
+                ctx.closePath();
+                ctx.fillStyle = col + '0.22)'; ctx.fill();
+
+                // Median line
+                ctx.strokeStyle = col + '0.9)'; ctx.lineWidth = 2.2; ctx.setLineDash([]);
+                ctx.beginPath();
+                hourData.forEach((d, i) => i === 0 ? ctx.moveTo(toX(i), toY(d.p50)) : ctx.lineTo(toX(i), toY(d.p50)));
+                ctx.stroke();
+
+                // Dots
+                hourData.forEach((d, i) => {
+                    ctx.fillStyle = col + '1)';
+                    ctx.beginPath(); ctx.arc(toX(i), toY(d.p50), 3, 0, Math.PI * 2); ctx.fill();
+                });
+            });
+
+            // X labels
+            hours.forEach((h, i) => {
+                ctx.fillStyle = 'rgba(237,224,204,.3)'; ctx.font = '8px Inconsolata'; ctx.textAlign = 'center';
+                ctx.fillText(`${String(h).padStart(2, '0')}:00`, toX(i), H - pad.b + 14);
+            });
+
+            // Legend
+            barData.forEach(({ bar }, i) => {
+                ctx.fillStyle = bar.color + '1)';
+                ctx.fillRect(W - pad.r - 120 + i * 42, pad.t, 10, 3);
+                ctx.fillStyle = 'rgba(237,224,204,.4)'; ctx.font = '8px Inconsolata'; ctx.textAlign = 'left';
+                ctx.fillText(bar.name, W - pad.r - 108 + i * 42, pad.t + 4);
+            });
+
+            // Heat lane
+            const hlabels = document.getElementById('heat-hlabels');
+            hlabels.innerHTML = hours.map(h => `<div class="heat-hlabel">${String(h).padStart(2, '0')}:00</div>`).join('');
+            const hgrid = document.getElementById('heat-grid');
+            hgrid.innerHTML = '';
+            barData.forEach(({ bar, hourData }) => {
+                const row = document.createElement('div');
+                row.className = 'heat-row';
+                row.innerHTML = `<div class="heat-bar-label">${bar.name}</div><div class="heat-cells">` +
+                    hourData.map(d => {
+                        const a = Math.min(1, d.probPacked / 100);
+                        const bg = `rgba(${Math.floor(221 * a)},${Math.floor(68 * (1 - a))},${Math.floor(68 * (1 - a))},${0.15 + a * 0.75})`;
+                        return `<div class="heat-cell" style="background:${bg}" title="${d.h}:00 · P(>90%)=${d.probPacked.toFixed(0)}% · median=${d.p50.toFixed(0)}%"></div>`;
+                    }).join('') + '</div>';
+                hgrid.appendChild(row);
+            });
+        }
+
+        // ── MAIN RUN ──────────────────────────────────────────────────────────────
+        async function runSim() {
+            const barId = +document.getElementById('ctrl-bar').value;
+            const hour = +document.getElementById('ctrl-hour').value;
+            const nSims = +document.getElementById('ctrl-iters').value;
+            const sigma = +document.getElementById('ctrl-sigma').value;
+
+            document.getElementById('run-btn').innerHTML = '<span class="spinner"></span> RUNNING…';
+            document.getElementById('run-btn').disabled = true;
+
+            if (!liveSignals) await fetchSignals();
+
+            const impacts = getFactorImpacts(liveSignals, barId, hour);
+            const boostSum = impacts.filter(i => i.dir === 'boost').reduce((a, i) => a + i.weight, 0);
+            const suppSum = impacts.filter(i => i.dir === 'suppress').reduce((a, i) => a + i.weight, 0);
+            const net = boostSum - suppSum;
+            const pointPct = scoreToPct(net);
+
+            await new Promise(r => setTimeout(r, 0)); // yield to browser
+            const samples = runMonteCarlo(impacts, nSims, sigma);
+
+            renderMC(samples, impacts, pointPct);
+            renderTornado(impacts, sigma);
+            renderScenarios();
+            renderTimeOfNight(sigma, nSims);
+
+            document.getElementById('run-btn').textContent = '▶ RUN SIMULATION';
+            document.getElementById('run-btn').disabled = false;
+        }
+
+        // ── TABS ──────────────────────────────────────────────────────────────────
+        document.querySelectorAll('.sim-tab').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.sim-tab').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.sim-panel').forEach(p => p.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('panel-' + btn.dataset.panel).classList.add('active');
+            });
+        });
+
+        // ── UI WIRING ─────────────────────────────────────────────────────────────
+        document.getElementById('ctrl-sigma').addEventListener('input', e => {
+            document.getElementById('sigma-val').textContent = (+e.target.value).toFixed(2);
+        });
+        document.getElementById('run-btn').addEventListener('click', runSim);
+
+        // Auto-run on load
+        window.addEventListener('load', () => {
+            fetchSignals().then(runSim);
+        });
+    </script>
+</body>
+
+</html>

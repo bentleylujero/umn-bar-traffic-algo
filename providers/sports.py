@@ -77,10 +77,47 @@ def _kickoff_local(event: dict) -> Optional[int]:
         return None
 
 
+# Schools whose names contain "minnesota" but are NOT UMN Twin Cities.
+# ESPN uses location fields like "Minnesota Duluth", "Minnesota State",
+# "Minnesota Morris", "St. Thomas - Minnesota", so we key off these fragments.
+_MN_SCHOOL_EXCLUSIONS = frozenset({
+    "duluth",       # UMD
+    "state",        # Minnesota State Mavericks (Mankato)
+    "mankato",      # alternate name
+    "morris",       # UMN Morris
+    "moorhead",     # Minnesota State Moorhead
+    "crookston",    # UMN Crookston
+    "st. thomas",   # St. Thomas Tommies
+    "thomas",       # St. Thomas fallback
+})
+
+
+def _team_matches(team: dict, fragment: str) -> bool:
+    """Return True if any team identifier field contains fragment (case-insensitive).
+    ESPN does not always populate slug (e.g. basketball scoreboard API).
+    Excludes Minnesota branch campuses (Duluth, Mankato, etc.) when matching 'minnesota'.
+    """
+    frag = fragment.lower()
+    fields = [
+        (team.get("slug") or "").lower(),
+        (team.get("displayName") or "").lower(),
+        (team.get("location") or "").lower(),
+        (team.get("shortDisplayName") or "").lower(),
+        (team.get("abbreviation") or "").lower(),
+    ]
+    for val in fields:
+        if frag in val:
+            # Reject if this is a branch campus, not the Twin Cities Gophers
+            if frag == "minnesota" and any(excl in val for excl in _MN_SCHOOL_EXCLUSIONS):
+                continue
+            return True
+    return False
+
+
 def _has_slug(event: dict, fragment: str) -> bool:
     for comp in event.get("competitions", []):
         for c in comp.get("competitors", []):
-            if fragment in c.get("team", {}).get("slug", "").lower():
+            if _team_matches(c.get("team", {}), fragment):
                 return True
     return False
 
@@ -88,18 +125,22 @@ def _has_slug(event: dict, fragment: str) -> bool:
 def _is_home_slug(event: dict, fragment: str) -> bool:
     for comp in event.get("competitions", []):
         for c in comp.get("competitors", []):
-            if (fragment in c.get("team", {}).get("slug", "").lower()
-                    and c.get("homeAway") == "home"):
+            if _team_matches(c.get("team", {}), fragment) and c.get("homeAway") == "home":
                 return True
     return False
 
 
 def _away_slugs(event: dict) -> list[str]:
+    """Return all identifiers for the away team(s), for rival detection."""
     slugs = []
     for comp in event.get("competitions", []):
         for c in comp.get("competitors", []):
             if c.get("homeAway") == "away":
-                slugs.append(c.get("team", {}).get("slug", "").lower())
+                team = c.get("team", {})
+                for field in ("slug", "displayName", "location", "shortDisplayName", "abbreviation"):
+                    val = (team.get(field) or "").lower()
+                    if val:
+                        slugs.append(val)
     return slugs
 
 
@@ -137,6 +178,8 @@ def fetch_umn_games(target_date: date) -> dict:
         "is_hockey_home":      0,
         "is_rivalry_game":     0,
         "game_hour":           None,
+        "opponent_name":       None,
+        "game_name":           None,
     }
 
     for sport, league, extra in _UMN_SPORTS:
@@ -149,6 +192,20 @@ def fetch_umn_games(target_date: date) -> dict:
             result[_UMN_FLAG[sport]] = 1
             result["is_game_day"]    = 1
             result["game_hour"]      = result["game_hour"] or _kickoff_local(event)
+            result["game_name"]      = result["game_name"] or event.get("name", "")
+
+            # Capture opponent display name
+            if result["opponent_name"] is None:
+                for comp in event.get("competitions", []):
+                    for c in comp.get("competitors", []):
+                        if c.get("homeAway") == "away":
+                            team = c.get("team", {})
+                            result["opponent_name"] = (
+                                team.get("displayName")
+                                or team.get("shortDisplayName")
+                                or team.get("location")
+                                or team.get("abbreviation")
+                            )
 
             for slug in _away_slugs(event):
                 if any(r in slug for r in _UMN_RIVALS):

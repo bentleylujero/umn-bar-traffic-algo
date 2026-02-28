@@ -7,6 +7,7 @@ import time
 from typing import Any
 
 from platform.backend.engine.dag import get_node_inputs, topological_sort
+from platform.backend.engine.nodes.context_nodes import CONTEXT_NODE_REGISTRY
 from platform.backend.engine.nodes.crowd_node import CrowdReportNode
 from platform.backend.engine.nodes.data_source import NODE_REGISTRY
 from platform.backend.engine.nodes.feature_node import FeatureExtractorNode
@@ -15,9 +16,10 @@ from platform.backend.schemas import NodeDef, PipelineDef, PipelineRunResult
 
 log = logging.getLogger(__name__)
 
-# Full node type → class registry (data sources + ML nodes)
+# Full node type → class registry (data sources + context inference + ML nodes)
 _ALL_NODES: dict[str, type] = {
     **NODE_REGISTRY,
+    **CONTEXT_NODE_REGISTRY,
     "feature_extractor": FeatureExtractorNode,
     "crowd_reports":     CrowdReportNode,
     "predictor":         PredictorNode,

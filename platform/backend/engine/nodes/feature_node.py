@@ -55,6 +55,13 @@ class FeatureExtractorNode:
             # Handle crowd_reports specifically (they are bar-specific)
             crowd_reports = inputs.get("crowd_reports", {}).get("crowd_reports", {})
 
+        # >>> DATA WARDEN LAYER <<<
+        # Validate data to ensure the model does not ingest outdated/irrelevant information
+        from platform.backend.engine.warden import DataWarden
+        warden = DataWarden(ref_time=dt)
+        signals = warden.validate_signals(signals)
+        crowd_reports = warden.validate_crowd_reports(crowd_reports)
+
         fb = FeatureBuilder()
         results: dict[int, dict] = {}
 

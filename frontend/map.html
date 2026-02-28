@@ -1,50 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Map — UMN Bar Tracker</title>
-  
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inconsolata:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inconsolata:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+
   <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
   <style>
     /* ── RESET ──────────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     /* ── TOKENS ─────────────────────────────────────────────── */
     :root {
-      --bg:           #080508;
-      --bg2:          #0d0a0e;
-      --card:         #110d14;
-      --card-h:       #171219;
-      --amber:        #e8a020;
+      --bg: #080508;
+      --bg2: #0d0a0e;
+      --card: #110d14;
+      --card-h: #171219;
+      --amber: #e8a020;
       --amber-bright: #ffb533;
-      --amber-dim:    rgba(232,160,32,0.35);
-      --amber-glow:   rgba(232,160,32,0.10);
-      --orange:       #d05820;
-      --red:          #df3030;
-      --red-dim:      rgba(223,48,48,0.25);
-      --green:        #56a85c;
-      --cream:        #ede0cc;
-      --cream-60:     rgba(237,224,204,0.60);
-      --cream-30:     rgba(237,224,204,0.30);
-      --cream-12:     rgba(237,224,204,0.12);
-      --border:       rgba(232,160,32,0.16);
-      --border-hot:   rgba(232,160,32,0.60);
-      --fd:           'Anton', sans-serif;
-      --fm:           'Inconsolata', monospace;
+      --amber-dim: rgba(232, 160, 32, 0.35);
+      --amber-glow: rgba(232, 160, 32, 0.10);
+      --orange: #d05820;
+      --red: #df3030;
+      --red-dim: rgba(223, 48, 48, 0.25);
+      --green: #56a85c;
+      --cream: #ede0cc;
+      --cream-60: rgba(237, 224, 204, 0.60);
+      --cream-30: rgba(237, 224, 204, 0.30);
+      --cream-12: rgba(237, 224, 204, 0.12);
+      --border: rgba(232, 160, 32, 0.16);
+      --border-hot: rgba(232, 160, 32, 0.60);
+      --fd: 'Anton', sans-serif;
+      --fm: 'Inconsolata', monospace;
     }
 
     /* ── BASE ───────────────────────────────────────────────── */
-    html, body {
+    html,
+    body {
       height: 100%;
       background: var(--bg);
       color: var(--cream);
@@ -55,7 +64,10 @@
     /* grain overlay */
     body::before {
       content: '';
-      position: fixed; inset: 0; z-index: 9998; pointer-events: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9998;
+      pointer-events: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.032'/%3E%3C/svg%3E");
       opacity: 0.7;
     }
@@ -63,28 +75,37 @@
     /* ambient glow behind cards */
     body::after {
       content: '';
-      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
       background:
-        radial-gradient(ellipse 60% 40% at 50% 38%, rgba(232,160,32,0.06) 0%, transparent 70%),
-        radial-gradient(ellipse 40% 30% at 20% 80%, rgba(208,88,32,0.04) 0%, transparent 60%);
+        radial-gradient(ellipse 60% 40% at 50% 38%, rgba(232, 160, 32, 0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 30% at 20% 80%, rgba(208, 88, 32, 0.04) 0%, transparent 60%);
     }
 
     .app {
-      position: relative; z-index: 1;
+      position: relative;
+      z-index: 1;
       height: 100vh;
       display: flex;
       flex-direction: column;
+      padding-top: 68px;
     }
 
     /* ── HEADER ─────────────────────────────────────────────── */
     header {
-      position: sticky; top: 0; z-index: 1000;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
       height: 68px;
       padding: 0 2rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(8,5,8,0.92);
+      background: rgba(8, 5, 8, 0.92);
       border-bottom: 1px solid var(--border);
       backdrop-filter: blur(8px);
     }
@@ -92,10 +113,10 @@
     /* scanline stripe on header */
     header::after {
       content: '';
-      position: absolute; inset: 0; pointer-events: none;
-      background: repeating-linear-gradient(
-        0deg, transparent 0 2px, rgba(0,0,0,0.06) 2px 3px
-      );
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(0deg, transparent 0 2px, rgba(0, 0, 0, 0.06) 2px 3px);
     }
 
     .hd-left {
@@ -109,7 +130,7 @@
       font-size: 1.9rem;
       letter-spacing: 0.04em;
       color: var(--amber);
-      text-shadow: 0 0 18px rgba(232,160,32,0.55), 0 0 36px rgba(232,160,32,0.18);
+      text-shadow: 0 0 18px rgba(232, 160, 32, 0.55), 0 0 36px rgba(232, 160, 32, 0.18);
       line-height: 1;
     }
 
@@ -128,7 +149,9 @@
 
     /* ── NAV ────────────────────────────────────────────────── */
     .hd-nav {
-      position: absolute; left: 50%; transform: translateX(-50%);
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
       display: flex;
       gap: 0.15rem;
     }
@@ -157,7 +180,9 @@
     }
 
     .live-badge {
-      display: flex; align-items: center; gap: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
       font-size: 0.62rem;
       letter-spacing: 0.18em;
       text-transform: uppercase;
@@ -165,16 +190,24 @@
     }
 
     .live-dot {
-      width: 7px; height: 7px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background: var(--amber);
-      box-shadow: 0 0 5px var(--amber), 0 0 10px rgba(232,160,32,0.4);
+      box-shadow: 0 0 5px var(--amber), 0 0 10px rgba(232, 160, 32, 0.4);
       animation: blink 2.2s ease-in-out infinite;
     }
 
     @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.3; }
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.3;
+      }
     }
 
     .clock {
@@ -194,9 +227,21 @@
       border-radius: 2px;
     }
 
-    .api-pill.online  { color: var(--green); border-color: rgba(86,168,92,0.35); }
-    .api-pill.offline { color: var(--red);   border-color: var(--red-dim); }
-    .api-pill.loading { color: var(--amber-dim); border-color: var(--border); animation: blink 1s linear infinite; }
+    .api-pill.online {
+      color: var(--green);
+      border-color: rgba(86, 168, 92, 0.35);
+    }
+
+    .api-pill.offline {
+      color: var(--red);
+      border-color: var(--red-dim);
+    }
+
+    .api-pill.loading {
+      color: var(--amber-dim);
+      border-color: var(--border);
+      animation: blink 1s linear infinite;
+    }
 
     /* ── ERROR BANNER ───────────────────────────────────────── */
     .error-banner {
@@ -204,13 +249,15 @@
       align-items: center;
       gap: 0.75rem;
       padding: 0.65rem 2rem;
-      background: rgba(200,40,40,0.12);
-      border-bottom: 1px solid rgba(200,40,40,0.3);
+      background: rgba(200, 40, 40, 0.12);
+      border-bottom: 1px solid rgba(200, 40, 40, 0.3);
       font-size: 0.68rem;
       color: #e87070;
     }
 
-    .error-banner.show { display: flex; }
+    .error-banner.show {
+      display: flex;
+    }
 
     /* ── MAIN ───────────────────────────────────────────────── */
     main {
@@ -219,104 +266,124 @@
       flex-direction: column;
       position: relative;
     }
-    
+
     #map {
       flex: 1;
       width: 100%;
       background: var(--bg2);
       z-index: 1;
     }
-    
+
     /* Leaflet overrides for dark mode aesthetic */
     .leaflet-container {
-        font-family: var(--fm);
-        background: var(--bg2);
+      font-family: var(--fm);
+      background: var(--bg2);
     }
-    .leaflet-popup-content-wrapper, .leaflet-popup-tip {
-        background: rgba(8, 5, 8, 0.95);
-        color: var(--cream);
-        border: 1px solid var(--border-hot);
-        box-shadow: 0 0 20px rgba(0,0,0,0.8);
-        border-radius: 4px;
+
+    .leaflet-popup-content-wrapper,
+    .leaflet-popup-tip {
+      background: rgba(8, 5, 8, 0.95);
+      color: var(--cream);
+      border: 1px solid var(--border-hot);
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+      border-radius: 4px;
     }
+
     .leaflet-popup-content {
-        margin: 12px 14px;
-        line-height: 1.5;
+      margin: 12px 14px;
+      line-height: 1.5;
     }
+
     .popup-title {
-        font-family: var(--fd);
-        color: var(--amber-bright);
-        font-size: 1.2rem;
-        letter-spacing: 0.05em;
-        margin-bottom: 6px;
-        border-bottom: 1px solid var(--border);
-        padding-bottom: 4px;
+      font-family: var(--fd);
+      color: var(--amber-bright);
+      font-size: 1.2rem;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 4px;
     }
+
     .popup-stat {
-        display: flex;
-        justify-content: space-between;
-        gap: 1rem;
-        font-size: 0.8rem;
-        margin-top: 4px;
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      font-size: 0.8rem;
+      margin-top: 4px;
     }
+
     .popup-val {
-        font-weight: bold;
+      font-weight: bold;
     }
-    .popup-val.high { color: var(--red); }
-    .popup-val.med { color: var(--orange); }
-    .popup-val.low { color: var(--green); }
+
+    .popup-val.high {
+      color: var(--red);
+    }
+
+    .popup-val.med {
+      color: var(--orange);
+    }
+
+    .popup-val.low {
+      color: var(--green);
+    }
 
     /* ── MAP OVERLAY DASHBOARD ─────────────────────────────── */
     .map-dashboard {
       position: absolute;
       bottom: 2rem;
       left: 2rem;
-      z-index: 400; /* Above Leaflet overlay pane */
-      background: rgba(17, 13, 20, 0.85); /* var(--card) with opacity */
+      z-index: 400;
+      /* Above Leaflet overlay pane */
+      background: rgba(17, 13, 20, 0.85);
+      /* var(--card) with opacity */
       border: 1px solid var(--border);
       backdrop-filter: blur(12px);
       padding: 1.2rem;
       width: 320px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     }
-    
+
     .map-dash-title {
-        font-family: var(--fd);
-        color: var(--amber);
-        font-size: 1.2rem;
-        letter-spacing: 0.05em;
-        margin-bottom: 1rem;
-        border-bottom: 1px solid var(--border);
-        padding-bottom: 0.5rem;
+      font-family: var(--fd);
+      color: var(--amber);
+      font-size: 1.2rem;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
     }
-    
+
     .map-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.75rem;
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.75rem;
     }
-    
+
     .map-table th {
-        text-align: left;
-        color: var(--cream-30);
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        padding-bottom: 0.5rem;
-        font-weight: normal;
-        border-bottom: 1px solid var(--cream-12);
+      text-align: left;
+      color: var(--cream-30);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding-bottom: 0.5rem;
+      font-weight: normal;
+      border-bottom: 1px solid var(--cream-12);
     }
-    
+
     .map-table td {
-        padding: 0.5rem 0;
-        border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
-    
+
     .map-table tr:last-child td {
-        border-bottom: none;
+      border-bottom: none;
     }
-    
-    .val-active { color: var(--amber-bright); font-weight: bold; }
-    
+
+    .val-active {
+      color: var(--amber-bright);
+      font-weight: bold;
+    }
+
     /* ── CONTROLS OVERLAY ──────────────────────────────────── */
     .map-controls {
       position: absolute;
@@ -331,224 +398,228 @@
       flex-direction: column;
       gap: 0.5rem;
     }
-    
+
     .control-label {
-        font-size: 0.55rem;
-        letter-spacing: 0.25em;
-        text-transform: uppercase;
-        color: var(--cream-60);
-        margin-bottom: 0.2rem;
-    }
-    
-    .metric-toggle {
-        display: flex;
-        gap: 0.5rem;
-    }
-    
-    .metric-btn {
-        font-family: var(--fm);
-        background: transparent;
-        border: 1px solid var(--border);
-        color: var(--cream-30);
-        padding: 0.4rem 0.8rem;
-        font-size: 0.7rem;
-        cursor: pointer;
-        transition: all 0.2s;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-    }
-    
-    .metric-btn:hover {
-        color: var(--cream);
-        border-color: var(--border-hot);
-    }
-    
-    .metric-btn.active {
-        background: var(--amber-glow);
-        color: var(--amber);
-        border-color: var(--amber);
+      font-size: 0.55rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--cream-60);
+      margin-bottom: 0.2rem;
     }
 
+    .metric-toggle {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .metric-btn {
+      font-family: var(--fm);
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--cream-30);
+      padding: 0.4rem 0.8rem;
+      font-size: 0.7rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .metric-btn:hover {
+      color: var(--cream);
+      border-color: var(--border-hot);
+    }
+
+    .metric-btn.active {
+      background: var(--amber-glow);
+      color: var(--amber);
+      border-color: var(--amber);
+    }
   </style>
 </head>
+
 <body>
-<div class="app">
+  <div class="app">
 
-  <!-- ── HEADER ── -->
-  <header>
-    <div class="hd-left">
-      <a href="index.html" class="logo" style="text-decoration:none">CROWD INTEL</a>
-      <span class="logo-sub">UMN Bar Tracker</span>
+    <!-- ── HEADER ── -->
+    <header>
+      <div class="hd-left">
+        <a href="index.html" class="logo" style="text-decoration:none">CROWD INTEL</a>
+        <span class="logo-sub">UMN Bar Tracker</span>
+      </div>
+      <nav class="hd-nav">
+        <a class="nav-tab" href="index.html">Live Forecast</a>
+        <a class="nav-tab active" href="map.html">Live Map</a>
+        <a class="nav-tab" href="pipeline.html">Data Pipeline</a>
+        <a class="nav-tab" href="simulations.html">Simulations</a>
+      </nav>
+      <div class="hd-right">
+        <div class="live-badge"><span class="live-dot"></span>Live</div>
+        <span class="clock" id="clock">--:--:--</span>
+        <span class="api-pill loading" id="api-pill">Connecting</span>
+      </div>
+    </header>
+
+    <!-- ── ERROR BANNER ── -->
+    <div class="error-banner" id="error-banner">
+      <span>⚠</span>
+      <span id="error-msg">Cannot reach API. Start backend:
+        <code>uvicorn platform.backend.main:app --reload --port 8001</code></span>
     </div>
-    <nav class="hd-nav">
-      <a class="nav-tab" href="index.html">Live Forecast</a>
-      <a class="nav-tab active" href="map.html">Live Map</a>
-      <a class="nav-tab" href="pipeline.html">Data Pipeline</a>
-    </nav>
-    <div class="hd-right">
-      <div class="live-badge"><span class="live-dot"></span>Live</div>
-      <span class="clock" id="clock">--:--:--</span>
-      <span class="api-pill loading" id="api-pill">Connecting</span>
-    </div>
-  </header>
 
-  <!-- ── ERROR BANNER ── -->
-  <div class="error-banner" id="error-banner">
-    <span>⚠</span>
-    <span id="error-msg">Cannot reach API. Start backend: <code>uvicorn platform.backend.main:app --reload --port 8001</code></span>
-  </div>
+    <!-- ── MAIN ── -->
+    <main>
+      <div id="map"></div>
 
-  <!-- ── MAIN ── -->
-  <main>
-    <div id="map"></div>
-    
-    <!-- Controls Overlay -->
-    <div class="map-controls">
+      <!-- Controls Overlay -->
+      <div class="map-controls">
         <div class="control-label">Bubble Size Metric</div>
         <div class="metric-toggle">
-            <button class="metric-btn active" id="btn-fullness" onclick="setMetric('pct')">Fullness %</button>
-            <button class="metric-btn" id="btn-wait" onclick="setMetric('wait')">Wait Time</button>
+          <button class="metric-btn active" id="btn-fullness" onclick="setMetric('pct')">Fullness %</button>
+          <button class="metric-btn" id="btn-wait" onclick="setMetric('wait')">Wait Time</button>
         </div>
-    </div>
-    
-    <!-- Dashboard Overlay -->
-    <div class="map-dashboard">
+      </div>
+
+      <!-- Dashboard Overlay -->
+      <div class="map-dashboard">
         <div class="map-dash-title">Current Predictions</div>
         <table class="map-table">
-            <thead>
-                <tr>
-                    <th>Bar</th>
-                    <th>Fullness</th>
-                    <th>Line Wait</th>
-                </tr>
-            </thead>
-            <tbody id="dash-tbody">
-                <!-- Populated via JS -->
-                <tr><td colspan="3" style="text-align:center; color: var(--cream-30)">Loading data...</td></tr>
-            </tbody>
+          <thead>
+            <tr>
+              <th>Bar</th>
+              <th>Fullness</th>
+              <th>Line Wait</th>
+            </tr>
+          </thead>
+          <tbody id="dash-tbody">
+            <!-- Populated via JS -->
+            <tr>
+              <td colspan="3" style="text-align:center; color: var(--cream-30)">Loading data...</td>
+            </tr>
+          </tbody>
         </table>
-    </div>
-  </main>
-</div>
+      </div>
+    </main>
+  </div>
 
-<script>
-  /* ── CONFIG ────────────────────────────────────────────── */
-  const API        = 'http://localhost:8001';
-  const REFRESH_S  = 60;
-  
-  // Coordinates mapped manually since the API currently doesn't provide them natively
-  const BAR_COORDS = {
-    "Blarney's Pub and Grill": [44.9796, -93.2363],
-    "Sally's Saloon":          [44.9734, -93.2285],
-    "Kollege Klub":            [44.9810, -93.2373],
-  };
-  
-  const BAR_LABELS = {
-    "Blarney's Pub and Grill": "Blarney's",
-    "Sally's Saloon":          "Sally's",
-    "Kollege Klub":            "KK",
-  };
+  <script>
+    /* ── CONFIG ────────────────────────────────────────────── */
+    const API = 'http://localhost:8001';
+    const REFRESH_S = 60;
 
-  let cdInterval = null;
-  let cdLeft     = REFRESH_S;
-  
-  let currentMetric = 'pct'; // 'pct' or 'wait'
-  let currentPreds = [];
-  let mapLayers = [];
+    // Coordinates mapped manually since the API currently doesn't provide them natively
+    const BAR_COORDS = {
+      "Blarney's Pub and Grill": [44.9796, -93.2363],
+      "Sally's Saloon": [44.9734, -93.2285],
+      "Kollege Klub": [44.9810, -93.2373],
+    };
 
-  /* ── CLOCK ─────────────────────────────────────────────── */
-  function tick() {
-    const n = new Date();
-    const pad = v => String(v).padStart(2,'0');
-    document.getElementById('clock').textContent =
-      `${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
-  }
-  setInterval(tick, 1000);
-  tick();
+    const BAR_LABELS = {
+      "Blarney's Pub and Grill": "Blarney's",
+      "Sally's Saloon": "Sally's",
+      "Kollege Klub": "KK",
+    };
 
-  /* ── COUNTDOWN ─────────────────────────────────────────── */
-  function startCountdown() {
-    clearInterval(cdInterval);
-    cdLeft = REFRESH_S;
-    cdInterval = setInterval(() => {
-      cdLeft--;
-      if (cdLeft <= 0) { clearInterval(cdInterval); fetchAll(); }
-    }, 1000);
-  }
+    let cdInterval = null;
+    let cdLeft = REFRESH_S;
 
-  /* ── MAP INIT ──────────────────────────────────────────── */
-  // Initialize Leaflet map centered on UMN Campus
-  const map = L.map('map', {
+    let currentMetric = 'pct'; // 'pct' or 'wait'
+    let currentPreds = [];
+    let mapLayers = [];
+
+    /* ── CLOCK ─────────────────────────────────────────────── */
+    function tick() {
+      const n = new Date();
+      const pad = v => String(v).padStart(2, '0');
+      document.getElementById('clock').textContent =
+        `${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+    }
+    setInterval(tick, 1000);
+    tick();
+
+    /* ── COUNTDOWN ─────────────────────────────────────────── */
+    function startCountdown() {
+      clearInterval(cdInterval);
+      cdLeft = REFRESH_S;
+      cdInterval = setInterval(() => {
+        cdLeft--;
+        if (cdLeft <= 0) { clearInterval(cdInterval); fetchAll(); }
+      }, 1000);
+    }
+
+    /* ── MAP INIT ──────────────────────────────────────────── */
+    // Initialize Leaflet map centered on UMN Campus
+    const map = L.map('map', {
       zoomControl: false // Custom position if needed later
-  }).setView([44.9768, -93.2325], 15);
-  
-  // Add CartoDB Dark Matter tile layer
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-	attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-	subdomains: 'abcd',
-	maxZoom: 20
-  }).addTo(map);
-  
-  // Custom Zoom Control position
-  L.control.zoom({
-      position: 'bottomright'
-  }).addTo(map);
+    }).setView([44.9768, -93.2325], 15);
 
-  /* ── MAP RENDER LOGIC ──────────────────────────────────── */
-  function setMetric(metric) {
+    // Add CartoDB Dark Matter tile layer
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 20
+    }).addTo(map);
+
+    // Custom Zoom Control position
+    L.control.zoom({
+      position: 'bottomright'
+    }).addTo(map);
+
+    /* ── MAP RENDER LOGIC ──────────────────────────────────── */
+    function setMetric(metric) {
       currentMetric = metric;
       document.getElementById('btn-fullness').classList.toggle('active', metric === 'pct');
       document.getElementById('btn-wait').classList.toggle('active', metric === 'wait');
-      
-      if (currentPreds.length > 0) {
-          renderData(currentPreds);
-      }
-  }
 
-  function getColor(pct) {
+      if (currentPreds.length > 0) {
+        renderData(currentPreds);
+      }
+    }
+
+    function getColor(pct) {
       if (pct < 50) return '#56a85c'; // Green
       if (pct < 85) return '#e8a020'; // Amber/Orange
       return '#df3030'; // Red
-  }
-  
-  function getRadius(p) {
+    }
+
+    function getRadius(p) {
       const pct = Math.round(p.predicted_pct_full * 100);
       const wait = Math.round(p.predicted_wait_minutes);
-      
-      if (currentMetric === 'pct') {
-          return Math.max(12, pct * 0.4); // Scale 12px to 40px based on fullness
-      } else {
-          return Math.max(12, wait * 1.5); // Scale based on wait time
-      }
-  }
 
-  function renderData(preds) {
+      if (currentMetric === 'pct') {
+        return Math.max(12, pct * 0.4); // Scale 12px to 40px based on fullness
+      } else {
+        return Math.max(12, wait * 1.5); // Scale based on wait time
+      }
+    }
+
+    function renderData(preds) {
       // Clear existing layers
       mapLayers.forEach(layer => map.removeLayer(layer));
       mapLayers = [];
-      
+
       const tbody = document.getElementById('dash-tbody');
       tbody.innerHTML = '';
-      
+
       preds.forEach(p => {
-          const coords = BAR_COORDS[p.bar_name];
-          if (!coords) return; // Skip if no coords
-          
-          const name = BAR_LABELS[p.bar_name] || p.bar_name;
-          const pct = Math.round(p.predicted_pct_full * 100);
-          const wait = Math.round(p.predicted_wait_minutes);
-          const color = getColor(pct);
-          const radius = getRadius(p);
-          
-          // Map Marker
-          const circle = L.circleMarker(coords, {
-              radius: radius,
-              fillColor: color,
-              color: '#fff',
-              weight: 2,
-              opacity: 0.8,
-              fillOpacity: 0.6
-          }).bindPopup(`
+        const coords = BAR_COORDS[p.bar_name];
+        if (!coords) return; // Skip if no coords
+
+        const name = BAR_LABELS[p.bar_name] || p.bar_name;
+        const pct = Math.round(p.predicted_pct_full * 100);
+        const wait = Math.round(p.predicted_wait_minutes);
+        const color = getColor(pct);
+        const radius = getRadius(p);
+
+        // Map Marker
+        const circle = L.circleMarker(coords, {
+          radius: radius,
+          fillColor: color,
+          color: '#fff',
+          weight: 2,
+          opacity: 0.8,
+          fillOpacity: 0.6
+        }).bindPopup(`
               <div class="popup-title">${name}</div>
               <div class="popup-stat">
                   <span>Fullness:</span>
@@ -559,68 +630,69 @@
                   <span class="popup-val ${wait > 10 ? 'high' : wait > 0 ? 'med' : 'low'}">${wait} min</span>
               </div>
           `);
-          
-          // Add interaction effects
-          circle.on('mouseover', function (e) {
-              this.setStyle({ fillOpacity: 0.9, weight: 3 });
-          });
-          circle.on('mouseout', function (e) {
-              this.setStyle({ fillOpacity: 0.6, weight: 2 });
-          });
-          
-          circle.addTo(map);
-          mapLayers.push(circle);
-          
-          // Dashboard Table Row
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
+
+        // Add interaction effects
+        circle.on('mouseover', function (e) {
+          this.setStyle({ fillOpacity: 0.9, weight: 3 });
+        });
+        circle.on('mouseout', function (e) {
+          this.setStyle({ fillOpacity: 0.6, weight: 2 });
+        });
+
+        circle.addTo(map);
+        mapLayers.push(circle);
+
+        // Dashboard Table Row
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
               <td>${name}</td>
               <td class="${currentMetric === 'pct' ? 'val-active' : ''}" style="color: ${color}">${pct}%</td>
               <td class="${currentMetric === 'wait' ? 'val-active' : ''}">${wait} min</td>
           `;
-          tbody.appendChild(tr);
+        tbody.appendChild(tr);
       });
-  }
-
-  /* ── FETCH ─────────────────────────────────────────────── */
-  async function fetchAll() {
-    const pill  = document.getElementById('api-pill');
-    const errEl = document.getElementById('error-banner');
-    pill.className = 'api-pill loading';
-    pill.textContent = 'Loading';
-
-    try {
-      const predsRes = await fetch(`${API}/api/v1/predict/all`);
-
-      if (!predsRes.ok) throw new Error(`predict/all ${predsRes.status}`);
-
-      const preds = await predsRes.json();
-      currentPreds = preds;
-      
-      renderData(preds);
-
-      pill.className   = 'api-pill online';
-      pill.textContent = 'Online';
-      errEl.classList.remove('show');
-
-    } catch (err) {
-      console.error(err);
-      pill.className   = 'api-pill offline';
-      pill.textContent = 'Offline';
-      document.getElementById('error-msg').textContent =
-        `Cannot reach API (${err.message}) — run: uvicorn platform.backend.main:app --reload --port 8001`;
-      errEl.classList.add('show');
     }
 
-    startCountdown();
-  }
+    /* ── FETCH ─────────────────────────────────────────────── */
+    async function fetchAll() {
+      const pill = document.getElementById('api-pill');
+      const errEl = document.getElementById('error-banner');
+      pill.className = 'api-pill loading';
+      pill.textContent = 'Loading';
 
-  /* ── INIT ──────────────────────────────────────────────── */
-  // Fix leafet map sizing on load
-  setTimeout(() => { map.invalidateSize(); }, 200);
-  fetchAll();
+      try {
+        const predsRes = await fetch(`${API}/api/v1/predict/all`);
 
-</script>
-<script src="ontology.js"></script>
+        if (!predsRes.ok) throw new Error(`predict/all ${predsRes.status}`);
+
+        const preds = await predsRes.json();
+        currentPreds = preds;
+
+        renderData(preds);
+
+        pill.className = 'api-pill online';
+        pill.textContent = 'Online';
+        errEl.classList.remove('show');
+
+      } catch (err) {
+        console.error(err);
+        pill.className = 'api-pill offline';
+        pill.textContent = 'Offline';
+        document.getElementById('error-msg').textContent =
+          `Cannot reach API (${err.message}) — run: uvicorn platform.backend.main:app --reload --port 8001`;
+        errEl.classList.add('show');
+      }
+
+      startCountdown();
+    }
+
+    /* ── INIT ──────────────────────────────────────────────── */
+    // Fix leafet map sizing on load
+    setTimeout(() => { map.invalidateSize(); }, 200);
+    fetchAll();
+
+  </script>
+  <script src="ontology.js"></script>
 </body>
+
 </html>

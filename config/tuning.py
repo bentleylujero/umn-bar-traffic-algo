@@ -17,7 +17,7 @@ Sections
 # Used to convert a raw headcount check-in → pct_full (0–100).
 
 BAR_CAPACITIES: dict[int, int] = {
-    1: 200,    # Blarney's Pub and Grill
+    1: 600,    # Blarney's Pub and Grill (basement + main floor)
     2: 1000,   # Sally's Saloon
     3: 500,    # Kollege Klub (two floors)
 }

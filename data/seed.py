@@ -15,13 +15,16 @@ import numpy as np
 
 from config.settings import BAR_SCHEDULES
 from data.db import get_connection, init_db
+from providers.greek_life import compute_greek_life_flags, GREEK_BAR_PROXIMITY
 
 SEED = 42
 random.seed(SEED)
 np.random.seed(SEED)
 
 # How many days of synthetic history to generate
-HISTORY_DAYS = 60
+# 180 days → covers Fall 2025 formal season (Oct-Nov), bid day (Sep 27),
+# Greek Week, and spring 2026 rush/bid day so the model learns these patterns.
+HISTORY_DAYS = 180
 
 # Realistic wait-time distributions per bar (mean, std) in minutes.
 # These are BASE values before signal multipliers.  At peak hours with no
@@ -242,6 +245,7 @@ def _traffic_multiplier(
     weather: dict,
     extras: dict,
     tv: dict,
+    greek: dict | None = None,
 ) -> float:
     """Combine signal flags into a single wait/crowd multiplier."""
     mult = 1.0
@@ -346,6 +350,23 @@ def _traffic_multiplier(
         mult *= 0.55
     elif weather["wind_chill_c"] < -25:
         mult *= 0.65
+
+    # Greek life — bar-specific proximity weights
+    if greek:
+        proximity = GREEK_BAR_PROXIMITY.get(bar_id, 0.5)
+        if greek.get("is_greek_bid_day"):
+            # Biggest Greek night of the semester
+            mult *= 1.0 + 0.80 * proximity
+        elif greek.get("is_greek_rush_week"):
+            # Rush = many dry events; suppresses general bar traffic
+            mult *= 0.80
+        elif greek.get("is_greek_formal_season") and dow in (3, 4, 5):
+            if hour >= 22 or hour <= 2:
+                mult *= 1.0 + 0.50 * proximity   # after-party spillback
+            elif 19 <= hour <= 22:
+                mult *= 1.0 + 0.25 * proximity   # pregame window
+        if greek.get("is_greek_thursday") and dow == 3:
+            mult *= 1.0 + 0.22 * proximity       # Greek Thursday baseline
 
     return mult
 
@@ -587,7 +608,8 @@ def seed(days: int = HISTORY_DAYS) -> None:
 
                     is_late_night = hour in (0, 1, 2)
                     weather       = _synthetic_weather(day)
-                    mult          = _traffic_multiplier(bar_id, hour, day.weekday(), acad, games, weather, extras, tv)
+                    greek         = compute_greek_life_flags(ts)
+                    mult          = _traffic_multiplier(bar_id, hour, day.weekday(), acad, games, weather, extras, tv, greek)
 
                     wait  = max(0.0, round(_wait(bar_id, hour, is_weekend, is_late_night) * mult, 1))
                     pct   = max(0.0, min(100.0, round(_pct_full(bar_id, hour, is_weekend, is_late_night) * mult, 1)))
@@ -633,8 +655,11 @@ def seed(days: int = HISTORY_DAYS) -> None:
                                      is_wild_game, is_timberwolves_game, is_nhl_playoffs,
                                      cloud_cover, is_first_nice_day,
                                      is_study_days, is_commencement, days_since_semester_start,
-                                     is_cinco_de_mayo, is_parents_weekend)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                     is_cinco_de_mayo, is_parents_weekend,
+                                     is_greek_rush_week, is_greek_bid_day, is_greek_formal_season,
+                                     is_greek_week, is_greek_thursday, is_greek_pregame_window,
+                                     greek_social_intensity)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                                 """,
                                 (
                                     obs_id,
@@ -688,6 +713,13 @@ def seed(days: int = HISTORY_DAYS) -> None:
                                     acad["days_since_semester_start"],
                                     extras["is_cinco_de_mayo"],
                                     extras["is_parents_weekend"],
+                                    greek["is_greek_rush_week"],
+                                    greek["is_greek_bid_day"],
+                                    greek["is_greek_formal_season"],
+                                    greek["is_greek_week"],
+                                    greek["is_greek_thursday"],
+                                    greek["is_greek_pregame_window"],
+                                    greek["greek_social_intensity"],
                                 ),
                             )
                             inserted += 1

@@ -65,8 +65,9 @@ def compute_academic_flags(dt: datetime) -> dict:
             days_since = (d - start).days
             week       = days_since // 7 + 1
             is_study   = int(fin_s - timedelta(days=3) <= d < fin_s)
+            is_weekend = d.weekday() >= 5
             return {
-                "classes_in_session":       1,
+                "classes_in_session":       0 if is_weekend else 1,
                 "is_finals_week":           0,
                 "is_welcome_week":          int(d <= syl_end),
                 "is_syllabus_week":         int(d <= syl_end),

@@ -82,13 +82,16 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      padding-top: 68px;
     }
 
     /* ── HEADER ─────────────────────────────────────────────── */
     header {
-      position: sticky;
+      position: fixed;
       top: 0;
-      z-index: 100;
+      left: 0;
+      right: 0;
+      z-index: 1000;
       height: 68px;
       padding: 0 2rem;
       display: flex;
@@ -274,6 +277,173 @@
       flex: 1;
       height: 1px;
       background: var(--border);
+    }
+
+    /* ── FACTOR CASCADE ──────────────────────────────────────── */
+    .factors-wrap {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    /* chip strip */
+    .factors-chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      padding: 0.8rem 1rem;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0, 0, 0, .18);
+    }
+
+    .fchip {
+      font-size: 0.5rem;
+      letter-spacing: .12em;
+      font-family: var(--fm);
+      padding: 3px 9px;
+      border-radius: 3px;
+      border: 1px solid transparent;
+      font-weight: 700;
+    }
+
+    .fchip-boost {
+      background: rgba(86, 168, 92, .12);
+      border-color: rgba(86, 168, 92, .4);
+      color: #56a85c;
+    }
+
+    .fchip-suppress {
+      background: rgba(223, 48, 48, .12);
+      border-color: rgba(223, 48, 48, .38);
+      color: #df6060;
+    }
+
+    .fchip-loading {
+      background: rgba(255, 255, 255, .04);
+      border-color: rgba(255, 255, 255, .1);
+      color: var(--cream-30);
+    }
+
+    /* insight cards */
+    .factors-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+    }
+
+    @media (max-width: 900px) {
+      .factors-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .factor-card {
+      padding: 0.85rem 1rem;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      transition: background .2s;
+    }
+
+    .factor-card:last-child {
+      border-right: none;
+    }
+
+    .factor-card:hover {
+      background: rgba(232, 160, 32, .03);
+    }
+
+    .factor-card-accent {
+      font-size: .47rem;
+      letter-spacing: .18em;
+      font-weight: 700;
+      margin-bottom: .35rem;
+      text-transform: uppercase;
+    }
+
+    .factor-card-title {
+      font-size: .55rem;
+      font-weight: 700;
+      color: var(--cream);
+      line-height: 1.4;
+      margin-bottom: .25rem;
+    }
+
+    .factor-card-body {
+      font-size: .5rem;
+      color: var(--cream-60);
+      line-height: 1.6;
+    }
+
+    .factor-skeleton {
+      height: 100px;
+      background: linear-gradient(90deg, rgba(255, 255, 255, .03) 25%, rgba(255, 255, 255, .06) 50%, rgba(255, 255, 255, .03) 75%);
+      background-size: 200% 100%;
+      animation: skel-shimmer 1.5s infinite;
+    }
+
+    @keyframes skel-shimmer {
+      to {
+        background-position: -200% 0
+      }
+    }
+
+    /* per-bar impact */
+    .factors-bar-impacts {
+      padding: .8rem 1rem;
+      border-top: 1px solid var(--border);
+      background: rgba(0, 0, 0, .1);
+    }
+
+    .fbar-title {
+      font-size: .47rem;
+      letter-spacing: .18em;
+      color: var(--amber);
+      text-transform: uppercase;
+      margin-bottom: .65rem;
+    }
+
+    .fbar-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: .75rem;
+    }
+
+    .fbar-item {
+      background: rgba(255, 255, 255, .03);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .6rem .8rem;
+    }
+
+    .fbar-item-name {
+      font-size: .5rem;
+      font-weight: 700;
+      color: var(--amber);
+      letter-spacing: .08em;
+      margin-bottom: .4rem;
+    }
+
+    .fbar-drivers {
+      font-size: .45rem;
+      color: var(--cream-60);
+      line-height: 1.6;
+    }
+
+    .fbar-driver-boost {
+      color: #56a85c;
+      font-weight: 700;
+    }
+
+    .fbar-driver-neutral {
+      color: var(--cream-60);
+    }
+
+    .fbar-skeleton {
+      height: 72px;
+      background: linear-gradient(90deg, rgba(255, 255, 255, .03) 25%, rgba(255, 255, 255, .06) 50%, rgba(255, 255, 255, .03) 75%);
+      background-size: 200% 100%;
+      animation: skel-shimmer 1.5s infinite;
     }
 
     /* ── BAR CARDS ──────────────────────────────────────────── */
@@ -1046,6 +1216,7 @@
         <a class="nav-tab active" href="index.html">Live Forecast</a>
         <a class="nav-tab" href="map.html">Live Map</a>
         <a class="nav-tab" href="pipeline.html">Data Pipeline</a>
+        <a class="nav-tab" href="simulations.html">Simulations</a>
       </nav>
       <div class="hd-right">
         <div class="live-badge"><span class="live-dot"></span>Live</div>
@@ -1143,6 +1314,33 @@
               <span class="obs-status" id="obs-status"></span>
             </div>
 
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TONIGHT'S FACTOR CASCADE ───────────────────────── -->
+      <div>
+        <div class="section-label">Tonight's Factor Cascade</div>
+        <div id="factors-wrap" class="factors-wrap">
+          <!-- chips row -->
+          <div class="factors-chips-row" id="factors-chips">
+            <span class="fchip fchip-loading">Fetching live factors…</span>
+          </div>
+          <!-- insight cards row -->
+          <div class="factors-grid" id="factors-grid">
+            <div class="factor-card factor-skeleton"></div>
+            <div class="factor-card factor-skeleton"></div>
+            <div class="factor-card factor-skeleton"></div>
+            <div class="factor-card factor-skeleton"></div>
+          </div>
+          <!-- per-bar impact row -->
+          <div class="factors-bar-impacts" id="factors-bar-impacts">
+            <div class="fbar-title">Estimated Bar Impact</div>
+            <div class="fbar-row" id="fbar-row">
+              <div class="fbar-item fbar-skeleton"></div>
+              <div class="fbar-item fbar-skeleton"></div>
+              <div class="fbar-item fbar-skeleton"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -1414,6 +1612,131 @@
       return div;
     }
 
+    /* ── FACTOR CASCADE RENDERER ────────────────────────────── */
+    function renderFactors(signals, insights, preds) {
+      const s = signals.sports || {};
+      const c = signals.calendar || {};
+      const w = signals.weather || {};
+
+      // ── 1. Build chips ─────────────────────────────────────────
+      const boosts = [];
+      const suppresses = [];
+
+      // Academic
+      if (!c.classes_in_session) boosts.push('No Classes — Social Mode ↑');
+      if (c.is_syllabus_week) boosts.push('Syllabus Week');
+      if (c.is_welcome_week) boosts.push('Welcome Week');
+      if (c.is_blackout_wednesday) boosts.push('Blackout Wednesday');
+      if (c.is_st_patricks) boosts.push("St. Patrick's Day");
+      if (c.is_halloween) boosts.push('Halloween');
+      if (c.is_cinco_de_mayo) boosts.push('Cinco de Mayo');
+      if (c.is_bar_crawl) boosts.push('Bar Crawl Night');
+      if (c.is_finals_week) suppresses.push('Finals Week — Study Suppressor');
+      if (c.is_midterms_week) suppresses.push('Midterms Week');
+      if (c.is_study_days) suppresses.push('Study Days');
+      if (c.is_break) suppresses.push('Campus Break — Low Turnout');
+      if (c.is_summer_session) suppresses.push('Summer Session');
+      if (c.classes_in_session) suppresses.push('Weeknight Classes Active');
+
+      // Sports
+      if (s.is_football_home) boosts.push('Football Home ↑');
+      if (s.is_basketball_home) boosts.push('Basketball Home ↑');
+      if (s.is_hockey_home) boosts.push('Hockey Home ↑');
+      if (s.is_rivalry_game) boosts.push('Rivalry Game Multiplier ↑');
+      if (s.is_super_bowl) boosts.push('SUPER BOWL 🔥');
+      if (s.is_march_madness_elite) boosts.push('March Madness Elite 8');
+      if (s.is_cfb_championship) boosts.push('CFB Championship');
+      if (s.is_vikings_game) boosts.push('Vikings Game');
+      if (s.is_wild_game) boosts.push('Wild Game');
+      if (s.is_timberwolves_game) boosts.push('T-Wolves Game');
+
+      // Weather
+      const temp = w.temperature_c;
+      if (w.is_first_nice_day) boosts.push('First Nice Day of Spring ☀️');
+      if (w.is_severe_weather) suppresses.push('Severe Weather Warning');
+      if (temp != null && temp < -10) suppresses.push(`Extreme Cold (${temp.toFixed(0)}°C)`);
+      else if (temp != null && temp < 0) suppresses.push(`Cold Weather (${temp.toFixed(0)}°C)`);
+      else if (temp != null && temp > 20) boosts.push(`Nice Weather (${temp.toFixed(0)}°C)`);
+      if (w.precipitation_mm > 2) suppresses.push(`Rain (${w.precipitation_mm.toFixed(1)} mm/h)`);
+      if (w.snowfall_mm > 5) suppresses.push(`Heavy Snow (${w.snowfall_mm.toFixed(0)} mm)`);
+
+      const chipsEl = document.getElementById('factors-chips');
+      chipsEl.innerHTML = [
+        ...boosts.map(t => `<span class="fchip fchip-boost">⬆ ${t}</span>`),
+        ...suppresses.map(t => `<span class="fchip fchip-suppress">⬇ ${t}</span>`),
+      ].join('') || '<span class="fchip fchip-loading">Baseline night — no major factors active</span>';
+
+      // ── 2. Insight cards ──────────────────────────────────────
+      const CARDS = [
+        { color: '#56a85c', accent: '📚 Academic', key: 'academic' },
+        { color: '#ffb533', accent: '🏟 Athletics', key: 'athletics' },
+        { color: '#00cfff', accent: '🌡 Weather', key: 'weather' },
+        { color: '#d868a0', accent: '🏛 Greek Life', key: 'greek_life' },
+      ];
+
+      const grid = document.getElementById('factors-grid');
+      grid.innerHTML = CARDS.map((card, i) => {
+        const text = insights ? insights[card.key] : 'Loading…';
+        const isLast = i === CARDS.length - 1;
+        return `<div class="factor-card${isLast ? ' factor-card-last' : ''}">
+          <div class="factor-card-accent" style="color:${card.color}">${card.accent}</div>
+          <div class="factor-card-body">${text || '—'}</div>
+        </div>`;
+      }).join('');
+
+      // ── 3. Per-bar impact ──────────────────────────────────────
+      const BAR_PROFILES = [
+        {
+          name: "Blarney's",
+          drivers: [
+            { flag: s.is_football_home || s.is_basketball_home, label: 'Post-game Dinkytown migration', type: 'boost' },
+            { flag: s.is_hockey_home, label: 'Hockey home — student draw', type: 'boost' },
+            { flag: s.is_rivalry_game, label: 'Rivalry intensity × 1.5', type: 'boost' },
+            { flag: w.is_severe_weather, label: 'Severe weather → indoor draw', type: 'boost' },
+            { flag: temp < -5, label: 'Cold → crowds migrate inside', type: 'boost' },
+            { flag: c.is_finals_week, label: 'Finals suppressor –1.5', type: 'suppress' },
+          ],
+        },
+        {
+          name: "Sally's",
+          drivers: [
+            { flag: s.is_football_home, label: 'Stadium Village foot traffic', type: 'boost' },
+            { flag: s.is_basketball_home, label: 'BB home → TV crowd builds 8–10 PM', type: 'boost' },
+            { flag: w.is_first_nice_day, label: 'Nice day → patio fill', type: 'boost' },
+            { flag: c.is_syllabus_week, label: 'Syllabus Week surge', type: 'boost' },
+            { flag: c.classes_in_session, label: 'Weeknight classes active', type: 'suppress' },
+          ],
+        },
+        {
+          name: 'KK',
+          drivers: [
+            { flag: !c.classes_in_session, label: 'Weekend / no class — social peak', type: 'boost' },
+            { flag: s.is_basketball_home, label: 'Basketball game → student turnout', type: 'boost' },
+            { flag: w.is_severe_weather, label: 'Severe weather → KK as destination', type: 'boost' },
+            { flag: c.is_welcome_week, label: 'Welcome Week — max social energy', type: 'boost' },
+            { flag: c.is_finals_week, label: 'Finals → social mode 0.15', type: 'suppress' },
+          ],
+        },
+      ];
+
+      const fbarRow = document.getElementById('fbar-row');
+      fbarRow.innerHTML = BAR_PROFILES.map(bar => {
+        const active = bar.drivers.filter(d => d.flag);
+        const driverHTML = active.length
+          ? active.map(d =>
+            `<div class="fbar-driver-${d.type}">
+                ${d.type === 'boost' ? '↑' : '↓'} ${d.label}
+              </div>`
+          ).join('')
+          : '<div class="fbar-driver-neutral">No specific factors active — baseline prediction</div>';
+
+        return `<div class="fbar-item">
+          <div class="fbar-item-name">${bar.name}</div>
+          <div class="fbar-drivers">${driverHTML}</div>
+        </div>`;
+      }).join('');
+    }
+
     /* ── FETCH ─────────────────────────────────────────────── */
     async function fetchAll() {
       const pill = document.getElementById('api-pill');
@@ -1422,9 +1745,10 @@
       pill.textContent = 'Loading';
 
       try {
-        const [predsRes, sigsRes] = await Promise.all([
+        const [predsRes, sigsRes, insRes] = await Promise.all([
           fetch(`${API}/api/v1/predict/all`),
           fetch(`${API}/api/v1/signals/live`),
+          fetch(`${API}/api/v1/signals/insights`),
         ]);
 
         if (!predsRes.ok) throw new Error(`predict/all ${predsRes.status}`);
@@ -1432,9 +1756,11 @@
 
         const preds = await predsRes.json();
         const signals = await sigsRes.json();
+        const insights = insRes.ok ? await insRes.json() : null;
 
         renderBars(preds, signals.popular_times);
         renderSignals(signals);
+        renderFactors(signals, insights, preds);
 
         pill.className = 'api-pill online';
         pill.textContent = 'Online';

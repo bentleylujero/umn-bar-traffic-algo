@@ -29,9 +29,12 @@
       --c30: rgba(237, 224, 204, .3);
       --c12: rgba(237, 224, 204, .12);
       --border: rgba(232, 160, 32, .13);
-      --border-h: rgba(232, 160, 32, .45);
       --fd: 'Anton', sans-serif;
       --fm: 'Inconsolata', monospace;
+      --raw: #0bc5ea;
+      --ctx: #a78bfa;
+      --intent: #e8a020;
+      --ml: #34d399;
     }
 
     html,
@@ -50,63 +53,46 @@
       z-index: 0;
       pointer-events: none;
       background-image:
-        linear-gradient(rgba(0, 190, 255, .022) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 190, 255, .022) 1px, transparent 1px);
+        linear-gradient(rgba(0, 190, 255, .018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 190, 255, .018) 1px, transparent 1px);
       background-size: 52px 52px;
     }
 
-    /* ── HEADER ─────────────────────────────────────────────── */
-    header {
+    /* ── HEADER ─────────────────────────────────── */
+    .hdr-main {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
-      z-index: 1000;
-      height: 68px;
-      padding: 0 2rem;
+      z-index: 100;
+      height: 52px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(8, 5, 8, 0.92);
+      padding: 0 22px;
       border-bottom: 1px solid var(--border);
-      backdrop-filter: blur(8px);
-    }
-
-    header::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      background: repeating-linear-gradient(0deg, transparent 0 2px, rgba(0, 0, 0, 0.06) 2px 3px);
+      background: rgba(8, 5, 8, .95);
+      backdrop-filter: blur(12px);
     }
 
     .hd-left {
       display: flex;
       align-items: baseline;
-      gap: 0.8rem;
+      gap: 10px
     }
 
-    .logo {
+    .hd-logo {
       font-family: var(--fd);
-      font-size: 1.9rem;
-      letter-spacing: 0.04em;
-      color: var(--amber);
-      text-shadow: 0 0 18px rgba(232, 160, 32, 0.55), 0 0 36px rgba(232, 160, 32, 0.18);
-      line-height: 1;
-      text-decoration: none;
+      font-size: 16px;
+      letter-spacing: .08em;
+      color: var(--amber-b)
     }
 
-    .logo-sub {
-      font-size: 0.6rem;
-      letter-spacing: 0.22em;
+    .hd-sub {
+      font-size: 8px;
+      letter-spacing: .22em;
       text-transform: uppercase;
-      color: var(--c30);
-    }
-
-    .hd-right {
-      display: flex;
-      align-items: center;
-      gap: 1.4rem;
+      color: var(--c30)
     }
 
     .hd-nav {
@@ -114,165 +100,169 @@
       left: 50%;
       transform: translateX(-50%);
       display: flex;
-      gap: 0.15rem;
+      gap: .1rem
     }
 
     .nav-tab {
       font-family: var(--fm);
-      font-size: 0.58rem;
-      letter-spacing: 0.26em;
+      font-size: 9px;
+      letter-spacing: .22em;
       text-transform: uppercase;
-      padding: 0.32rem 0.9rem;
+      padding: .28rem .85rem;
       color: var(--c30);
       text-decoration: none;
       border: 1px solid transparent;
-      transition: color 0.2s, border-color 0.2s;
+      transition: color .2s, border-color .2s;
     }
 
     .nav-tab:hover {
       color: var(--c60);
-      border-color: var(--border);
+      border-color: var(--border)
     }
 
     .nav-tab.active {
       color: var(--amber);
-      border-color: var(--border);
-      background: var(--amber-glow, rgba(232, 160, 32, 0.10));
+      border-color: var(--border)
+    }
+
+    .hd-right {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem
     }
 
     .live-badge {
       display: flex;
       align-items: center;
-      gap: 0.4rem;
-      font-size: 0.62rem;
-      letter-spacing: 0.18em;
+      gap: .4rem;
+      font-size: .6rem;
+      letter-spacing: .18em;
       text-transform: uppercase;
-      color: var(--amber);
+      color: var(--amber)
     }
 
     .live-dot {
-      width: 7px;
-      height: 7px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: var(--amber);
-      box-shadow: 0 0 5px var(--amber), 0 0 10px rgba(232, 160, 32, 0.4);
-      animation: blink 2.2s ease-in-out infinite;
+      box-shadow: 0 0 5px var(--amber);
+      animation: blink 2.2s ease-in-out infinite
     }
 
     @keyframes blink {
 
       0%,
       100% {
-        opacity: 1;
+        opacity: 1
       }
 
       50% {
-        opacity: 0.3;
+        opacity: .3
       }
     }
 
-    .clock {
-      font-size: 0.88rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      color: var(--c60);
-      font-variant-numeric: tabular-nums;
-    }
-
-    /* PIPELINE SUB-HEADER */
-    .hdr {
+    /* ── STORY BAR ──────────────────────────────── */
+    .story-bar {
       position: fixed;
-      top: 68px;
-
+      top: 52px;
       left: 0;
       right: 0;
       z-index: 90;
-      height: 50px;
+      height: 46px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 0 24px;
+      padding: 0 22px;
+      gap: 9px;
       border-bottom: 1px solid var(--border);
-      background: rgba(8, 5, 8, .88);
+      background: rgba(8, 5, 8, .92);
       backdrop-filter: blur(8px);
     }
 
-    .hdr-left {
-      display: flex;
-      align-items: baseline;
-      gap: 14px
-    }
-
-    .hdr-title {
-      font-family: var(--fd);
-      font-size: 20px;
-      letter-spacing: .07em
-    }
-
-    .hdr-sub {
-      font-size: 9px;
-      color: var(--c30);
-      letter-spacing: .16em
-    }
-
-    .hdr-stats {
-      display: flex;
-      gap: 20px;
-      align-items: center
-    }
-
-    .hdr-stat {
-      text-align: center
-    }
-
-    .hdr-stat-v {
-      font-size: 15px;
-      color: var(--amber-b);
-      font-weight: 700;
-      line-height: 1
-    }
-
-    .hdr-stat-k {
-      font-size: 8px;
-      color: var(--c30);
-      letter-spacing: .1em;
-      margin-top: 1px
-    }
-
-    .run-btn {
-      padding: 7px 18px;
-      background: rgba(232, 160, 32, .1);
-      border: 1px solid var(--amber);
-      color: var(--amber-b);
-      font-family: var(--fm);
-      font-size: 10px;
-      letter-spacing: .14em;
+    .story-lbl {
+      font-size: 7.5px;
+      letter-spacing: .22em;
       text-transform: uppercase;
+      color: var(--c30);
+      margin-right: 3px;
+      white-space: nowrap
+    }
+
+    .story-btn {
+      font-family: var(--fm);
+      font-size: 8px;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      padding: 4px 11px;
+      border: 1px solid rgba(255, 255, 255, .1);
+      color: var(--c30);
+      background: transparent;
       cursor: pointer;
       transition: all .2s;
+      border-radius: 1px;
+      white-space: nowrap;
     }
 
-    .run-btn:hover {
-      background: rgba(232, 160, 32, .2);
-      box-shadow: 0 0 14px rgba(232, 160, 32, .25)
+    .story-btn:hover {
+      color: var(--cream);
+      border-color: rgba(255, 255, 255, .25)
     }
 
-    .run-btn.running {
-      color: #3ecfb8;
-      border-color: #3ecfb8;
-      background: rgba(62, 207, 184, .08)
+    .story-btn.active {
+      font-weight: 700
     }
 
-    /* VIEWPORT */
+    .story-btn[data-story="date_party"].active {
+      color: #f472b6;
+      border-color: #f472b6;
+      background: rgba(244, 114, 182, .08)
+    }
+
+    .story-btn[data-story="game_day"].active {
+      color: #fb923c;
+      border-color: #fb923c;
+      background: rgba(251, 146, 60, .08)
+    }
+
+    .story-btn[data-story="kk_tuesday"].active {
+      color: #e8a020;
+      border-color: #e8a020;
+      background: rgba(232, 160, 32, .08)
+    }
+
+    .story-btn[data-story="finals"].active {
+      color: #60a5fa;
+      border-color: #60a5fa;
+      background: rgba(96, 165, 250, .08)
+    }
+
+    .story-narr {
+      margin-left: auto;
+      max-width: 460px;
+      font-size: 7.5px;
+      color: var(--c30);
+      letter-spacing: .04em;
+      line-height: 1.5;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      transition: color .3s;
+    }
+
+    .story-narr.on {
+      color: var(--c60)
+    }
+
+    /* ── VIEWPORT ───────────────────────────────── */
     #vp {
       position: fixed;
-      top: 118px;
+      top: 98px;
       left: 0;
       right: 0;
-      bottom: 0;
+      bottom: 24px;
       overflow: hidden;
       cursor: grab;
-      z-index: 1
+      z-index: 1;
     }
 
     #vp.drag {
@@ -283,1107 +273,1045 @@
       position: absolute;
       top: 0;
       left: 0;
-      width: 1860px;
-      height: 1100px;
-      transform-origin: 0 0
+      width: 1900px;
+      height: 1020px;
+      transform-origin: 0 0;
     }
 
-    /* SVG */
     #psvg {
       position: absolute;
       top: 0;
       left: 0;
-      width: 1860px;
-      height: 1100px;
+      width: 1900px;
+      height: 1020px;
       pointer-events: none;
-      overflow: visible
+      overflow: visible;
     }
 
-    /* NODES */
+    /* ── COLUMN HEADERS ─────────────────────────── */
+    .col-hdr {
+      position: absolute;
+      top: 4px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 7.5px;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+    }
+
+    .col-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      flex-shrink: 0
+    }
+
+    .col-desc {
+      font-size: 6.5px;
+      opacity: .4;
+      letter-spacing: .14em
+    }
+
+    /* ── NODE CARDS ─────────────────────────────── */
     .node {
       position: absolute;
-      width: 200px;
+      width: 172px;
       background: var(--card);
       border: 1px solid var(--border);
       border-top: 2.5px solid var(--nc, var(--amber));
-      padding: 11px 14px 10px;
+      padding: 9px 12px 8px;
       cursor: pointer;
-      transition: border-color .25s, box-shadow .25s, transform .18s;
+      transition: border-color .25s, box-shadow .25s, transform .18s, opacity .3s;
       z-index: 10;
     }
 
     .node:hover {
       border-color: var(--nc, var(--amber));
-      box-shadow: 0 0 22px color-mix(in srgb, var(--nc, var(--amber)) 25%, transparent),
-        inset 0 0 28px color-mix(in srgb, var(--nc, var(--amber)) 5%, transparent);
+      box-shadow: 0 0 20px color-mix(in srgb, var(--nc, var(--amber)) 30%, transparent),
+        inset 0 0 22px color-mix(in srgb, var(--nc, var(--amber)) 5%, transparent);
       transform: translateY(-2px);
       z-index: 20;
     }
 
-    @keyframes nrefresh {
-      0% {
-        box-shadow: none
-      }
-
-      35% {
-        box-shadow: 0 0 0 3px var(--nc), 0 0 28px var(--nc)
-      }
-
-      100% {
-        box-shadow: none
-      }
+    .node.dimmed {
+      opacity: .1;
+      pointer-events: none
     }
 
-    .node.flash {
-      animation: nrefresh .75s ease-out
+    .node.story-lit {
+      box-shadow: 0 0 30px color-mix(in srgb, var(--sc, var(--nc)) 50%, transparent),
+        inset 0 0 18px color-mix(in srgb, var(--sc, var(--nc)) 8%, transparent);
+      border-top-color: var(--sc, var(--nc)) !important;
+      opacity: 1 !important;
     }
 
     .nh {
       display: flex;
       align-items: center;
-      gap: 6px;
-      margin-bottom: 3px
+      gap: 5px;
+      margin-bottom: 2px
     }
 
     .ndot {
-      width: 6px;
-      height: 6px;
+      width: 5px;
+      height: 5px;
       border-radius: 50%;
       background: var(--nc, var(--amber));
-      box-shadow: 0 0 6px var(--nc, var(--amber));
+      box-shadow: 0 0 4px var(--nc, var(--amber));
       flex-shrink: 0
-    }
-
-    .node-live .ndot {
-      animation: pdot 1.9s infinite
     }
 
     .nlabel {
       font-family: var(--fd);
-      font-size: 13px;
-      letter-spacing: .07em;
+      font-size: 11.5px;
+      letter-spacing: .05em;
       flex: 1
     }
 
     .nbadge {
-      font-size: 7.5px;
-      letter-spacing: .13em;
-      padding: 2px 5px;
+      font-size: 6.5px;
+      letter-spacing: .12em;
+      padding: 1px 4px;
       border: 1px solid var(--nc, var(--amber));
       color: var(--nc, var(--amber));
-      opacity: .75
-    }
-
-    .nsub {
-      font-size: 8.5px;
-      color: var(--c30);
-      letter-spacing: .09em;
-      margin-bottom: 5px
-    }
-
-    .ncache {
-      font-size: 7.5px;
-      color: var(--c30);
-      letter-spacing: .1em
-    }
-
-    .nmetric {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin-top: 6px;
-      border-top: 1px solid var(--border);
-      padding-top: 5px
-    }
-
-    .nmk {
-      font-size: 7.5px;
-      color: var(--c30);
-      letter-spacing: .07em
-    }
-
-    .nmv {
-      font-size: 12px;
-      color: var(--nc, var(--amber));
-      font-weight: 700
-    }
-
-    /* output bar nodes */
-    .nbar {
-      width: 220px
-    }
-
-    .prow {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin-top: 3px
-    }
-
-    .pk {
-      font-size: 7.5px;
-      color: var(--c30);
-      letter-spacing: .07em
-    }
-
-    .pv {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--nc)
-    }
-
-    .cbadge {
-      display: inline-block;
-      font-size: 7px;
-      letter-spacing: .12em;
-      padding: 2px 5px;
-      border: 1px solid var(--nc);
-      color: var(--nc);
-      margin-top: 5px
-    }
-
-    /* column labels */
-    .clbl {
-      position: absolute;
-      font-size: 7.5px;
-      letter-spacing: .2em;
-      color: var(--c30);
+      opacity: .65;
       text-transform: uppercase;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 4px;
-      text-align: center;
     }
 
-    /* ZOOM CTRL */
-    #zc {
+    .ndesc {
+      font-size: 8px;
+      color: var(--c30);
+      line-height: 1.4;
+      margin-top: 2px
+    }
+
+    .nsigs {
+      margin-top: 5px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px
+    }
+
+    .nsig {
+      font-size: 6.5px;
+      padding: 1px 4px;
+      background: color-mix(in srgb, var(--nc, var(--amber)) 8%, transparent);
+      border: 1px solid color-mix(in srgb, var(--nc, var(--amber)) 18%, transparent);
+      color: color-mix(in srgb, var(--nc, var(--amber)) 65%, var(--cream));
+      letter-spacing: .07em;
+    }
+
+    .node[data-layer="0"] {
+      --nc: var(--raw)
+    }
+
+    .node[data-layer="1"] {
+      --nc: var(--ctx)
+    }
+
+    .node[data-layer="2"][data-bar="sallys"] {
+      --nc: #fb923c
+    }
+
+    .node[data-layer="2"][data-bar="blarneys"] {
+      --nc: #facc15
+    }
+
+    .node[data-layer="2"][data-bar="kk"] {
+      --nc: #c084fc
+    }
+
+    .node[data-layer="3"],
+    .node[data-layer="4"] {
+      --nc: var(--ml)
+    }
+
+    /* ── EDGES ───────────────────────────────────── */
+    .ep {
+      fill: none;
+      stroke: rgba(237, 224, 204, .09);
+      stroke-width: 1.2;
+      transition: stroke .3s, stroke-width .3s, opacity .3s;
+    }
+
+    .ep.causal {
+      stroke-dasharray: 5 4
+    }
+
+    .ep.pass {
+      stroke-dasharray: 2 5;
+      stroke: rgba(237, 224, 204, .05)
+    }
+
+    .ep.hi {
+      stroke-width: 1.8
+    }
+
+    .ep.lo {
+      stroke-width: 0.8;
+      stroke: rgba(237, 224, 204, .05)
+    }
+
+    .ep.dimmed {
+      opacity: .03
+    }
+
+    .ep.lit {
+      stroke-width: 2.4;
+      opacity: 1
+    }
+
+    .ep.lit.causal {
+      animation: flow 1.8s linear infinite;
+      stroke-dasharray: 8 5
+    }
+
+    @keyframes flow {
+      from {
+        stroke-dashoffset: 100
+      }
+
+      to {
+        stroke-dashoffset: 0
+      }
+    }
+
+    .eh {
+      fill: none;
+      stroke: transparent;
+      stroke-width: 14;
+      cursor: crosshair
+    }
+
+    .elbl {
+      position: absolute;
+      pointer-events: none;
+      font-family: var(--fm);
+      font-size: 7px;
+      letter-spacing: .08em;
+      color: var(--c30);
+      background: rgba(8, 5, 8, .88);
+      padding: 1px 5px;
+      white-space: nowrap;
+      opacity: 0;
+      border: 1px solid rgba(237, 224, 204, .07);
+      z-index: 40;
+      transition: opacity .15s, color .3s;
+    }
+
+    .elbl.lit {
+      opacity: 1
+    }
+
+    .elbl.dimmed {
+      opacity: 0
+    }
+
+    /* ── DETAIL PANEL ───────────────────────────── */
+    #detail {
       position: fixed;
-      bottom: 18px;
-      right: 18px;
-      z-index: 200;
-      display: flex;
-      flex-direction: column;
-      gap: 3px
+      right: 0;
+      top: 98px;
+      bottom: 24px;
+      width: 290px;
+      z-index: 80;
+      background: rgba(12, 9, 16, .97);
+      border-left: 1px solid var(--border);
+      transform: translateX(100%);
+      transition: transform .28s cubic-bezier(.4, 0, .2, 1);
+      overflow-y: auto;
+      padding: 18px 16px;
     }
 
-    .zb {
-      width: 30px;
-      height: 30px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      color: var(--c60);
-      font-size: 16px;
+    #detail.open {
+      transform: translateX(0)
+    }
+
+    #det-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      font-size: 8px;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--c30);
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all .2s;
+      background: none;
+      border: none;
       font-family: var(--fm);
     }
 
-    .zb:hover {
-      border-color: var(--amber);
-      color: var(--amber-b)
+    #det-close:hover {
+      color: var(--cream)
     }
 
-    #zlvl {
-      background: var(--card);
-      border: 1px solid var(--border);
+    .det-layer {
+      font-size: 7px;
+      letter-spacing: .22em;
+      text-transform: uppercase;
       color: var(--c30);
-      font-size: 8.5px;
-      letter-spacing: .1em;
-      text-align: center;
-      padding: 4px 0
-    }
-
-    /* TOOLTIP */
-    #tt {
-      position: fixed;
-      z-index: 500;
-      min-width: 248px;
-      max-width: 300px;
-      background: #09070d;
-      border: 1px solid var(--ttc, #e8a020);
-      box-shadow: 0 4px 40px rgba(0, 0, 0, .85);
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity .14s, transform .14s;
-      transform: translateY(5px);
-    }
-
-    #tt.vis {
-      opacity: 1;
-      transform: translateY(0)
-    }
-
-    .tth {
-      padding: 8px 12px;
-      border-bottom: 1px solid rgba(255, 255, 255, .07);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: rgba(255, 255, 255, .025)
-    }
-
-    .tttl {
-      font-family: var(--fd);
-      font-size: 13px;
-      letter-spacing: .06em;
-      color: var(--ttc, #e8a020)
-    }
-
-    .ttbg {
-      font-size: 7.5px;
-      letter-spacing: .12em;
-      padding: 2px 6px;
-      border: 1px solid var(--ttc, #e8a020);
-      color: var(--ttc, #e8a020)
-    }
-
-    .ttb {
-      padding: 9px 12px
-    }
-
-    .tts {
       margin-bottom: 7px
     }
 
-    .ttst {
+    .det-title {
+      font-family: var(--fd);
+      font-size: 17px;
+      letter-spacing: .06em;
+      color: var(--amber-b);
+      margin-bottom: 8px
+    }
+
+    .det-src {
       font-size: 7.5px;
-      letter-spacing: .17em;
       color: var(--c30);
-      margin-bottom: 4px;
-      border-bottom: 1px solid rgba(255, 255, 255, .06);
-      padding-bottom: 3px
+      margin-bottom: 10px;
+      letter-spacing: .08em
     }
 
-    .ttr {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      padding: 1.5px 0
-    }
-
-    .ttk {
+    .det-desc {
       font-size: 8.5px;
-      color: var(--c30);
-      letter-spacing: .04em
-    }
-
-    .ttv {
-      font-size: 9.5px;
       color: var(--c60);
-      font-weight: 500
+      line-height: 1.65;
+      margin-bottom: 12px
     }
 
-    .ttv.hi {
-      color: var(--ttc, #e8a020)
+    .det-h {
+      font-size: 7px;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--c30);
+      margin-bottom: 5px
     }
 
-    .ttchips {
+    .det-pills {
       display: flex;
       flex-wrap: wrap;
       gap: 3px;
-      margin-top: 3px
+      margin-bottom: 12px
     }
 
-    .ttchip {
+    .det-pill {
       font-size: 7.5px;
-      padding: 2px 5px;
-      background: rgba(255, 255, 255, .04);
-      border: 1px solid rgba(255, 255, 255, .09);
-      color: var(--c30)
+      padding: 2px 6px;
+      background: rgba(232, 160, 32, .08);
+      border: 1px solid rgba(232, 160, 32, .2);
+      color: rgba(232, 160, 32, .75);
+      letter-spacing: .06em
     }
 
-    .ttbr {
+    .det-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 3px 0;
+      border-bottom: 1px solid var(--c12)
+    }
+
+    .det-k {
+      font-size: 7.5px;
+      color: var(--c60)
+    }
+
+    .det-v {
+      font-size: 9.5px;
+      font-weight: 700;
+      color: var(--amber-b)
+    }
+
+    /* ── TOOLTIP ────────────────────────────────── */
+    #tt {
+      position: fixed;
+      z-index: 200;
+      pointer-events: none;
+      background: rgba(12, 9, 16, .98);
+      border: 1px solid rgba(232, 160, 32, .28);
+      padding: 8px 11px;
+      max-width: 270px;
+      font-size: 8px;
+      color: var(--c60);
+      line-height: 1.6;
+      opacity: 0;
+      transition: opacity .15s;
+    }
+
+    #tt.show {
+      opacity: 1
+    }
+
+    .tt-lbl {
+      font-size: 10px;
+      color: var(--amber-b);
+      font-weight: 700;
+      margin-bottom: 3px;
+      letter-spacing: .06em
+    }
+
+    .tt-type {
+      font-size: 7px;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--c30);
+      margin-bottom: 5px
+    }
+
+    /* ── STATUS ──────────────────────────────────── */
+    #sbar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 24px;
+      z-index: 80;
       display: flex;
       align-items: center;
-      gap: 7px;
-      padding: 3px 0
-    }
-
-    .ttbn {
-      font-size: 8.5px;
-      color: var(--c60);
-      width: 84px;
-      flex-shrink: 0
-    }
-
-    .tbbtr {
-      flex: 1;
-      height: 3px;
-      background: rgba(255, 255, 255, .07)
-    }
-
-    .tbbf {
-      height: 100%;
-      background: var(--ttc, #e8a020)
-    }
-
-    .tbbp {
-      font-size: 8.5px;
-      color: var(--ttc, #e8a020);
-      width: 28px;
-      text-align: right
-    }
-
-    /* ── ONTOLOGY BUTTON (sub-header) ────────────────────── */
-    .onto-btn {
-      padding: 7px 14px;
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--c60);
-      font-family: var(--fm);
-      font-size: 10px;
+      gap: 18px;
+      padding: 0 16px;
+      background: rgba(8, 5, 8, .95);
+      border-top: 1px solid var(--border);
+      font-size: 7.5px;
       letter-spacing: .14em;
       text-transform: uppercase;
-      cursor: pointer;
-      transition: all .2s;
+      color: var(--c30);
     }
-    .onto-btn:hover, .onto-btn.open {
-      border-color: var(--amber);
-      color: var(--amber-b);
-      background: rgba(232,160,32,.06);
+
+    #sbar b {
+      color: var(--amber)
+    }
+
+    .zctr {
+      position: fixed;
+      bottom: 34px;
+      right: 14px;
+      z-index: 81;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .zbtn {
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      color: var(--c60);
+      cursor: pointer;
+      transition: color .2s, border-color .2s;
+      font-family: monospace;
+      font-size: 14px;
+    }
+
+    .zbtn:hover {
+      color: var(--amber);
+      border-color: var(--amber)
+    }
+
+    .zbtn.fit {
+      font-size: 8px;
+      letter-spacing: 0
     }
   </style>
 </head>
 
 <body>
 
-  <header>
+  <!-- HEADER -->
+  <header class="hdr-main">
     <div class="hd-left">
-      <a href="index.html" class="logo" style="text-decoration:none">CROWD INTEL</a>
-      <span class="logo-sub">UMN Bar Tracker</span>
+      <span class="hd-logo">CROWD INTEL</span>
+      <span class="hd-sub">UMN · Dinkytown + Stadium Village</span>
     </div>
     <nav class="hd-nav">
-      <a class="nav-tab" href="index.html">Live Forecast</a>
-      <a class="nav-tab" href="map.html">Live Map</a>
-      <a class="nav-tab active" href="pipeline.html">Data Pipeline</a>
+      <a href="index.html" class="nav-tab">Dashboard</a>
+      <a href="map.html" class="nav-tab">Map</a>
+      <a href="pipeline.html" class="nav-tab active">Pipeline</a>
+      <a href="simulations.html" class="nav-tab">Simulations</a>
     </nav>
     <div class="hd-right">
-      <div class="live-badge"><span class="live-dot"></span>Live</div>
-      <span class="clock" id="clk">--:--:--</span>
+      <div class="live-badge"><span class="live-dot"></span>LIVE</div>
     </div>
   </header>
 
-  <div class="hdr">
-    <div class="hdr-left">
-      <div class="hdr-title">SIGNAL FLOW</div>
-      <div class="hdr-sub">LIVE DATA PIPELINE · 6 SOURCES · 75 FEATURES · 3 BARS</div>
-    </div>
-    <div class="hdr-stats">
-      <div class="hdr-stat">
-        <div class="hdr-stat-v">6</div>
-        <div class="hdr-stat-k">DATA SOURCES</div>
-      </div>
-      <div class="hdr-stat">
-        <div class="hdr-stat-v">75</div>
-        <div class="hdr-stat-k">FEATURES</div>
-      </div>
-      <div class="hdr-stat">
-        <div class="hdr-stat-v" id="s-lat">—</div>
-        <div class="hdr-stat-k">LAST RUN</div>
-      </div>
-    </div>
-    <button class="onto-btn" id="ontobtn" onclick="ontoToggle()">◈ ONTOLOGY</button>
-    <button class="run-btn" id="rbtn" onclick="runPipeline()">▶ RUN PIPELINE</button>
+  <!-- STORY BAR -->
+  <div class="story-bar">
+    <span class="story-lbl">Highlight path:</span>
+    <button class="story-btn" data-story="date_party">Date Party Night</button>
+    <button class="story-btn" data-story="game_day">Game Day</button>
+    <button class="story-btn" data-story="kk_tuesday">KK Tuesday</button>
+    <button class="story-btn" data-story="finals">Finals Week</button>
+    <button class="story-btn" data-story="">Clear</button>
+    <div class="story-narr" id="snarr"></div>
   </div>
 
+  <!-- VIEWPORT -->
   <div id="vp">
     <div id="cv">
-
-      <!-- COLUMN LABELS -->
-      <div class="clbl" style="left:80px;top:42px;width:200px">DATA SOURCES</div>
-      <div class="clbl" style="left:615px;top:42px;width:200px">FEATURE BUILDER</div>
-      <div class="clbl" style="left:1075px;top:42px;width:200px">PREDICTOR</div>
-      <div class="clbl" style="left:1520px;top:42px;width:220px">OUTPUTS</div>
-
-      <!-- SVG -->
-      <svg id="psvg" xmlns="http://www.w3.org/2000/svg">
+      <svg id="psvg">
         <defs>
-          <filter id="gs" x="-60%" y="-60%" width="220%" height="220%">
-            <feGaussianBlur stdDeviation="2.2" result="b" />
-            <feMerge>
-              <feMergeNode in="b" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-          <filter id="gl" x="-80%" y="-80%" width="260%" height="260%">
-            <feGaussianBlur stdDeviation="4.5" result="b" />
-            <feMerge>
-              <feMergeNode in="b" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-          <marker id="ac" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto">
-            <path d="M0,0 L0,5 L5,2.5Z" fill="#00cfff" opacity=".55" />
+          <marker id="ma" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="rgba(237,224,204,.12)" />
           </marker>
-          <marker id="aa" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto">
-            <path d="M0,0 L0,5 L5,2.5Z" fill="#ffb533" opacity=".55" />
-          </marker>
-          <marker id="ag" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto">
-            <path d="M0,0 L0,5 L5,2.5Z" fill="#56a85c" opacity=".55" />
-          </marker>
-          <marker id="ap" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto">
-            <path d="M0,0 L0,5 L5,2.5Z" fill="#c060e0" opacity=".55" />
-          </marker>
-          <marker id="at" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto">
-            <path d="M0,0 L0,5 L5,2.5Z" fill="#3ecfb8" opacity=".55" />
-          </marker>
-          <marker id="aw" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto">
-            <path d="M0,0 L0,5 L5,2.5Z" fill="#f0e0c0" opacity=".55" />
-          </marker>
-          <marker id="ab" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto">
-            <path d="M0,0 L0,5 L5,2.5Z" fill="#169b62" opacity=".55" />
-          </marker>
-          <marker id="as" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto">
-            <path d="M0,0 L0,5 L5,2.5Z" fill="#b5253d" opacity=".55" />
-          </marker>
-          <marker id="ak" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto">
-            <path d="M0,0 L0,5 L5,2.5Z" fill="#f5c800" opacity=".55" />
-          </marker>
-          <marker id="agl" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto">
-            <path d="M0,0 L0,5 L5,2.5Z" fill="#d868a0" opacity=".55" />
+          <marker id="mb" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="rgba(237,224,204,.5)" />
           </marker>
         </defs>
-
-        <!-- EDGE PATHS -->
-        <path d="M 280,120 C 448,120 448,415 615,415" fill="none" stroke="#00cfff" stroke-width="1.4" opacity=".22"
-          marker-end="url(#ac)" />
-        <path d="M 280,265 C 448,265 448,415 615,415" fill="none" stroke="#ffb533" stroke-width="1.4" opacity=".22"
-          marker-end="url(#aa)" />
-        <path d="M 280,415 C 410,415 490,415 615,415" fill="none" stroke="#56a85c" stroke-width="1.4" opacity=".22"
-          marker-end="url(#ag)" />
-        <path d="M 280,565 C 448,565 448,415 615,415" fill="none" stroke="#c060e0" stroke-width="1.4" opacity=".22"
-          marker-end="url(#ap)" />
-        <path d="M 280,710 C 448,710 448,415 615,415" fill="none" stroke="#3ecfb8" stroke-width="1.4" opacity=".22"
-          marker-end="url(#at)" />
-        <path d="M 280,900 C 448,900 448,415 615,415" fill="none" stroke="#d868a0" stroke-width="1.4" opacity=".22"
-          marker-end="url(#agl)" />
-        <path d="M 815,415 C 915,415 975,415 1075,415" fill="none" stroke="#f0e0c0" stroke-width="2" opacity=".28"
-          marker-end="url(#aw)" />
-        <path d="M 1275,415 C 1398,415 1398,285 1520,285" fill="none" stroke="#169b62" stroke-width="1.4" opacity=".22"
-          marker-end="url(#ab)" />
-        <path d="M 1275,415 C 1390,415 1400,415 1520,415" fill="none" stroke="#b5253d" stroke-width="1.4" opacity=".22"
-          marker-end="url(#as)" />
-        <path d="M 1275,415 C 1398,415 1398,545 1520,545" fill="none" stroke="#f5c800" stroke-width="1.4" opacity=".22"
-          marker-end="url(#ak)" />
-
-        <!-- PARTICLES: weather → feature (cyan) -->
-        <circle r="2.8" fill="#00cfff" filter="url(#gs)">
-          <animateMotion dur="2.9s" repeatCount="indefinite" begin="0s" path="M 280,120 C 448,120 448,415 615,415" />
-        </circle>
-        <circle r="2.8" fill="#00cfff" filter="url(#gs)">
-          <animateMotion dur="2.9s" repeatCount="indefinite" begin="0.72s" path="M 280,120 C 448,120 448,415 615,415" />
-        </circle>
-        <circle r="2.8" fill="#00cfff" filter="url(#gs)">
-          <animateMotion dur="2.9s" repeatCount="indefinite" begin="1.45s" path="M 280,120 C 448,120 448,415 615,415" />
-        </circle>
-        <circle r="2.8" fill="#00cfff" filter="url(#gs)">
-          <animateMotion dur="2.9s" repeatCount="indefinite" begin="2.17s" path="M 280,120 C 448,120 448,415 615,415" />
-        </circle>
-
-        <!-- PARTICLES: sports → feature (amber) -->
-        <circle r="2.8" fill="#ffb533" filter="url(#gs)">
-          <animateMotion dur="2.6s" repeatCount="indefinite" begin="0s" path="M 280,265 C 448,265 448,415 615,415" />
-        </circle>
-        <circle r="2.8" fill="#ffb533" filter="url(#gs)">
-          <animateMotion dur="2.6s" repeatCount="indefinite" begin="0.65s" path="M 280,265 C 448,265 448,415 615,415" />
-        </circle>
-        <circle r="2.8" fill="#ffb533" filter="url(#gs)">
-          <animateMotion dur="2.6s" repeatCount="indefinite" begin="1.3s" path="M 280,265 C 448,265 448,415 615,415" />
-        </circle>
-        <circle r="2.8" fill="#ffb533" filter="url(#gs)">
-          <animateMotion dur="2.6s" repeatCount="indefinite" begin="1.95s" path="M 280,265 C 448,265 448,415 615,415" />
-        </circle>
-
-        <!-- PARTICLES: calendar → feature (green) -->
-        <circle r="2.8" fill="#56a85c" filter="url(#gs)">
-          <animateMotion dur="1.7s" repeatCount="indefinite" begin="0s" path="M 280,415 C 410,415 490,415 615,415" />
-        </circle>
-        <circle r="2.8" fill="#56a85c" filter="url(#gs)">
-          <animateMotion dur="1.7s" repeatCount="indefinite" begin="0.42s" path="M 280,415 C 410,415 490,415 615,415" />
-        </circle>
-        <circle r="2.8" fill="#56a85c" filter="url(#gs)">
-          <animateMotion dur="1.7s" repeatCount="indefinite" begin="0.85s" path="M 280,415 C 410,415 490,415 615,415" />
-        </circle>
-        <circle r="2.8" fill="#56a85c" filter="url(#gs)">
-          <animateMotion dur="1.7s" repeatCount="indefinite" begin="1.27s" path="M 280,415 C 410,415 490,415 615,415" />
-        </circle>
-
-        <!-- PARTICLES: events → feature (purple) -->
-        <circle r="2.8" fill="#c060e0" filter="url(#gs)">
-          <animateMotion dur="2.6s" repeatCount="indefinite" begin="0s" path="M 280,565 C 448,565 448,415 615,415" />
-        </circle>
-        <circle r="2.8" fill="#c060e0" filter="url(#gs)">
-          <animateMotion dur="2.6s" repeatCount="indefinite" begin="0.65s" path="M 280,565 C 448,565 448,415 615,415" />
-        </circle>
-        <circle r="2.8" fill="#c060e0" filter="url(#gs)">
-          <animateMotion dur="2.6s" repeatCount="indefinite" begin="1.3s" path="M 280,565 C 448,565 448,415 615,415" />
-        </circle>
-        <circle r="2.8" fill="#c060e0" filter="url(#gs)">
-          <animateMotion dur="2.6s" repeatCount="indefinite" begin="1.95s" path="M 280,565 C 448,565 448,415 615,415" />
-        </circle>
-
-        <!-- PARTICLES: popular_times → feature (teal) -->
-        <circle r="2.8" fill="#3ecfb8" filter="url(#gs)">
-          <animateMotion dur="3.3s" repeatCount="indefinite" begin="0s" path="M 280,710 C 448,710 448,415 615,415" />
-        </circle>
-        <circle r="2.8" fill="#3ecfb8" filter="url(#gs)">
-          <animateMotion dur="3.3s" repeatCount="indefinite" begin="0.82s" path="M 280,710 C 448,710 448,415 615,415" />
-        </circle>
-        <circle r="2.8" fill="#3ecfb8" filter="url(#gs)">
-          <animateMotion dur="3.3s" repeatCount="indefinite" begin="1.65s" path="M 280,710 C 448,710 448,415 615,415" />
-        </circle>
-        <circle r="2.8" fill="#3ecfb8" filter="url(#gs)">
-          <animateMotion dur="3.3s" repeatCount="indefinite" begin="2.47s" path="M 280,710 C 448,710 448,415 615,415" />
-        </circle>
-
-        <!-- PARTICLES: greek_life → feature (pink) -->
-        <circle r="2.8" fill="#d868a0" filter="url(#gs)">
-          <animateMotion dur="2.8s" repeatCount="indefinite" begin="0s" path="M 280,900 C 448,900 448,415 615,415" />
-        </circle>
-        <circle r="2.8" fill="#d868a0" filter="url(#gs)">
-          <animateMotion dur="2.8s" repeatCount="indefinite" begin="0.7s" path="M 280,900 C 448,900 448,415 615,415" />
-        </circle>
-        <circle r="2.8" fill="#d868a0" filter="url(#gs)">
-          <animateMotion dur="2.8s" repeatCount="indefinite" begin="1.4s" path="M 280,900 C 448,900 448,415 615,415" />
-        </circle>
-        <circle r="2.8" fill="#d868a0" filter="url(#gs)">
-          <animateMotion dur="2.8s" repeatCount="indefinite" begin="2.1s" path="M 280,900 C 448,900 448,415 615,415" />
-        </circle>
-
-        <!-- PARTICLES: feature → predictor (cream, larger) -->
-        <circle r="3.8" fill="#f0e0c0" filter="url(#gl)">
-          <animateMotion dur="1.35s" repeatCount="indefinite" begin="0s" path="M 815,415 C 915,415 975,415 1075,415" />
-        </circle>
-        <circle r="3.8" fill="#f0e0c0" filter="url(#gl)">
-          <animateMotion dur="1.35s" repeatCount="indefinite" begin="0.34s"
-            path="M 815,415 C 915,415 975,415 1075,415" />
-        </circle>
-        <circle r="3.8" fill="#f0e0c0" filter="url(#gl)">
-          <animateMotion dur="1.35s" repeatCount="indefinite" begin="0.67s"
-            path="M 815,415 C 915,415 975,415 1075,415" />
-        </circle>
-        <circle r="3.8" fill="#f0e0c0" filter="url(#gl)">
-          <animateMotion dur="1.35s" repeatCount="indefinite" begin="1.01s"
-            path="M 815,415 C 915,415 975,415 1075,415" />
-        </circle>
-
-        <!-- PARTICLES: predictor → blarneys (irish green) -->
-        <circle r="3" fill="#169b62" filter="url(#gs)">
-          <animateMotion dur="1.8s" repeatCount="indefinite" begin="0s"
-            path="M 1275,415 C 1398,415 1398,285 1520,285" />
-        </circle>
-        <circle r="3" fill="#169b62" filter="url(#gs)">
-          <animateMotion dur="1.8s" repeatCount="indefinite" begin="0.6s"
-            path="M 1275,415 C 1398,415 1398,285 1520,285" />
-        </circle>
-        <circle r="3" fill="#169b62" filter="url(#gs)">
-          <animateMotion dur="1.8s" repeatCount="indefinite" begin="1.2s"
-            path="M 1275,415 C 1398,415 1398,285 1520,285" />
-        </circle>
-
-        <!-- PARTICLES: predictor → sallys (maroon) -->
-        <circle r="3" fill="#c0304a" filter="url(#gs)">
-          <animateMotion dur="1.55s" repeatCount="indefinite" begin="0s"
-            path="M 1275,415 C 1390,415 1400,415 1520,415" />
-        </circle>
-        <circle r="3" fill="#c0304a" filter="url(#gs)">
-          <animateMotion dur="1.55s" repeatCount="indefinite" begin="0.52s"
-            path="M 1275,415 C 1390,415 1400,415 1520,415" />
-        </circle>
-        <circle r="3" fill="#c0304a" filter="url(#gs)">
-          <animateMotion dur="1.55s" repeatCount="indefinite" begin="1.03s"
-            path="M 1275,415 C 1390,415 1400,415 1520,415" />
-        </circle>
-
-        <!-- PARTICLES: predictor → kk (yellow) -->
-        <circle r="3" fill="#f5c800" filter="url(#gs)">
-          <animateMotion dur="1.8s" repeatCount="indefinite" begin="0s"
-            path="M 1275,415 C 1398,415 1398,545 1520,545" />
-        </circle>
-        <circle r="3" fill="#f5c800" filter="url(#gs)">
-          <animateMotion dur="1.8s" repeatCount="indefinite" begin="0.6s"
-            path="M 1275,415 C 1398,415 1398,545 1520,545" />
-        </circle>
-        <circle r="3" fill="#f5c800" filter="url(#gs)">
-          <animateMotion dur="1.8s" repeatCount="indefinite" begin="1.2s"
-            path="M 1275,415 C 1398,415 1398,545 1520,545" />
-        </circle>
       </svg>
+    </div>
+  </div>
 
-      <!-- SOURCE NODES -->
-      <div class="node node-live" data-node="weather" style="left:80px;top:75px;--nc:#00cfff">
-        <div class="nh">
-          <div class="ndot"></div><span class="nlabel">WEATHER</span><span class="nbadge">LIVE</span>
-        </div>
-        <div class="nsub">Open-Meteo API · open-meteo.com</div>
-        <div class="ncache">CACHE 10 MIN &nbsp;·&nbsp; 8 SIGNALS</div>
-        <div class="nmetric"><span class="nmk">TEMPERATURE</span><span class="nmv" id="nv-t">−2.1°C</span></div>
-      </div>
+  <!-- DETAIL PANEL -->
+  <div id="detail">
+    <button id="det-close">✕ close</button>
+    <div id="det-body"></div>
+  </div>
 
-      <div class="node node-live" data-node="sports" style="left:80px;top:220px;--nc:#ffb533">
-        <div class="nh">
-          <div class="ndot"></div><span class="nlabel">SPORTS</span><span class="nbadge">LIVE</span>
-        </div>
-        <div class="nsub">ESPN API · site.api.espn.com</div>
-        <div class="ncache">CACHE 1 HR &nbsp;·&nbsp; 15 SIGNALS</div>
-        <div class="nmetric"><span class="nmk">BBALL HOME</span><span class="nmv" style="color:#56a85c">TRUE</span>
-        </div>
-      </div>
+  <!-- TOOLTIP -->
+  <div id="tt">
+    <div class="tt-lbl" id="tt-lbl"></div>
+    <div class="tt-type" id="tt-type"></div>
+    <div id="tt-body"></div>
+  </div>
 
-      <div class="node" data-node="calendar" style="left:80px;top:370px;--nc:#56a85c">
-        <div class="nh">
-          <div class="ndot"></div><span class="nlabel">CALENDAR</span><span class="nbadge">COMPUTED</span>
-        </div>
-        <div class="nsub">UMN Academic Calendar</div>
-        <div class="ncache">STATIC &nbsp;·&nbsp; 19 FLAGS</div>
-        <div class="nmetric"><span class="nmk">CLASSES IN SESSION</span><span class="nmv">TRUE</span></div>
-      </div>
-
-      <div class="node node-live" data-node="events" style="left:80px;top:520px;--nc:#c060e0">
-        <div class="nh">
-          <div class="ndot"></div><span class="nlabel">EVENTS</span><span class="nbadge">LIVE</span>
-        </div>
-        <div class="nsub">SeatGeek API · UMN Events</div>
-        <div class="ncache">CACHE 1 HR &nbsp;·&nbsp; 5 SIGNALS</div>
-        <div class="nmetric"><span class="nmk">NEARBY EVENTS</span><span class="nmv">3</span></div>
-      </div>
-
-      <div class="node node-live" data-node="popular_times" style="left:80px;top:665px;--nc:#3ecfb8">
-        <div class="nh">
-          <div class="ndot"></div><span class="nlabel">POP. TIMES</span><span class="nbadge">LIVE</span>
-        </div>
-        <div class="nsub">Google Places API</div>
-        <div class="ncache">CACHE 1 HR &nbsp;·&nbsp; 3 BARS</div>
-        <div class="nmetric"><span class="nmk">AVG BUSYNESS</span><span class="nmv">62%</span></div>
-      </div>
-
-      <div class="node" data-node="greek_life" style="left:80px;top:858px;--nc:#d868a0">
-        <div class="nh">
-          <div class="ndot"></div><span class="nlabel">GREEK LIFE</span><span class="nbadge">COMPUTED</span>
-        </div>
-        <div class="nsub">providers/greek_life.py · ~3,000 members</div>
-        <div class="ncache">STATIC &nbsp;·&nbsp; 7 SIGNALS</div>
-        <div class="nmetric"><span class="nmk">SOCIAL INTENSITY</span><span class="nmv" id="nv-gl">0.72</span></div>
-      </div>
-
-      <!-- FEATURE NODE -->
-      <div class="node" data-node="feature_extractor" style="left:615px;top:370px;--nc:#f0e0c0">
-        <div class="nh">
-          <div class="ndot"></div><span class="nlabel">FEATURES</span><span class="nbadge">READY</span>
-        </div>
-        <div class="nsub">features/builder.py · FeatureBuilder</div>
-        <div class="ncache">68 FEATURES &nbsp;·&nbsp; PER-BAR</div>
-        <div class="nmetric"><span class="nmk">TOP SIGNAL</span><span class="nmv" style="font-size:10px">hour_cos</span>
-        </div>
-      </div>
-
-      <!-- PREDICTOR NODE -->
-      <div class="node" data-node="predictor" style="left:1075px;top:370px;--nc:#ff7030">
-        <div class="nh">
-          <div class="ndot"></div><span class="nlabel">PREDICTOR</span><span class="nbadge">READY</span>
-        </div>
-        <div class="nsub">RandomForest + BaselineModel</div>
-        <div class="ncache">ENSEMBLE &nbsp;·&nbsp; 14-DAY SPLIT</div>
-        <div class="nmetric"><span class="nmk">MODELS</span><span class="nmv" style="font-size:10px">RF + MEDIAN</span>
-        </div>
-      </div>
-
-      <!-- OUTPUT NODES -->
-      <div class="node nbar" data-node="blarneys" style="left:1520px;top:240px;--nc:#169b62">
-        <div class="nh">
-          <div class="ndot"></div><span class="nlabel" style="font-size:11px">BLARNEY'S</span><span class="nbadge"
-            style="border-color:#e8640a;color:#e8640a">BAR 1</span>
-        </div>
-        <div class="nsub">Dinkytown · bar_id = 1</div>
-        <div class="prow"><span class="pk">WAIT</span><span class="pv">14 min</span></div>
-        <div class="prow"><span class="pk">PCT FULL</span><span class="pv">68%</span></div>
-        <div class="cbadge">HIGH CONFIDENCE</div>
-      </div>
-
-      <div class="node nbar" data-node="sallys" style="left:1520px;top:370px;--nc:#b5253d">
-        <div class="nh">
-          <div class="ndot"></div><span class="nlabel" style="font-size:11px">SALLY'S</span><span class="nbadge">BAR
-            2</span>
-        </div>
-        <div class="nsub">Dinkytown · bar_id = 2</div>
-        <div class="prow"><span class="pk">WAIT</span><span class="pv">8 min</span></div>
-        <div class="prow"><span class="pk">PCT FULL</span><span class="pv">52%</span></div>
-        <div class="cbadge">HIGH CONFIDENCE</div>
-      </div>
-
-      <div class="node nbar" data-node="kk" style="left:1520px;top:500px;--nc:#f5c800">
-        <div class="nh">
-          <div class="ndot"></div><span class="nlabel" style="font-size:11px">KOLLEGE KLUB</span><span class="nbadge"
-            style="border-color:#8b1a2e;color:#8b1a2e">BAR 3</span>
-        </div>
-        <div class="nsub">Stadium Village · bar_id = 3</div>
-        <div class="prow"><span class="pk">WAIT</span><span class="pv">22 min</span></div>
-        <div class="prow"><span class="pk">PCT FULL</span><span class="pv">81%</span></div>
-        <div class="cbadge">MED CONFIDENCE</div>
-      </div>
-
-    </div><!-- /cv -->
-  </div><!-- /vp -->
-
-  <div id="tt"></div>
-
-  <!-- ontology panel injected by ontology.js -->
-
-  <div id="zc">
-    <button class="zb" onclick="doZoom(1.18)" title="Zoom in">+</button>
-    <div id="zlvl">100%</div>
-    <button class="zb" onclick="doZoom(1/1.18)" title="Zoom out">−</button>
-    <button class="zb" onclick="fitView()" title="Fit" style="font-size:11px">⊡</button>
+  <!-- STATUS -->
+  <div id="sbar">
+    SIGNAL FLOW PIPELINE &nbsp;·&nbsp;
+    <b id="sn">—</b> NODES &nbsp;·&nbsp;
+    <b id="se">—</b> EDGES &nbsp;·&nbsp;
+    <b id="sc">—</b> CAUSAL &nbsp;·&nbsp;
+    <b id="sa">CONNECTING</b>
+  </div>
+  <div class="zctr">
+    <button class="zbtn" id="zi">+</button>
+    <button class="zbtn" id="zo">−</button>
+    <button class="zbtn fit" id="zf">FIT</button>
   </div>
 
   <script>
-    /* ── ZOOM / PAN ─────────────────────────────── */
+    const API = 'http://localhost:8001';
+    const NW = 172, NH = 88;
+
+    // Node canvas positions (top-left x,y)
+    const POS = {
+      weather: { x: 44, y: 60 },
+      sports: { x: 44, y: 195 },
+      calendar: { x: 44, y: 332 },
+      greek_life: { x: 44, y: 468 },
+      events: { x: 44, y: 604 },
+      popular_times: { x: 44, y: 740 },
+
+      greek_social_ctx: { x: 375, y: 70 },
+      game_day_ctx: { x: 375, y: 276 },
+      specials_clock: { x: 375, y: 520 },
+      academic_pressure: { x: 375, y: 730 },
+
+      sallys_intent: { x: 718, y: 95 },
+      blarneys_intent: { x: 718, y: 390 },
+      kk_intent: { x: 718, y: 695 },
+
+      feature_extractor: { x: 1070, y: 380 },
+      predictor: { x: 1430, y: 380 },
+    };
+
+    const LAYER_COLS = [
+      { x: 44, label: 'RAW SOURCES', desc: 'live providers', color: '#0bc5ea' },
+      { x: 375, label: 'CONTEXT INFERENCE', desc: 'cross-signal reasoning', color: '#a78bfa' },
+      { x: 718, label: 'BAR INTENT', desc: 'per-bar demand', color: '#e8a020' },
+      { x: 1070, label: 'FEATURES', desc: '68-feature ML vector', color: '#34d399' },
+      { x: 1430, label: 'PREDICTOR', desc: 'RandomForest output', color: '#34d399' },
+    ];
+
+    const STORY_COLORS = {
+      date_party: '#f472b6',
+      game_day: '#fb923c',
+      kk_tuesday: '#e8a020',
+      finals: '#60a5fa',
+    };
+
+    const STORIES_META = {
+      date_party: {
+        nodes: new Set(['greek_life', 'calendar', 'greek_social_ctx', 'specials_clock', 'sallys_intent', 'kk_intent', 'feature_extractor', 'predictor']),
+        narrative: 'Oct-Nov & Mar-Apr formal season: date parties start 9-10 PM. Greeks pregame at Sally\'s Happy Hour (3-6 PM) for cheap drinks — then migrate to KK, the primary Greek destination (0.90×), by 10 PM.',
+      },
+      game_day: {
+        nodes: new Set(['weather', 'sports', 'calendar', 'game_day_ctx', 'sallys_intent', 'blarneys_intent', 'feature_extractor', 'predictor']),
+        narrative: 'Home football: fans surge through Stadium Village (Sally\'s) before kickoff, then post-game crowds migrate north to Dinkytown (Blarney\'s). Rivalry games get 1.5× multiplier.',
+      },
+      kk_tuesday: {
+        nodes: new Set(['calendar', 'specials_clock', 'academic_pressure', 'kk_intent', 'feature_extractor', 'predictor']),
+        narrative: 'KK Tuesday: 9 PM-2 AM, +70% boost. A campus institution. Mid-semester social mode 0.80 = busiest non-Greek-event night. KK Thursday +40% (×1.25 when Greek Thu overlaps).',
+      },
+      finals: {
+        nodes: new Set(['calendar', 'academic_pressure', 'sallys_intent', 'blarneys_intent', 'kk_intent', 'feature_extractor', 'predictor']),
+        narrative: 'Finals suppression: social_mode = 0.15, multiplier = 0.30×. All bar intent nodes dimmed. Exception: "last night out" surge two days before break starts (+35%).',
+      },
+    };
+
+    // Embedded topology (used when API is offline)
+    const TOPO = {
+      nodes: [
+        { id: 'weather', label: 'Weather', layer: 0, type: 'raw', bar: null, description: 'Real-time Minneapolis weather from Open-Meteo. 10-min cache.', signals: ['temperature_c', 'precipitation_mm', 'wind_speed_ms', 'cloud_cover', 'is_severe_weather'], source: 'Open-Meteo API' },
+        { id: 'sports', label: 'Sports', layer: 0, type: 'raw', bar: null, description: 'UMN home game schedule + TV sports from ESPN.', signals: ['is_football_home', 'hours_until_game', 'is_rivalry_game', 'tv_game_weight', 'is_nfl_game_day'], source: 'ESPN API' },
+        { id: 'calendar', label: 'Academic Calendar', layer: 0, type: 'raw', bar: null, description: 'UMN semester schedule: finals, welcome week, breaks, midterms.', signals: ['classes_in_session', 'is_finals_week', 'is_welcome_week', 'week_of_semester', 'days_until_break'], source: 'Static + computed' },
+        { id: 'greek_life', label: 'Greek Life', layer: 0, type: 'raw', bar: null, description: 'IFC (24 chapters) + PHC (13 sororities) social calendar. ~3,000 members.', signals: ['is_greek_formal_season', 'is_greek_bid_day', 'is_greek_thursday', 'greek_social_intensity'], source: 'UMN FSL calendar' },
+        { id: 'events', label: 'Local Events', layer: 0, type: 'raw', bar: null, description: 'Concerts and events near UMN bars via SeatGeek.', signals: ['nearby_events_count', 'event_type'], source: 'SeatGeek API' },
+        { id: 'popular_times', label: 'Popular Times', layer: 0, type: 'raw', bar: null, description: 'Google Popular Times baseline busyness for each bar.', signals: ['busyness_score', 'current_popularity'], source: 'Google Places' },
+
+        { id: 'greek_social_ctx', label: 'Greek Social Context', layer: 1, type: 'context', bar: null, description: "Infers date party tonight → Sally's pre-game push 3-6 PM (cheap HH before event) → KK after-party draw 10 PM+. Formal season + Thu/Fri/Sat → date_party_tonight.", signals: ['date_party_tonight', 'sallys_pregame_boost', 'kk_after_party_draw', 'blarneys_greek_draw', 'greek_social_driver'] },
+        { id: 'game_day_ctx', label: 'Game Day Context', layer: 1, type: 'context', bar: null, description: 'Models pre-game bar draw (1-3 hrs before kickoff), post-game Dinkytown migration, and TV sports anchor signal (big games = people stay at bar).', signals: ['pregame_bar_draw', 'post_game_migration', 'blarneys_postgame_boost', 'tv_anchor_strength', 'game_day_mood'] },
+        { id: 'specials_clock', label: 'Specials Clock', layer: 1, type: 'context', bar: null, description: 'Real-time deal status per bar: BAR_SCHEDULES × current time. Signals exactly which cheap-drink windows are open right now.', signals: ['sallys_happy_hour_active', 'blarneys_karaoke_thursday', 'kk_tuesday_special', 'kk_thursday_special', 'active_deals_count'] },
+        { id: 'academic_pressure', label: 'Academic Pressure', layer: 1, type: 'context', bar: null, description: 'social_mode_score (0=finals crunch, 1=welcome week). Finals suppression 0.30×. Pre-break surge +35% two days before semester ends.', signals: ['social_mode_score', 'semester_phase', 'finals_suppression', 'pre_break_surge', 'thirsty_thursday_factor'] },
+
+        { id: 'sallys_intent', label: "Sally's Intent", layer: 2, type: 'intent', bar: 'sallys', description: "Key story: date party + HH active (3-6 PM) → Greek pre-game surge. Also: $2 Tuesday student draw, football foot traffic through Stadium Village.", signals: ['sallys_demand_multiplier', 'sallys_primary_driver', 'sallys_greek_contribution', 'sallys_expected_peak'] },
+        { id: 'blarneys_intent', label: "Blarney's Intent", layer: 2, type: 'intent', bar: 'blarneys', description: 'Post-game Dinkytown migration is biggest game-day driver. Karaoke Thursday +55%. Greek proximity 0.75× = consistent baseline. Late-night drunk migration after 11 PM.', signals: ['blarneys_demand_multiplier', 'blarneys_primary_driver', 'blarneys_karaoke_boost', 'blarneys_postgame_boost'] },
+        { id: 'kk_intent', label: 'KK Intent', layer: 2, type: 'intent', bar: 'kk', description: 'Primary Greek destination (0.90×). After-party draw 10 PM+ on formal nights. KK Tuesday +70% and KK Thursday +40% are campus institutions.', signals: ['kk_demand_multiplier', 'kk_primary_driver', 'kk_after_party_draw', 'kk_tue_boost', 'kk_expected_peak_hour'] },
+
+        { id: 'feature_extractor', label: 'Feature Extractor', layer: 3, type: 'ml', bar: null, description: 'Builds 68-feature vector from all upstream signals. Top features: hour_cos, classes_in_session, is_break, wind_speed_ms, cloud_cover.', signals: ['68 features', 'hour_cos', 'classes_in_session', 'is_break', 'wind_speed_ms'] },
+        { id: 'predictor', label: 'Predictor', layer: 4, type: 'output', bar: null, description: 'RandomForest (WaitTimeModel) trained on 60 days of observations. Predicts wait time, % full, and drink wait for each bar.', signals: ['wait_minutes', 'pct_full', 'drink_wait_minutes'] },
+      ],
+
+      edges: [
+        // ── Raw → Context ─────────────────────────────────────────────────────────
+        { f: 'weather', t: 'game_day_ctx', lbl: 'temp · precip', sem: 'Weather shifts crowd indoor/outdoor behavior. Severe cold pushes people inside (bars).', stories: ['game_day'], type: 'data', wt: 'med' },
+        { f: 'sports', t: 'game_day_ctx', lbl: 'UMN home games · TV', sem: 'Home game schedule determines pregame bar draw and post-game migration timing.', stories: ['game_day'], type: 'data', wt: 'hi' },
+        { f: 'calendar', t: 'game_day_ctx', lbl: 'academic gating', sem: 'Game attendance varies by semester phase — finals week games draw smaller crowds.', stories: ['game_day'], type: 'data', wt: 'lo' },
+        { f: 'greek_life', t: 'greek_social_ctx', lbl: 'formal season · bid days', sem: 'Greek social calendar: Oct-Nov/Mar-Apr formal season, bid days (biggest bar night), Greek Thursday, rush week suppression.', stories: ['date_party'], type: 'data', wt: 'hi' },
+        { f: 'calendar', t: 'greek_social_ctx', lbl: 'semester phase', sem: 'Greek events only occur during active semester. Rush week (days 0-28) suppresses general bar traffic as chapters recruit.', stories: ['date_party'], type: 'data', wt: 'med' },
+        { f: 'calendar', t: 'specials_clock', lbl: 'day of week · hour', sem: 'Which bar specials are active is determined entirely by day of week and current hour (BAR_SCHEDULES).', stories: ['date_party', 'kk_tuesday'], type: 'data', wt: 'hi' },
+        { f: 'calendar', t: 'academic_pressure', lbl: 'finals · welcome week', sem: 'Academic calendar sets student social mode: 0.15 during finals, 0.90 during welcome week, 0.80 in mid-semester peak (weeks 3-8).', stories: ['finals'], type: 'data', wt: 'hi' },
+
+        // ── Context → Bar Intent ──────────────────────────────────────────────────
+        { f: 'greek_social_ctx', t: 'sallys_intent', lbl: 'pre-party HH push 3-6 PM', sem: "DATE PARTY STORY: Date parties start 9-10 PM. Greek members pregame at Sally's Happy Hour (3-6 PM) for cheap drinks before the event. When formal_season + HH active + date_party_tonight: greek_pregame_contribution = sallys_pregame_boost × 1.4. This is the primary Sally's signal on formal nights.", stories: ['date_party'], type: 'causal', wt: 'hi' },
+        { f: 'specials_clock', t: 'sallys_intent', lbl: "happy hour · $2 Tue", sem: "Sally's 3-6 PM daily happy hour (+25%), 10 PM-midnight late HH (+20%), and $2 Tuesday 8 PM-midnight (+30% × social_mode) each drive distinct demand spikes.", stories: ['date_party', 'kk_tuesday'], type: 'data', wt: 'hi' },
+        { f: 'academic_pressure', t: 'sallys_intent', lbl: 'student social mode', sem: "Finals suppression (0.30×) kills Sally's traffic. Welcome week (0.90 mode) = max turnout. Pre-break surge (+35%) applies two days before semester ends.", stories: ['finals'], type: 'data', wt: 'med' },
+        { f: 'game_day_ctx', t: 'sallys_intent', lbl: 'football foot traffic', sem: "Stadium Village sits on the path from campus to TCF Bank Stadium. Pre-game fans walk past Sally's 1-3 hrs before kickoff → foot traffic surge.", stories: ['game_day'], type: 'causal', wt: 'med' },
+        { f: 'weather', t: 'sallys_intent', lbl: 'patio weather boost', sem: "Nice days (15-28°C, 2-8 PM) bring outdoor crowd to Sally's Stadium Village patio. +15% demand during good weather windows.", stories: [], type: 'data', wt: 'lo' },
+
+        { f: 'game_day_ctx', t: 'blarneys_intent', lbl: 'post-game Dinkytown migration', sem: "GAME DAY STORY: After UMN home games, crowds migrate north into Dinkytown. Blarney's is the first major bar they hit. post_game_migration × 0.75 = blarneys_postgame_boost. Rivalry games: 1.5× multiplier on both pregame draw and post-game migration.", stories: ['game_day'], type: 'causal', wt: 'hi' },
+        { f: 'greek_social_ctx', t: 'blarneys_intent', lbl: 'Greek row (0.75×)', sem: "Blarney's is 0.2 mi from Phi Gam, Chi Psi, and other houses in Dinkytown. Greek social intensity × 0.75 proximity = consistent Greek spillover, amplified on Greek Thursday.", stories: ['date_party'], type: 'data', wt: 'med' },
+        { f: 'specials_clock', t: 'blarneys_intent', lbl: 'karaoke Thu +55%', sem: "Karaoke Thursday (9 PM - 2 AM) is Blarney's biggest night (+55% boost). HH starts at 3:17 PM — their signature quirky time. Wednesday deals +25%. Late-night draw (late_night_draw=True) after 11 PM.", stories: [], type: 'data', wt: 'hi' },
+        { f: 'academic_pressure', t: 'blarneys_intent', lbl: 'social baseline', sem: "Social mode sets the Dinkytown baseline. Finals suppression hits Blarney's — it depends on discretionary going-out. Pre-break surge also applies.", stories: ['finals'], type: 'data', wt: 'med' },
+
+        { f: 'greek_social_ctx', t: 'kk_intent', lbl: 'primary Greek dest (0.90×) · after-party', sem: "DATE PARTY STORY (continued): KK is THE primary Greek destination at UMN (0.90× proximity — adjacent to Greek row). After-party draw 10 PM+: kk_after_party_draw = 0.80 × 0.90 = 0.72 when date_party_tonight + after midnight. Bid day is the single biggest KK night of the semester.", stories: ['date_party'], type: 'causal', wt: 'hi' },
+        { f: 'specials_clock', t: 'kk_intent', lbl: 'KK Tue +70% · KK Thu +40%', sem: "KK Tuesday (9 PM-2 AM, +70%) and KK Thursday (9 PM-2 AM, +40%) are campus institutions since the 1990s. When Greek Thursday overlaps KK Thursday: thu_boost × 1.25 = packed night.", stories: ['kk_tuesday'], type: 'data', wt: 'hi' },
+        { f: 'academic_pressure', t: 'kk_intent', lbl: 'semester social cycle', sem: 'Greek social patterns follow academic calendar. Mid-semester peak (weeks 3-8, social_mode=0.80) = KK\'s busiest baseline period. Finals suppression 0.30× applies.', stories: ['finals'], type: 'data', wt: 'med' },
+
+        // ── Bar Intent → Feature ──────────────────────────────────────────────────
+        { f: 'sallys_intent', t: 'feature_extractor', lbl: "Sally's demand vector", sem: "sallys_demand_multiplier, primary_driver, greek_contribution, deal_boost, game_contribution, expected_peak feed into the 68-feature matrix.", stories: ['date_party', 'game_day', 'finals', 'kk_tuesday'], type: 'data', wt: 'hi' },
+        { f: 'blarneys_intent', t: 'feature_extractor', lbl: "Blarney's demand vector", sem: "blarneys_demand_multiplier, karaoke_boost, postgame_boost, greek_draw, late_night contribution.", stories: ['date_party', 'game_day', 'finals'], type: 'data', wt: 'hi' },
+        { f: 'kk_intent', t: 'feature_extractor', lbl: 'KK demand vector', sem: "kk_demand_multiplier, after_party_draw, tue_boost, thu_boost, greek_baseline, expected_peak_hour.", stories: ['date_party', 'finals', 'kk_tuesday'], type: 'data', wt: 'hi' },
+
+        // ── Raw → Feature (numeric pass-through) ─────────────────────────────────
+        { f: 'weather', t: 'feature_extractor', lbl: 'raw weather features', sem: 'temperature_c, precipitation_mm, wind_speed_ms, cloud_cover, is_severe_weather, is_first_nice_day passed directly as numeric ML features.', stories: [], type: 'pass', wt: 'med' },
+        { f: 'sports', t: 'feature_extractor', lbl: 'raw sports flags', sem: 'is_football_home, hours_until_game, tv_game_weight, is_rivalry_game passed as numeric features.', stories: [], type: 'pass', wt: 'med' },
+        { f: 'events', t: 'feature_extractor', lbl: 'local events', sem: 'Nearby event count and capacity signal baseline neighborhood crowd draw.', stories: [], type: 'pass', wt: 'lo' },
+        { f: 'popular_times', t: 'feature_extractor', lbl: 'Google baseline', sem: 'Popular Times busyness score provides a time-of-week baseline independent of special events.', stories: [], type: 'pass', wt: 'lo' },
+
+        // ── Feature → Predictor ───────────────────────────────────────────────────
+        { f: 'feature_extractor', t: 'predictor', lbl: '68-feature vector', sem: 'Full feature matrix: TIME_FEATURES (hour_cos, dow_sin, is_weekend, …) + SIGNAL_FEATURES (all DB signal cols) + bar intent demand vectors → RandomForest predictions.', stories: ['date_party', 'game_day', 'finals', 'kk_tuesday'], type: 'data', wt: 'hi' },
+      ],
+    };
+
+    // ── STATE ─────────────────────────────────────────────────────────────────────
+    let activeStory = '';
+    let scale = 1, ox = 0, oy = 0;
+    let dragging = false, dx0 = 0, dy0 = 0, ox0 = 0, oy0 = 0;
+
     const vp = document.getElementById('vp');
     const cv = document.getElementById('cv');
-    let sc = 0.82, tx = 60, ty = 20;
+    const svg = document.getElementById('psvg');
 
-    function applyT() {
-      cv.style.transform = `translate(${tx}px,${ty}px) scale(${sc})`;
-      document.getElementById('zlvl').textContent = Math.round(sc * 100) + '%';
+    // ── RENDER LAYER HEADERS ──────────────────────────────────────────────────────
+    function renderHeaders() {
+      LAYER_COLS.forEach(col => {
+        const d = document.createElement('div');
+        d.className = 'col-hdr';
+        d.style.cssText = `left:${col.x}px; width:172px; color:${col.color}; top:4px;`;
+        d.innerHTML = `<span class="col-dot" style="background:${col.color};box-shadow:0 0 4px ${col.color}"></span>
+      <span>${col.label}</span>
+      <span class="col-desc">${col.desc}</span>`;
+        cv.appendChild(d);
+      });
     }
-    applyT();
 
-    function doZoom(f, cx, cy) {
-      const r = vp.getBoundingClientRect();
-      cx = cx ?? r.width / 2; cy = cy ?? r.height / 2;
-      const ns = Math.min(2.4, Math.max(0.2, sc * f));
-      tx = cx - (cx - tx) * (ns / sc);
-      ty = cy - (cy - ty) * (ns / sc);
-      sc = ns; applyT();
+    // ── PORT POSITIONS ────────────────────────────────────────────────────────────
+    function rport(id) { const p = POS[id]; return p ? { x: p.x + NW, y: p.y + NH / 2 } : null }
+    function lport(id) { const p = POS[id]; return p ? { x: p.x, y: p.y + NH / 2 } : null }
+
+    // ── RENDER EDGES ──────────────────────────────────────────────────────────────
+    function renderEdges() {
+      TOPO.edges.forEach((e, i) => {
+        const src = rport(e.f), tgt = lport(e.t);
+        if (!src || !tgt) return;
+
+        const dx = tgt.x - src.x;
+        const c1x = src.x + dx * 0.42, c1y = src.y;
+        const c2x = tgt.x - dx * 0.42, c2y = tgt.y;
+        const d = `M${src.x},${src.y} C${c1x},${c1y} ${c2x},${c2y} ${tgt.x},${tgt.y}`;
+        const eid = `${e.f}__${e.t}__${i}`;
+
+        // Hit area
+        const hit = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        hit.setAttribute('d', d); hit.setAttribute('class', 'eh'); hit.dataset.eid = eid;
+
+        // Visible path
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', d);
+        path.setAttribute('marker-end', 'url(#ma)');
+        let cls = 'ep';
+        if (e.type === 'causal') cls += ' causal';
+        if (e.type === 'pass') cls += ' pass';
+        if (e.wt === 'hi') cls += ' hi';
+        if (e.wt === 'lo') cls += ' lo';
+        path.setAttribute('class', cls);
+        path.dataset.eid = eid;
+        path.dataset.stories = (e.stories || []).join(',');
+
+        svg.appendChild(path);
+        svg.appendChild(hit);
+
+        // Label
+        const lx = src.x + dx * 0.43;
+        const ly = src.y + (tgt.y - src.y) * 0.43 - 11;
+        const lbl = document.createElement('div');
+        lbl.className = 'elbl';
+        lbl.dataset.eid = eid;
+        lbl.dataset.stories = (e.stories || []).join(',');
+        lbl.textContent = e.lbl || '';
+        lbl.style.cssText = `left:${lx}px;top:${ly}px`;
+        cv.appendChild(lbl);
+
+        // Hover
+        hit.addEventListener('mouseenter', ev => { showEdgeTT(e, ev); lbl.style.opacity = '1' });
+        hit.addEventListener('mousemove', moveTT);
+        hit.addEventListener('mouseleave', () => {
+          hideTT();
+          if (!lbl.classList.contains('lit')) lbl.style.opacity = '';
+        });
+      });
+    }
+
+    // ── RENDER NODES ──────────────────────────────────────────────────────────────
+    function renderNodes() {
+      TOPO.nodes.forEach(n => {
+        const p = POS[n.id];
+        if (!p) return;
+
+        const el = document.createElement('div');
+        el.className = 'node';
+        el.dataset.id = n.id;
+        el.dataset.layer = n.layer;
+        if (n.bar) el.dataset.bar = n.bar;
+        el.style.cssText = `left:${p.x}px;top:${p.y}px`;
+
+        const badge = n.type === 'raw' ? 'LIVE'
+          : n.type === 'context' ? 'INFER'
+            : n.type === 'intent' ? 'INTENT'
+              : n.type === 'ml' ? 'ML'
+                : 'OUT';
+
+        const sigs = (n.signals || []).slice(0, 3).map(s => `<span class="nsig">${s}</span>`).join('');
+
+        el.innerHTML = `
+      <div class="nh">
+        <span class="ndot"></span>
+        <span class="nlabel">${n.label}</span>
+        <span class="nbadge">${badge}</span>
+      </div>
+      <div class="ndesc">${(n.description || '').slice(0, 68)}…</div>
+      <div class="nsigs">${sigs}</div>`;
+
+        el.addEventListener('click', () => openDetail(n));
+        el.addEventListener('mouseenter', ev => showNodeTT(n, ev));
+        el.addEventListener('mousemove', moveTT);
+        el.addEventListener('mouseleave', hideTT);
+
+        cv.appendChild(el);
+      });
+    }
+
+    // ── STORY HIGHLIGHT ────────────────────────────────────────────────────────────
+    function applyStory(sid) {
+      activeStory = sid;
+      const color = STORY_COLORS[sid] || null;
+      const meta = STORIES_META[sid] || null;
+
+      // Narrative
+      const narr = document.getElementById('snarr');
+      narr.textContent = meta ? meta.narrative : '';
+      narr.className = meta ? 'story-narr on' : 'story-narr';
+
+      // Nodes
+      document.querySelectorAll('.node').forEach(el => {
+        el.style.removeProperty('--sc');
+        if (!sid) {
+          el.classList.remove('dimmed', 'story-lit');
+        } else if (meta && meta.nodes.has(el.dataset.id)) {
+          el.classList.remove('dimmed');
+          el.classList.add('story-lit');
+          el.style.setProperty('--sc', color);
+        } else {
+          el.classList.remove('story-lit');
+          el.classList.add('dimmed');
+        }
+      });
+
+      // Edges
+      document.querySelectorAll('.ep').forEach(el => {
+        const stories = el.dataset.stories ? el.dataset.stories.split(',') : [];
+        if (!sid) {
+          el.classList.remove('dimmed', 'lit');
+          el.style.removeProperty('stroke');
+          el.setAttribute('marker-end', 'url(#ma)');
+        } else if (stories.includes(sid)) {
+          el.classList.remove('dimmed');
+          el.classList.add('lit');
+          el.style.stroke = color;
+          el.setAttribute('marker-end', 'url(#mb)');
+        } else {
+          el.classList.remove('lit');
+          el.classList.add('dimmed');
+          el.style.removeProperty('stroke');
+          el.setAttribute('marker-end', 'url(#ma)');
+        }
+      });
+
+      // Labels
+      document.querySelectorAll('.elbl').forEach(el => {
+        const stories = el.dataset.stories ? el.dataset.stories.split(',') : [];
+        if (!sid) {
+          el.classList.remove('dimmed', 'lit');
+          el.style.removeProperty('color');
+          el.style.opacity = '';
+        } else if (stories.includes(sid)) {
+          el.classList.remove('dimmed');
+          el.classList.add('lit');
+          el.style.color = color;
+          el.style.opacity = '1';
+        } else {
+          el.classList.remove('lit');
+          el.classList.add('dimmed');
+          el.style.opacity = '0';
+        }
+      });
+    }
+
+    document.querySelectorAll('.story-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const sid = btn.dataset.story;
+        document.querySelectorAll('.story-btn').forEach(b => b.classList.remove('active'));
+        if (sid && sid !== activeStory) {
+          btn.classList.add('active');
+          applyStory(sid);
+        } else {
+          applyStory('');
+        }
+      });
+    });
+
+    // ── DETAIL PANEL ──────────────────────────────────────────────────────────────
+    function openDetail(n) {
+      const layerNames = ['RAW SOURCE', 'CONTEXT INFERENCE', 'BAR INTENT', 'FEATURE EXTRACTION', 'PREDICTOR'];
+      const layerCols = ['var(--raw)', 'var(--ctx)', 'var(--intent)', 'var(--ml)', 'var(--ml)'];
+      const lname = layerNames[n.layer] || '';
+      const lcol = layerCols[n.layer] || 'var(--amber)';
+
+      const pills = (n.signals || []).map(s => `<span class="det-pill">${s}</span>`).join('');
+      const src = n.source ? `<div class="det-src">SOURCE · ${n.source}</div>` : '';
+
+      document.getElementById('det-body').innerHTML = `
+    <div class="det-layer" style="color:${lcol}">${lname} · LAYER ${n.layer}</div>
+    <div class="det-title">${n.label}</div>
+    ${src}
+    <div class="det-desc">${n.description || ''}</div>
+    <div class="det-h">SIGNALS PRODUCED</div>
+    <div class="det-pills">${pills}</div>
+    <div class="det-h" style="margin-top:1.1rem">⚡ LIVE CONTEXT INSIGHTS</div>
+    <div id="det-live"><div class="det-row"><span class="det-k" style="opacity:.5">fetching live analysis…</span></div></div>
+    <div class="det-h" style="margin-top:1rem">🛡 WARDEN STATUS</div>
+    <div id="det-warden"><div class="det-row"><span class="det-k" style="opacity:.5">checking…</span></div></div>`;
+
+      document.getElementById('detail').classList.add('open');
+      fetchLive(n);
+    }
+
+    async function fetchLive(n) {
+      // ── Fetch insights (what the model INTERPRETS) ─────────────────────────────
+      try {
+        const [insRes, sigRes] = await Promise.all([
+          fetch(`${API}/api/v1/signals/insights`),
+          fetch(`${API}/api/v1/signals/live`),
+        ]);
+
+        const liveEl = document.getElementById('det-live');
+        const wardenEl = document.getElementById('det-warden');
+        if (!liveEl) return;
+
+        // ── INSIGHTS PANEL ──────────────────────────────────────────────────────
+        if (insRes.ok) {
+          const ins = await insRes.json();
+
+          const INSIGHT_CONF = [
+            { key: 'academic', icon: '📚', color: '#56a85c', label: 'ACADEMIC' },
+            { key: 'greek_life', icon: '🏛', color: '#d868a0', label: 'GREEK LIFE' },
+            { key: 'weather', icon: '🌡', color: '#00cfff', label: 'WEATHER' },
+            { key: 'athletics', icon: '🏟', color: '#ffb533', label: 'ATHLETICS' },
+            { key: 'tv_sports', icon: '📺', color: '#ff8844', label: 'TV SPORTS' },
+            { key: 'outlook', icon: '⚡', color: '#e8a020', label: 'OUTLOOK' },
+          ];
+
+          liveEl.innerHTML = INSIGHT_CONF.map(c => `
+        <div class="det-row" style="flex-direction:column;align-items:flex-start;gap:.2rem;padding:.55rem 0;border-bottom:1px solid rgba(255,255,255,.05)">
+          <span style="font-size:.47rem;letter-spacing:.18em;color:${c.color};font-family:'Anton',sans-serif">${c.icon} ${c.label}</span>
+          <span class="det-v" style="color:rgba(237,224,204,.75);font-size:.54rem;line-height:1.55;white-space:normal">${ins[c.key] || '—'}</span>
+        </div>`).join('');
+        } else {
+          liveEl.innerHTML = `<div class="det-row"><span class="det-k" style="opacity:.4">API offline</span></div>`;
+        }
+
+        // ── WARDEN PANEL ────────────────────────────────────────────────────────
+        if (wardenEl && sigRes.ok) {
+          const sig = await sigRes.json();
+          const now = new Date();
+
+          const weatherFetchedAt = sig?.weather?.fetched_at;
+          let wardenRows = '';
+
+          if (weatherFetchedAt) {
+            const ageMin = ((now - new Date(weatherFetchedAt)) / 60000).toFixed(1);
+            const stale = parseFloat(ageMin) > 120;
+            const badge = stale
+              ? `<span style="color:#ff5555;font-weight:bold">⚠ STALE (${ageMin} min)</span>`
+              : `<span style="color:#44dd44">✓ FRESH (${ageMin} min old)</span>`;
+            wardenRows += `<div class="det-row"><span class="det-k">Weather age</span><span class="det-v">${badge}</span></div>`;
+          }
+
+          // Academic warden: weekend check
+          const isWeekend = [0, 6].includes(now.getDay());
+          const calInSess = sig?.calendar?.classes_in_session;
+          const calCorrect = isWeekend ? (calInSess === 0) : true;
+          wardenRows += `<div class="det-row"><span class="det-k">Calendar (weekend check)</span><span class="det-v" style="color:${calCorrect ? '#44dd44' : '#ff5555'}">${calCorrect ? '✓ correct' : '⚠ classes flagged on weekend!'}</span></div>`;
+
+          // Greek life date-party specificity
+          const hasActiveDateParty = sig?.calendar?.classes_in_session !== undefined;
+          wardenRows += `<div class="det-row"><span class="det-k">Data integrity</span><span class="det-v" style="color:#44dd44">✓ Warden active — stale data nullified</span></div>`;
+
+          wardenEl.innerHTML = wardenRows || `<div class="det-row"><span class="det-k" style="opacity:.4">No warden data</span></div>`;
+        }
+      } catch (e) {
+        const liveEl = document.getElementById('det-live');
+        const wardenEl = document.getElementById('det-warden');
+        if (liveEl) liveEl.innerHTML = `<div class="det-row"><span class="det-k" style="opacity:.4">API offline — ${e.message}</span></div>`;
+        if (wardenEl) wardenEl.innerHTML = `<div class="det-row"><span class="det-k" style="opacity:.4">API offline</span></div>`;
+      }
+    }
+
+    document.getElementById('det-close').addEventListener('click', () => {
+      document.getElementById('detail').classList.remove('open');
+    });
+
+    // ── TOOLTIPS ──────────────────────────────────────────────────────────────────
+    const tt = document.getElementById('tt');
+
+    function showEdgeTT(e, ev) {
+      document.getElementById('tt-lbl').textContent = e.lbl || '';
+      const tmap = { causal: 'CAUSAL INFERENCE', pass: 'NUMERIC PASS-THROUGH', data: 'DATA FLOW' };
+      document.getElementById('tt-type').textContent = `${tmap[e.type] || 'DATA FLOW'} · ${(e.wt || 'med').toUpperCase()} WEIGHT`;
+      document.getElementById('tt-body').textContent = e.sem || '';
+      tt.classList.add('show');
+      posTT(ev);
+    }
+
+    function showNodeTT(n, ev) {
+      const lnames = ['Raw Source', 'Context Inference', 'Bar Intent', 'Feature Extraction', 'Predictor'];
+      document.getElementById('tt-lbl').textContent = n.label;
+      document.getElementById('tt-type').textContent = lnames[n.layer] || '';
+      document.getElementById('tt-body').textContent = (n.description || '').slice(0, 150);
+      tt.classList.add('show');
+      posTT(ev);
+    }
+
+    function posTT(e) {
+      let lx = e.clientX + 14, ly = e.clientY - 10;
+      if (lx + 285 > window.innerWidth) lx = e.clientX - 295;
+      if (ly + 120 > window.innerHeight) ly = e.clientY - 130;
+      tt.style.left = lx + 'px';
+      tt.style.top = ly + 'px';
+    }
+    function moveTT(e) { if (tt.classList.contains('show')) posTT(e) }
+    function hideTT() { tt.classList.remove('show') }
+
+    // ── PAN & ZOOM ────────────────────────────────────────────────────────────────
+    function applyXform() {
+      cv.style.transform = `translate(${ox}px,${oy}px) scale(${scale})`;
     }
 
     function fitView() {
-      const r = vp.getBoundingClientRect();
-      sc = Math.min(r.width / 1860, r.height / 1100) * 0.88;
-      tx = (r.width - 1860 * sc) / 2;
-      ty = (r.height - 1100 * sc) / 2;
-      applyT();
+      const vw = vp.clientWidth, vh = vp.clientHeight;
+      const sc = Math.min(vw / 1640, vh / 960, 0.96) * 0.9;
+      scale = sc;
+      ox = (vw - 1640 * sc) / 2 - 20 * sc;
+      oy = (vh - 960 * sc) / 2 - 30 * sc;
+      applyXform();
     }
+
+    vp.addEventListener('mousedown', e => {
+      if (e.button !== 0) return;
+      if (e.target.closest('.node') || e.target.closest('.eh')) return;
+      dragging = true;
+      dx0 = e.clientX; dy0 = e.clientY; ox0 = ox; oy0 = oy;
+      vp.classList.add('drag');
+    });
+    window.addEventListener('mousemove', e => {
+      if (!dragging) return;
+      ox = ox0 + (e.clientX - dx0);
+      oy = oy0 + (e.clientY - dy0);
+      applyXform();
+    });
+    window.addEventListener('mouseup', () => { dragging = false; vp.classList.remove('drag') });
 
     vp.addEventListener('wheel', e => {
       e.preventDefault();
+      const f = e.deltaY < 0 ? 1.10 : 0.91;
       const r = vp.getBoundingClientRect();
-      doZoom(e.deltaY < 0 ? 1.1 : 0.91, e.clientX - r.left, e.clientY - r.top);
+      const mx = e.clientX - r.left, my = e.clientY - r.top;
+      ox = mx - (mx - ox) * f;
+      oy = my - (my - oy) * f;
+      scale = Math.min(Math.max(scale * f, 0.2), 2.8);
+      applyXform();
     }, { passive: false });
 
-    let drag = null;
-    vp.addEventListener('pointerdown', e => {
-      if (e.target.closest('.node')) return;
-      drag = { sx: e.clientX - tx, sy: e.clientY - ty };
-      vp.classList.add('drag');
-      vp.setPointerCapture(e.pointerId);
-    });
-    vp.addEventListener('pointermove', e => {
-      if (!drag) return;
-      tx = e.clientX - drag.sx; ty = e.clientY - drag.sy; applyT();
-    });
-    vp.addEventListener('pointerup', () => { drag = null; vp.classList.remove('drag'); });
+    document.getElementById('zi').addEventListener('click', () => { scale = Math.min(scale * 1.18, 2.8); applyXform() });
+    document.getElementById('zo').addEventListener('click', () => { scale = Math.max(scale * 0.85, 0.2); applyXform() });
+    document.getElementById('zf').addEventListener('click', fitView);
 
-    /* ── CLOCK ───────────────────────────────────── */
-    function tick() {
-      const d = new Date();
-      document.getElementById('clk').textContent =
-        d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-    }
-    setInterval(tick, 1000); tick();
+    // ── INIT ──────────────────────────────────────────────────────────────────────
+    (async () => {
+      document.getElementById('sn').textContent = TOPO.nodes.length;
+      document.getElementById('se').textContent = TOPO.edges.length;
+      document.getElementById('sc').textContent = TOPO.edges.filter(e => e.type === 'causal').length;
 
-    /* ── TOOLTIP DATA ────────────────────────────── */
-    const ND = {
-      weather: {
-        color: '#00cfff', label: 'WEATHER NODE', badge: 'Open-Meteo',
-        sections: [
-          {
-            t: 'LIVE SIGNALS', rows: [
-              ['temperature_c', '−2.1°C', 1], ['wind_chill_c', '−8.4°C', 1],
-              ['precipitation_mm', '0.0', 0], ['snowfall_mm', '1.2 mm', 1],
-              ['wind_speed_ms', '6.8 m/s', 1], ['cloud_cover', '78%', 1],
-              ['is_severe_weather', 'false', 0], ['is_first_nice_day', 'false', 0],
-            ]
-          },
-          {
-            t: 'CONFIG', rows: [
-              ['endpoint', 'api.open-meteo.com', 0], ['location', 'Minneapolis MN', 0],
-              ['cache_ttl', '600 s', 0], ['unit', 'metric', 0],
-            ]
-          }
-        ]
-      },
-      sports: {
-        color: '#ffb533', label: 'SPORTS NODE', badge: 'ESPN API',
-        sections: [
-          {
-            t: 'UMN ATHLETICS', rows: [
-              ['is_football_home', 'false', 0], ['is_basketball_home', 'true', 1],
-              ['is_hockey_home', 'false', 0], ['is_rivalry_game', 'false', 0],
-              ['hours_until_game', '5.5 h', 1],
-            ]
-          },
-          {
-            t: 'TV SPORTS', rows: [
-              ['is_nfl_game_day', 'false', 0], ['is_super_bowl', 'false', 0],
-              ['is_vikings_game', 'false', 0], ['is_cfb_saturday', 'false', 0],
-              ['is_march_madness', 'false', 0], ['is_nba_playoffs', 'false', 0],
-              ['tv_game_weight', '0.65', 1],
-            ]
-          }
-        ]
-      },
-      calendar: {
-        color: '#56a85c', label: 'CALENDAR NODE', badge: 'UMN Academic',
-        sections: [
-          {
-            t: 'ACADEMIC FLAGS', rows: [
-              ['classes_in_session', 'true', 1], ['is_finals_week', 'false', 0],
-              ['is_welcome_week', 'false', 0], ['is_midterms_week', 'false', 0],
-              ['is_syllabus_week', 'false', 0], ['is_study_days', 'false', 0],
-              ['is_break', 'false', 0], ['week_of_semester', '6', 1],
-              ['days_until_break', '41', 0], ['is_summer_session', 'false', 0],
-            ]
-          },
-          {
-            t: 'SOCIAL EVENTS', rows: [
-              ['is_st_patricks', 'false', 0], ['is_halloween', 'false', 0],
-              ['is_homecoming', 'false', 0], ['is_bar_crawl', 'false', 0],
-              ['is_blackout_wednesday', 'false', 0], ['is_new_years_eve', 'false', 0],
-              ['is_cinco_de_mayo', 'false', 0], ['is_parents_weekend', 'false', 0],
-            ]
-          }
-        ]
-      },
-      events: {
-        color: '#c060e0', label: 'EVENTS NODE', badge: 'SeatGeek',
-        sections: [
-          {
-            t: 'NEARBY EVENTS (≤2km)', rows: [
-              ['events_nearby', '3', 1], ['max_capacity', '1,200', 1],
-              ['has_large_event', 'true', 1], ['nearest_dist_km', '0.4 km', 0],
-              ['categories', 'music, comedy', 0],
-            ]
-          },
-          {
-            t: 'CONFIG', rows: [
-              ['endpoint', 'api.seatgeek.com/2', 0],
-              ['radius_km', '2.0', 0], ['cache_ttl', '3600 s', 0],
-            ]
-          }
-        ]
-      },
-      popular_times: {
-        color: '#3ecfb8', label: 'POP. TIMES NODE', badge: 'Google Places',
-        bars: [
-          { name: "BLARNEY'S", busy: 61 },
-          { name: "SALLY'S", busy: 54 },
-          { name: 'KOLL. KLUB', busy: 72 },
-        ],
-        extra: [['source', 'Google Places API'], ['model', 'historical hourly'], ['cache_ttl', '3600 s']]
-      },
-      feature_extractor: {
-        color: '#f0e0c0', label: 'FEATURE EXTRACTOR', badge: '75 features',
-        groups: [
-          { n: 'TIME (10)', c: ['hour', 'day_of_week', 'hour_sin', 'hour_cos', 'dow_sin', 'dow_cos', 'is_weekend', 'is_thursday', 'month', 'week_of_year'] },
-          { n: 'GREEK LIFE (7)', c: ['is_greek_bid_day', 'is_greek_thursday', 'is_greek_formal_season', 'is_greek_pregame_window', 'greek_social_intensity', 'is_greek_rush_week', 'is_greek_week'] },
-          { n: 'WEATHER (8)', c: ['temperature_c', 'wind_chill_c', 'precipitation_mm', 'snowfall_mm', 'wind_speed_ms', 'is_severe_weather', 'cloud_cover', 'is_first_nice_day'] },
-          { n: 'SPORTS (15)', c: ['is_football_home', 'is_basketball_home', 'is_hockey_home', 'hours_until_game', 'is_rivalry_game', 'is_nfl_game_day', 'is_vikings_game', 'tv_game_weight', '+ 7 more'] },
-          { n: 'ACADEMIC + EVENTS (35)', c: ['classes_in_session', 'is_finals_week', 'week_of_semester', 'days_until_break', 'is_bar_crawl', 'is_homecoming', 'is_halloween', 'cover_charge', '+ 27 more'] },
-        ]
-      },
-      predictor: {
-        color: '#ff7030', label: 'PREDICTOR NODE', badge: 'Ensemble',
-        sections: [
-          {
-            t: 'MODELS', rows: [
-              ['primary', 'WaitTimeModel (RF)', 1], ['fallback_1', 'BaselineModel (median)', 0],
-              ['fallback_2', 'global default', 0], ['n_estimators', '100', 0],
-              ['test_split_days', '14', 1],
-            ]
-          },
-          {
-            t: 'OUTPUTS (per bar)', rows: [
-              ['predicted_wait_minutes', 'float', 1], ['predicted_pct_full', '0.0 – 1.0', 1],
-              ['confidence', 'high / med / low', 1], ['model_used', 'str', 0],
-              ['signals_used', 'dict[str,Any]', 0],
-            ]
-          }
-        ]
-      },
-      blarneys: {
-        color: '#169b62', label: "BLARNEY'S", badge: 'bar_id = 1',
-        sections: [
-          {
-            t: 'PREDICTIONS', rows: [
-              ['wait_minutes', '14 min', 1], ['pct_full', '68%', 1],
-              ['confidence', 'HIGH', 1], ['model_used', 'ml (RF)', 0],
-            ]
-          },
-          {
-            t: 'BAR SPECIALS', rows: [
-              ['Karaoke Thu', '9 PM–2 AM  +55%', 1], ['Happy Hour', '3:17–6:17 PM', 0],
-              ['Wed Deal', '9 PM–1 AM  +25%', 0], ['late_night_draw', 'true', 0],
-            ]
-          }
-        ]
-      },
-      sallys: {
-        color: '#b5253d', label: "SALLY'S", badge: 'bar_id = 2',
-        sections: [
-          {
-            t: 'PREDICTIONS', rows: [
-              ['wait_minutes', '8 min', 1], ['pct_full', '52%', 1],
-              ['confidence', 'HIGH', 1], ['model_used', 'ml (RF)', 0],
-            ]
-          },
-          {
-            t: 'BAR SPECIALS', rows: [
-              ['$2 Tuesday', '8 PM–midnight  +30%', 1],
-              ['Late HH', '10 PM–midnight  +20%', 0],
-              ['Happy Hour', '3–6 PM', 0],
-            ]
-          }
-        ]
-      },
-      greek_life: {
-        color: '#d868a0', label: 'GREEK LIFE NODE', badge: 'providers/greek_life.py',
-        sections: [
-          {
-            t: 'SOCIAL CALENDAR', rows: [
-              ['is_greek_rush_week', 'false', 0], ['is_greek_bid_day', 'false', 0],
-              ['is_greek_formal_season', 'false', 0], ['is_greek_week', 'false', 0],
-              ['is_greek_thursday', 'true', 1], ['is_greek_pregame_window', 'true', 1],
-              ['greek_social_intensity', '0.72', 1],
-            ]
-          },
-          {
-            t: 'COMMUNITY', rows: [
-              ['ifc_fraternities', '24 chapters', 0], ['phc_sororities', '13 chapters', 0],
-              ['total_members', '~3,000', 1], ['source', 'computed — no API', 0],
-              ['kk_affinity', '0.90', 1], ['blarneys_affinity', '0.75', 1],
-              ['sallys_affinity', '0.45', 0],
-            ]
-          }
-        ]
-      },
-      kk: {
-        color: '#f5c800', label: 'KOLLEGE KLUB', badge: 'bar_id = 3',
-        sections: [
-          {
-            t: 'PREDICTIONS', rows: [
-              ['wait_minutes', '22 min', 1], ['pct_full', '81%', 1],
-              ['confidence', 'MEDIUM', 1], ['model_used', 'ml (RF)', 0],
-            ]
-          },
-          {
-            t: 'BAR SPECIALS', rows: [
-              ['KK Tuesday', '9 PM–2 AM  +70%', 1], ['KK Thursday', '9 PM–2 AM  +40%', 1],
-              ['Fri After Class', '3–7 PM  +35%', 0], ['cover_charge', 'Thu–Sat', 0],
-            ]
-          }
-        ]
-      }
-    };
+      renderHeaders();
+      renderEdges();
+      renderNodes();
+      fitView();
 
-    function buildTT(id) {
-      const d = ND[id]; if (!d) return '';
-      const tt = document.getElementById('tt');
-      tt.style.setProperty('--ttc', d.color);
-      let h = `<div class="tth"><span class="tttl">${d.label}</span><span class="ttbg">${d.badge}</span></div><div class="ttb">`;
-      if (d.sections) {
-        d.sections.forEach(s => {
-          h += `<div class="tts"><div class="ttst">${s.t}</div>`;
-          s.rows.forEach(([k, v, hi]) => {
-            h += `<div class="ttr"><span class="ttk">${k}</span><span class="ttv${hi ? ' hi' : ''}">${v}</span></div>`;
-          });
-          h += '</div>';
-        });
-      }
-      if (d.groups) {
-        d.groups.forEach(g => {
-          h += `<div class="tts"><div class="ttst">${g.n}</div><div class="ttchips">`;
-          g.c.forEach(c => { h += `<span class="ttchip">${c}</span>`; });
-          h += '</div></div>';
-        });
-      }
-      if (d.bars) {
-        h += '<div class="tts"><div class="ttst">BUSYNESS BASELINE</div>';
-        d.bars.forEach(b => {
-          h += `<div class="ttbr"><span class="ttbn">${b.name}</span><div class="tbbtr"><div class="tbbf" style="width:${b.busy}%"></div></div><span class="tbbp">${b.busy}%</span></div>`;
-        });
-        h += '</div>';
-        if (d.extra) {
-          h += '<div class="tts">';
-          d.extra.forEach(([k, v]) => { h += `<div class="ttr"><span class="ttk">${k}</span><span class="ttv">${v}</span></div>`; });
-          h += '</div>';
+      // Try to update from live API
+      try {
+        const r = await fetch(`${API}/api/v1/pipeline/topology`);
+        if (r.ok) {
+          document.getElementById('sa').textContent = 'API ONLINE';
+        } else {
+          document.getElementById('sa').textContent = 'API OFFLINE';
         }
+      } catch {
+        document.getElementById('sa').textContent = 'API OFFLINE';
       }
-      return h + '</div>';
-    }
-
-    /* ── TOOLTIP HOVER ───────────────────────────── */
-    const ttEl = document.getElementById('tt');
-    let ttT = null;
-    const RIGHT_NODES = new Set(['blarneys', 'sallys', 'kk', 'predictor']);
-
-    document.querySelectorAll('.node').forEach(n => {
-      n.addEventListener('mouseenter', () => {
-        clearTimeout(ttT);
-        const id = n.dataset.node;
-        ttEl.innerHTML = buildTT(id);
-        const r = n.getBoundingClientRect();
-        const isRight = RIGHT_NODES.has(id);
-        let left = isRight ? r.left - 268 : r.right + 10;
-        let top = r.top + r.height / 2 - 90;
-        left = Math.max(8, Math.min(left, window.innerWidth - 310));
-        top = Math.max(8, Math.min(top, window.innerHeight - 420));
-        ttEl.style.left = left + 'px';
-        ttEl.style.top = top + 'px';
-        ttEl.classList.add('vis');
-      });
-      n.addEventListener('mouseleave', () => { ttT = setTimeout(() => ttEl.classList.remove('vis'), 110); });
-    });
-    ttEl.addEventListener('mouseenter', () => clearTimeout(ttT));
-    ttEl.addEventListener('mouseleave', () => ttEl.classList.remove('vis'));
-
-    /* ── REFRESH PULSES ──────────────────────────── */
-    const liveSrc = ['weather', 'sports', 'events', 'popular_times'];
-    function pulse() {
-      const id = liveSrc[Math.floor(Math.random() * liveSrc.length)];
-      const el = document.querySelector(`[data-node="${id}"]`);
-      if (el) { el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
-      setTimeout(() => { if (el) el.classList.remove('flash'); }, 800);
-      setTimeout(pulse, 3800 + Math.random() * 3200);
-    }
-    setTimeout(pulse, 2000);
-
-    /* ── RUN PIPELINE ────────────────────────────── */
-    function runPipeline() {
-      const btn = document.getElementById('rbtn');
-      if (btn.classList.contains('running')) return;
-      btn.textContent = '◉ RUNNING…'; btn.classList.add('running');
-      const seq = ['weather', 'sports', 'calendar', 'events', 'popular_times', 'greek_life', 'feature_extractor', 'predictor'];
-      let i = 0;
-      function step() {
-        if (i >= seq.length) {
-          btn.textContent = '▶ RUN PIPELINE'; btn.classList.remove('running');
-          document.getElementById('s-lat').textContent = (115 + Math.floor(Math.random() * 80)) + 'ms';
-          return;
-        }
-        const el = document.querySelector(`[data-node="${seq[i]}"]`);
-        if (el) { el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
-        i++; setTimeout(step, 320);
-      }
-      setTimeout(step, 80);
-    }
-
-    window.addEventListener('load', fitView);
-
+    })();
   </script>
-  <script src="ontology.js"></script>
 </body>
 
 </html>
