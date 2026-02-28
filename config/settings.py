@@ -23,6 +23,28 @@ BARS = [
     {"name": "Kollege Klub", "neighborhood": "Dinkytown"},
 ]
 
+# Estimated maximum legal occupancy per bar (people).
+# Used to convert headcount → pct_full in the check-in form.
+# Update these from the fire marshal posting inside each bar.
+BAR_CAPACITIES: dict[int, int] = {
+    1: 200,   # Blarney's Pub and Grill
+    2: 150,   # Sally's Saloon
+    3: 300,   # Kollege Klub (two floors)
+}
+
+# Canonical deal-type tags for manual observations.
+# These are stored on the observation row (deal_type column) so future
+# feature engineering can derive a deal-intensity signal.
+# cover_charge deal type also sets the cover_charge dollar field directly
+# (which the model already uses as a feature via SIGNAL_FEATURES).
+DEAL_TYPES: list[str] = [
+    "none",           # no active deal
+    "happy_hour",     # standard happy-hour pricing
+    "drink_special",  # recurring deal night (e.g. KK Tuesday, $2 Tuesday)
+    "entertainment",  # karaoke, DJ, trivia, live music
+    "cover_charge",   # door cover being collected
+]
+
 # Model
 TEST_SPLIT_DAYS = 14          # hold-out last N days for evaluation
 RANDOM_SEED = 42

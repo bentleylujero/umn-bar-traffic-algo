@@ -10,8 +10,11 @@ from pydantic import BaseModel
 class CrowdReport(BaseModel):
     bar_id: int
     wait_minutes: float
-    pct_full: Optional[float] = None
-    cover_charge: Optional[float] = None
+    pct_full: Optional[float] = None         # 0–100; derived from people_count if omitted
+    people_count: Optional[int] = None       # raw headcount; converted to pct_full server-side
+    cover_charge: Optional[float] = None     # dollars; auto-set when deal_type='cover_charge'
+    deal_type: Optional[str] = None          # none|happy_hour|drink_special|entertainment|cover_charge
+    observed_at: Optional[datetime] = None   # defaults to now() when omitted
     notes: Optional[str] = None
 
 class PredictionRequest(BaseModel):

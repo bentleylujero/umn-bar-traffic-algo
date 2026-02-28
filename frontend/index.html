@@ -483,13 +483,13 @@
     .sig-v.dim     { color: rgba(237,224,204,0.22); }
     .sig-v.neutral { color: var(--cream-60); }
 
-    /* ── HEADCOUNT PANEL ────────────────────────────────────── */
-    .checkin-wrap {
+    /* ── LOG OBSERVATION PANEL ──────────────────────────────── */
+    .obs-wrap {
       border: 1px solid var(--border);
       background: var(--card);
     }
 
-    .checkin-topbar {
+    .obs-topbar {
       padding: 0.65rem 1.5rem;
       border-bottom: 1px solid var(--border);
       display: flex;
@@ -500,156 +500,227 @@
       transition: background 0.2s;
     }
 
-    .checkin-topbar:hover { background: var(--card-h); }
+    .obs-topbar:hover { background: var(--card-h); }
 
-    .checkin-topbar-title {
+    .obs-topbar-title {
       font-size: 0.56rem;
       letter-spacing: 0.32em;
       text-transform: uppercase;
       color: var(--amber);
     }
 
-    .checkin-toggle {
+    .obs-toggle {
       font-size: 0.58rem;
       color: var(--cream-30);
       letter-spacing: 0.1em;
     }
 
-    .checkin-body {
+    .obs-body {
       display: none;
-      padding: 1.25rem 1.5rem;
+      padding: 1.4rem 1.5rem 1.5rem;
     }
 
-    .checkin-body.open { display: block; }
+    .obs-body.open { display: block; }
 
-    .checkin-hint {
-      font-size: 0.62rem;
+    /* bar selector tabs */
+    .obs-bar-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.4rem;
+    }
+
+    .obs-bar-tab {
+      flex: 1;
+      padding: 0.55rem 0.5rem;
+      background: var(--bg2);
+      border: 1px solid var(--border);
       color: var(--cream-30);
-      letter-spacing: 0.06em;
-      margin-bottom: 1.1rem;
-      line-height: 1.6;
+      font-family: var(--fd);
+      font-size: 0.95rem;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      text-align: center;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
     }
 
-    .checkin-bars {
+    .obs-bar-tab:hover { color: var(--cream-60); border-color: var(--border-hot); }
+
+    .obs-bar-tab.active {
+      color: var(--amber-bright);
+      border-color: var(--amber);
+      background: var(--amber-glow);
+    }
+
+    /* two-column form layout */
+    .obs-form-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1.25rem;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.1rem 1.8rem;
       margin-bottom: 1.25rem;
     }
 
-    .checkin-bar {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      padding: 1rem 1.1rem;
-    }
+    .obs-field { display: flex; flex-direction: column; gap: 0.3rem; }
+    .obs-field.full-width { grid-column: 1 / -1; }
 
-    .checkin-bar-name {
-      font-family: var(--fd);
-      font-size: 1rem;
-      color: var(--amber-bright);
-      letter-spacing: 0.04em;
-      margin-bottom: 0.75rem;
-    }
-
-    .checkin-field {
-      margin-bottom: 0.65rem;
-    }
-
-    .checkin-label {
-      display: block;
+    .obs-label {
       font-size: 0.54rem;
       letter-spacing: 0.2em;
       text-transform: uppercase;
       color: var(--cream-30);
-      margin-bottom: 0.3rem;
     }
 
-    .checkin-slider-row {
-      display: flex;
-      align-items: center;
-      gap: 0.65rem;
-    }
-
-    .checkin-slider {
-      -webkit-appearance: none;
-      appearance: none;
-      flex: 1;
-      height: 4px;
-      background: var(--cream-12);
-      outline: none;
-      border-radius: 2px;
-    }
-
-    .checkin-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: var(--amber);
-      cursor: pointer;
-      box-shadow: 0 0 6px var(--amber-dim);
-    }
-
-    .checkin-slider-val {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: var(--cream-60);
-      min-width: 2.5rem;
-      text-align: right;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .checkin-input {
-      width: 100%;
+    .obs-input {
       background: var(--bg);
       border: 1px solid var(--border);
       color: var(--cream);
       font-family: var(--fm);
-      font-size: 0.72rem;
-      padding: 0.3rem 0.5rem;
+      font-size: 0.82rem;
+      padding: 0.38rem 0.6rem;
+      outline: none;
+      width: 100%;
+    }
+
+    .obs-input:focus { border-color: var(--amber); }
+
+    /* people → pct preview */
+    .obs-pct-preview {
+      font-size: 0.65rem;
+      color: var(--amber);
+      letter-spacing: 0.08em;
+      margin-top: 0.2rem;
+      min-height: 1em;
+    }
+
+    /* time row */
+    .obs-time-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .obs-time-pill {
+      font-family: var(--fm);
+      font-size: 0.58rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      padding: 0.28rem 0.65rem;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--cream-30);
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .obs-time-pill:hover { color: var(--cream-60); border-color: var(--border-hot); }
+    .obs-time-pill.active { color: var(--amber); border-color: var(--amber); background: var(--amber-glow); }
+
+    .obs-time-custom {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--cream);
+      font-family: var(--fm);
+      font-size: 0.78rem;
+      padding: 0.28rem 0.6rem;
+      outline: none;
+      display: none;
+    }
+
+    .obs-time-custom.show { display: block; }
+    .obs-time-custom:focus { border-color: var(--amber); }
+
+    /* deal chips */
+    .obs-deal-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+
+    .obs-deal-chip {
+      font-family: var(--fm);
+      font-size: 0.56rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding: 0.28rem 0.7rem;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--cream-30);
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+
+    .obs-deal-chip:hover { color: var(--cream-60); border-color: var(--border-hot); }
+
+    .obs-deal-chip.active {
+      border-color: var(--amber);
+      color: var(--amber-bright);
+      background: var(--amber-glow);
+    }
+
+    .obs-deal-chip.active.cover { border-color: var(--orange); color: var(--orange); background: rgba(208,88,32,0.08); }
+
+    .obs-cover-amt {
+      display: none;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+    }
+
+    .obs-cover-amt.show { display: flex; }
+
+    .obs-cover-amt-label {
+      font-size: 0.58rem;
+      color: var(--cream-30);
+      letter-spacing: 0.1em;
+    }
+
+    .obs-cover-input {
+      width: 5rem;
+      background: var(--bg);
+      border: 1px solid var(--orange);
+      color: var(--cream);
+      font-family: var(--fm);
+      font-size: 0.82rem;
+      padding: 0.28rem 0.5rem;
       outline: none;
     }
 
-    .checkin-input:focus { border-color: var(--amber); }
+    .obs-cover-input:focus { border-color: var(--amber-bright); }
 
-    .checkin-actions {
+    /* actions row */
+    .obs-actions {
       display: flex;
       align-items: center;
       gap: 1rem;
+      padding-top: 0.25rem;
     }
 
-    .checkin-submit {
+    .obs-submit {
       font-family: var(--fm);
       font-size: 0.6rem;
       letter-spacing: 0.22em;
       text-transform: uppercase;
-      padding: 0.45rem 1.1rem;
+      padding: 0.5rem 1.4rem;
       background: transparent;
       border: 1px solid var(--amber);
       color: var(--amber);
       cursor: pointer;
-      transition: background 0.2s, color 0.2s;
+      transition: background 0.2s;
     }
 
-    .checkin-submit:hover {
-      background: var(--amber-glow);
-    }
+    .obs-submit:hover  { background: var(--amber-glow); }
+    .obs-submit:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    .checkin-submit:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
-    .checkin-status {
+    .obs-status {
       font-size: 0.62rem;
       letter-spacing: 0.08em;
       opacity: 0;
       transition: opacity 0.3s;
     }
 
-    .checkin-status.show { opacity: 1; }
-    .checkin-status.ok   { color: var(--green); }
-    .checkin-status.err  { color: var(--red); }
+    .obs-status.show { opacity: 1; }
+    .obs-status.ok   { color: var(--green); }
+    .obs-status.err  { color: var(--red); }
 
     /* ── FOOTER ─────────────────────────────────────────────── */
     footer {
@@ -687,9 +758,10 @@
 
     /* ── RESPONSIVE ─────────────────────────────────────────── */
     @media (max-width: 860px) {
-      .bars-grid    { grid-template-columns: 1fr; }
-      .signals-cols { grid-template-columns: 1fr; }
-      .checkin-bars { grid-template-columns: 1fr; }
+      .bars-grid      { grid-template-columns: 1fr; }
+      .signals-cols   { grid-template-columns: 1fr; }
+      .obs-form-grid  { grid-template-columns: 1fr; }
+      .obs-bar-tabs   { flex-direction: column; }
       .sig-col { border-right: none; border-bottom: 1px solid var(--border); }
       .sig-col:last-child { border-bottom: none; }
       .hd-nav { display: none; }
@@ -735,74 +807,73 @@
       </div>
     </div>
 
-    <!-- Headcount check-in -->
+    <!-- Log Observation panel -->
     <div>
-      <div class="section-label">Headcount Check-in</div>
-      <div class="checkin-wrap">
-        <div class="checkin-topbar" id="checkin-topbar">
-          <span class="checkin-topbar-title">Log Actual Bar Capacity</span>
-          <span class="checkin-toggle" id="checkin-toggle">▼ Open</span>
+      <div class="section-label">Log Observation</div>
+      <div class="obs-wrap">
+        <div class="obs-topbar" id="obs-topbar">
+          <span class="obs-topbar-title">Record Ground-Truth Data</span>
+          <span class="obs-toggle" id="obs-toggle">▼ Open</span>
         </div>
-        <div class="checkin-body" id="checkin-body">
-          <p class="checkin-hint">
-            Enter the real headcount you observe right now. Each submission is
-            written to the database as a ground-truth observation, improving
-            future model accuracy. Provide % full — or leave at 0 to skip that bar.
-          </p>
-          <div class="checkin-bars">
-            <!-- Bar 1 — Blarney's -->
-            <div class="checkin-bar">
-              <div class="checkin-bar-name">Blarney's</div>
-              <div class="checkin-field">
-                <label class="checkin-label" for="pct-1">% Full</label>
-                <div class="checkin-slider-row">
-                  <input type="range" class="checkin-slider" id="pct-1" min="0" max="100" value="0"
-                    oninput="document.getElementById('pct-val-1').textContent=this.value+'%'">
-                  <span class="checkin-slider-val" id="pct-val-1">0%</span>
-                </div>
-              </div>
-              <div class="checkin-field">
-                <label class="checkin-label" for="wait-1">Visible Line (min)</label>
-                <input type="number" class="checkin-input" id="wait-1" min="0" max="120" value="0" placeholder="0">
-              </div>
-            </div>
-            <!-- Bar 2 — Sally's -->
-            <div class="checkin-bar">
-              <div class="checkin-bar-name">Sally's</div>
-              <div class="checkin-field">
-                <label class="checkin-label" for="pct-2">% Full</label>
-                <div class="checkin-slider-row">
-                  <input type="range" class="checkin-slider" id="pct-2" min="0" max="100" value="0"
-                    oninput="document.getElementById('pct-val-2').textContent=this.value+'%'">
-                  <span class="checkin-slider-val" id="pct-val-2">0%</span>
-                </div>
-              </div>
-              <div class="checkin-field">
-                <label class="checkin-label" for="wait-2">Visible Line (min)</label>
-                <input type="number" class="checkin-input" id="wait-2" min="0" max="120" value="0" placeholder="0">
-              </div>
-            </div>
-            <!-- Bar 3 — KK -->
-            <div class="checkin-bar">
-              <div class="checkin-bar-name">Kollege Klub</div>
-              <div class="checkin-field">
-                <label class="checkin-label" for="pct-3">% Full</label>
-                <div class="checkin-slider-row">
-                  <input type="range" class="checkin-slider" id="pct-3" min="0" max="100" value="0"
-                    oninput="document.getElementById('pct-val-3').textContent=this.value+'%'">
-                  <span class="checkin-slider-val" id="pct-val-3">0%</span>
-                </div>
-              </div>
-              <div class="checkin-field">
-                <label class="checkin-label" for="wait-3">Visible Line (min)</label>
-                <input type="number" class="checkin-input" id="wait-3" min="0" max="120" value="0" placeholder="0">
-              </div>
-            </div>
+        <div class="obs-body" id="obs-body">
+
+          <!-- Bar selector -->
+          <div class="obs-bar-tabs" id="obs-bar-tabs">
+            <!-- populated by JS from /api/v1/bars -->
           </div>
-          <div class="checkin-actions">
-            <button class="checkin-submit" id="checkin-submit" onclick="submitCheckin()">Submit Headcount</button>
-            <span class="checkin-status" id="checkin-status"></span>
+
+          <div class="obs-form-grid">
+
+            <!-- People count -->
+            <div class="obs-field">
+              <label class="obs-label" for="obs-people">People in bar</label>
+              <input type="number" class="obs-input" id="obs-people"
+                min="0" max="2000" placeholder="e.g. 30"
+                oninput="obsUpdatePct()">
+              <div class="obs-pct-preview" id="obs-pct-preview"></div>
+            </div>
+
+            <!-- Wait time -->
+            <div class="obs-field">
+              <label class="obs-label" for="obs-wait">Line / wait (min)</label>
+              <input type="number" class="obs-input" id="obs-wait"
+                min="0" max="120" placeholder="0" value="0">
+            </div>
+
+            <!-- Time -->
+            <div class="obs-field full-width">
+              <label class="obs-label">Observation time</label>
+              <div class="obs-time-row">
+                <button class="obs-time-pill active" id="obs-time-now"
+                  onclick="obsSetTimeNow()">Now</button>
+                <button class="obs-time-pill" id="obs-time-custom-btn"
+                  onclick="obsSetTimeCustom()">Custom</button>
+                <input type="datetime-local" class="obs-time-custom" id="obs-time-custom-input">
+              </div>
+            </div>
+
+            <!-- Deal type -->
+            <div class="obs-field full-width">
+              <label class="obs-label">Deal active</label>
+              <div class="obs-deal-chips" id="obs-deal-chips">
+                <!-- populated by JS from /api/v1/bars -->
+              </div>
+              <div class="obs-cover-amt" id="obs-cover-amt">
+                <span class="obs-cover-amt-label">Cover $</span>
+                <input type="number" class="obs-cover-input" id="obs-cover-input"
+                  min="0" max="50" placeholder="5" value="5">
+              </div>
+            </div>
+
           </div>
+
+          <div class="obs-actions">
+            <button class="obs-submit" id="obs-submit" onclick="obsSubmit()">
+              Log Observation
+            </button>
+            <span class="obs-status" id="obs-status"></span>
+          </div>
+
         </div>
       </div>
     </div>
@@ -1111,75 +1182,206 @@
   /* ── INIT ──────────────────────────────────────────────── */
   fetchAll();
 
-  /* ── CHECKIN TOGGLE ────────────────────────────────────── */
-  document.getElementById('checkin-topbar').addEventListener('click', () => {
-    const body   = document.getElementById('checkin-body');
-    const toggle = document.getElementById('checkin-toggle');
+  /* ── OBS PANEL STATE ───────────────────────────────────── */
+  let obsBars     = [];   // [{id, name, capacity}, ...]
+  let obsBarId    = 1;
+  let obsDealType = 'none';
+  let obsUseNow   = true;
+
+  const DEAL_LABELS = {
+    none:          'None',
+    happy_hour:    'Happy Hour',
+    drink_special: 'Drink Special',
+    entertainment: 'Entertainment',
+    cover_charge:  'Cover Charge',
+  };
+
+  /* ── OBS TOGGLE ─────────────────────────────────────────── */
+  document.getElementById('obs-topbar').addEventListener('click', () => {
+    const body   = document.getElementById('obs-body');
+    const toggle = document.getElementById('obs-toggle');
     const open   = body.classList.toggle('open');
     toggle.textContent = open ? '▲ Close' : '▼ Open';
   });
 
-  /* ── CHECKIN SUBMIT ────────────────────────────────────── */
-  async function submitCheckin() {
-    const btn    = document.getElementById('checkin-submit');
-    const status = document.getElementById('checkin-status');
+  /* ── OBS INIT — fetch bar metadata ─────────────────────── */
+  async function obsInit() {
+    try {
+      const res  = await fetch(`${API}/api/v1/bars/`);
+      const data = await res.json();
+      obsBars = data.bars;
+      obsRenderBarTabs();
+      obsRenderDealChips(data.deal_types);
+      obsUpdatePct();
+    } catch (_) {
+      // API offline — use hardcoded fallback so the form still works
+      obsBars = [
+        { id: 1, name: "Blarney's", capacity: 200 },
+        { id: 2, name: "Sally's",   capacity: 150 },
+        { id: 3, name: "KK",        capacity: 300 },
+      ];
+      obsRenderBarTabs();
+      obsRenderDealChips(Object.keys(DEAL_LABELS));
+      obsUpdatePct();
+    }
+  }
 
-    const bars = [
-      { bar_id: 1, pctEl: 'pct-1', waitEl: 'wait-1' },
-      { bar_id: 2, pctEl: 'pct-2', waitEl: 'wait-2' },
-      { bar_id: 3, pctEl: 'pct-3', waitEl: 'wait-3' },
-    ];
+  function obsRenderBarTabs() {
+    const container = document.getElementById('obs-bar-tabs');
+    container.innerHTML = '';
+    obsBars.forEach((b, i) => {
+      const short = b.name.replace("Blarney's Pub and Grill", "Blarney's")
+                          .replace("Sally's Saloon", "Sally's")
+                          .replace("Kollege Klub", "KK");
+      const btn = document.createElement('button');
+      btn.className   = 'obs-bar-tab' + (i === 0 ? ' active' : '');
+      btn.textContent = short;
+      btn.dataset.id  = b.id;
+      btn.onclick     = () => obsSelectBar(b.id);
+      container.appendChild(btn);
+    });
+  }
 
-    // Filter to bars where the user moved the slider or entered a wait > 0
-    const reports = bars
-      .map(b => ({
-        bar_id:       b.bar_id,
-        pct_full:     parseInt(document.getElementById(b.pctEl).value, 10),
-        wait_minutes: parseFloat(document.getElementById(b.waitEl).value) || 0,
-      }))
-      .filter(r => r.pct_full > 0 || r.wait_minutes > 0);
+  function obsRenderDealChips(dealTypes) {
+    const container = document.getElementById('obs-deal-chips');
+    container.innerHTML = '';
+    dealTypes.forEach(dt => {
+      const btn = document.createElement('button');
+      btn.className   = 'obs-deal-chip' + (dt === 'none' ? ' active' : '') +
+                        (dt === 'cover_charge' ? ' cover' : '');
+      btn.textContent = DEAL_LABELS[dt] || dt;
+      btn.dataset.deal = dt;
+      btn.onclick      = () => obsSelectDeal(dt);
+      container.appendChild(btn);
+    });
+  }
 
-    if (!reports.length) {
-      status.textContent = '⚠ Move at least one slider before submitting.';
-      status.className   = 'checkin-status show err';
-      setTimeout(() => status.classList.remove('show'), 3000);
+  function obsSelectBar(id) {
+    obsBarId = id;
+    document.querySelectorAll('.obs-bar-tab').forEach(b => {
+      b.classList.toggle('active', Number(b.dataset.id) === id);
+    });
+    obsUpdatePct();
+  }
+
+  function obsSelectDeal(dt) {
+    obsDealType = dt;
+    document.querySelectorAll('.obs-deal-chip').forEach(c => {
+      c.classList.toggle('active', c.dataset.deal === dt);
+    });
+    document.getElementById('obs-cover-amt').classList.toggle('show', dt === 'cover_charge');
+  }
+
+  /* ── OBS TIME CONTROLS ──────────────────────────────────── */
+  function obsSetTimeNow() {
+    obsUseNow = true;
+    document.getElementById('obs-time-now').classList.add('active');
+    document.getElementById('obs-time-custom-btn').classList.remove('active');
+    document.getElementById('obs-time-custom-input').classList.remove('show');
+  }
+
+  function obsSetTimeCustom() {
+    obsUseNow = false;
+    document.getElementById('obs-time-custom-btn').classList.add('active');
+    document.getElementById('obs-time-now').classList.remove('active');
+    const inp = document.getElementById('obs-time-custom-input');
+    inp.classList.add('show');
+    // Default to current local time if not yet set
+    if (!inp.value) {
+      const now = new Date();
+      const pad = v => String(v).padStart(2, '0');
+      inp.value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    }
+  }
+
+  /* ── PCT PREVIEW ────────────────────────────────────────── */
+  function obsUpdatePct() {
+    const bar      = obsBars.find(b => b.id === obsBarId);
+    const capacity = bar ? bar.capacity : 200;
+    const people   = parseInt(document.getElementById('obs-people').value, 10) || 0;
+    const pct      = people > 0 ? Math.min(100, Math.round(people / capacity * 100)) : null;
+    const preview  = document.getElementById('obs-pct-preview');
+    if (pct !== null) {
+      preview.textContent = `≈ ${pct}% of ${capacity} capacity`;
+    } else {
+      preview.textContent = bar ? `Bar capacity: ${capacity}` : '';
+    }
+  }
+
+  /* ── OBS SUBMIT ─────────────────────────────────────────── */
+  async function obsSubmit() {
+    const btn    = document.getElementById('obs-submit');
+    const status = document.getElementById('obs-status');
+
+    const people   = parseInt(document.getElementById('obs-people').value, 10) || 0;
+    const wait     = parseFloat(document.getElementById('obs-wait').value)     || 0;
+    const cover    = obsDealType === 'cover_charge'
+                     ? (parseFloat(document.getElementById('obs-cover-input').value) || 5)
+                     : null;
+
+    if (people === 0 && wait === 0) {
+      status.textContent = '⚠ Enter at least a people count or wait time.';
+      status.className   = 'obs-status show err';
+      setTimeout(() => status.classList.remove('show'), 3500);
       return;
     }
 
-    btn.disabled = true;
-    status.className = 'checkin-status';
+    let observed_at = null;
+    if (!obsUseNow) {
+      const raw = document.getElementById('obs-time-custom-input').value;
+      if (raw) observed_at = new Date(raw).toISOString();
+    }
+
+    const payload = {
+      bar_id:        obsBarId,
+      wait_minutes:  wait,
+      people_count:  people || null,
+      deal_type:     obsDealType,
+      cover_charge:  cover,
+      observed_at:   observed_at,
+      notes:         'manual-obs',
+    };
+
+    btn.disabled     = true;
+    status.className = 'obs-status';
 
     try {
-      await Promise.all(reports.map(r =>
-        fetch(`${API}/api/v1/reports/submit`, {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({
-            bar_id:       r.bar_id,
-            wait_minutes: r.wait_minutes,
-            pct_full:     r.pct_full,   // DB stores 0–100 (matches observations schema)
-            notes:        'manual-checkin',
-          }),
-        }).then(res => { if (!res.ok) throw new Error(`bar ${r.bar_id}: ${res.status}`); })
-      ));
-
-      // Reset sliders
-      [1, 2, 3].forEach(id => {
-        document.getElementById(`pct-${id}`).value = 0;
-        document.getElementById(`pct-val-${id}`).textContent = '0%';
-        document.getElementById(`wait-${id}`).value = 0;
+      const res = await fetch(`${API}/api/v1/reports/submit`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.detail || res.status);
+      }
+      const data = await res.json();
 
-      status.textContent = `✓ ${reports.length} report${reports.length > 1 ? 's' : ''} submitted — thanks!`;
-      status.className   = 'checkin-status show ok';
-      setTimeout(() => status.classList.remove('show'), 4000);
+      // Reset inputs
+      document.getElementById('obs-people').value = '';
+      document.getElementById('obs-wait').value   = 0;
+      obsSetTimeNow();
+      obsSelectDeal('none');
+      obsUpdatePct();
+
+      const bar  = obsBars.find(b => b.id === obsBarId);
+      const name = bar ? bar.name.replace("Blarney's Pub and Grill","Blarney's")
+                                 .replace("Sally's Saloon","Sally's")
+                                 .replace("Kollege Klub","KK")
+                       : `Bar ${obsBarId}`;
+      const pctStr = data.pct_full != null ? ` · ${Math.round(data.pct_full)}% full` : '';
+      status.textContent = `✓ ${name} logged${pctStr}`;
+      status.className   = 'obs-status show ok';
+      setTimeout(() => status.classList.remove('show'), 4500);
     } catch (err) {
-      status.textContent = `✗ Submit failed: ${err.message}`;
-      status.className   = 'checkin-status show err';
+      status.textContent = `✗ ${err.message}`;
+      status.className   = 'obs-status show err';
     } finally {
       btn.disabled = false;
     }
   }
+
+  obsInit();
 </script>
 </body>
 </html>

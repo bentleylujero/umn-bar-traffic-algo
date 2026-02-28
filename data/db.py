@@ -85,8 +85,21 @@ def init_db(path: Path = DB_PATH) -> None:
             "INSERT OR IGNORE INTO bars (name, neighborhood) VALUES (?, ?)",
             [(b["name"], b["neighborhood"]) for b in BARS],
         )
+        _migrate_observations(conn)
         _migrate_signals(conn)
     conn.close()
+
+
+def _migrate_observations(conn: sqlite3.Connection) -> None:
+    """Add any missing columns to the observations table (safe / idempotent)."""
+    _OBS_MIGRATIONS: list[tuple[str, str]] = [
+        ("deal_type", "TEXT"),
+    ]
+    for col, col_def in _OBS_MIGRATIONS:
+        try:
+            conn.execute(f"ALTER TABLE observations ADD COLUMN {col} {col_def}")
+        except sqlite3.OperationalError:
+            pass  # column already exists
 
 
 def _migrate_signals(conn: sqlite3.Connection) -> None:

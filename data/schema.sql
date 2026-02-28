@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS observations (
     pct_full           REAL    CHECK (pct_full BETWEEN 0 AND 100),
     drink_wait_minutes REAL    CHECK (drink_wait_minutes >= 0),
     cover_charge       REAL,                      -- dollars, NULL if none
+    deal_type          TEXT CHECK (deal_type IN ('none','happy_hour','drink_special','entertainment','cover_charge')),
     notes              TEXT,
     created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
     UNIQUE (bar_id, observed_at)
