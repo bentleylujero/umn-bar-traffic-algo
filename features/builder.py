@@ -119,6 +119,14 @@ SIGNAL_FEATURES = [
     # Aggregates is_st_patricks, is_halloween, etc. into a single continuous signal
     # so the RF can split strongly on holiday magnitude rather than each sparse flag.
     "drinking_holiday_weight",
+    # Greek life social calendar
+    "is_greek_rush_week",       # IFC/PHC recruitment week — suppresses general bar traffic
+    "is_greek_bid_day",         # Bid day ± 1 day — single biggest Greek bar night
+    "is_greek_formal_season",   # Oct-Nov (fall) + Mar-Apr (spring) date-party season
+    "is_greek_week",            # Spring Greek Week (~2 weeks before spring finals)
+    "is_greek_thursday",        # Thursday during active semester (canonical Greek bar night)
+    "is_greek_pregame_window",  # 7–10 PM Thu/Fri/Sat — pre-event bar surge window
+    "greek_social_intensity",   # Continuous 0–1 composite (higher = more Greek bar traffic)
     # Live ingestion signals
     "live_wait_minutes",
     "live_pct_full",

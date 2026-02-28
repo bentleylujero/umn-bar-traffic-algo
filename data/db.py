@@ -63,6 +63,14 @@ _SIGNALS_MIGRATIONS: list[tuple[str, str]] = [
     # Events expanded
     ("is_cinco_de_mayo",          "INTEGER NOT NULL DEFAULT 0"),
     ("is_parents_weekend",        "INTEGER NOT NULL DEFAULT 0"),
+    # Greek life social signals
+    ("is_greek_rush_week",        "INTEGER NOT NULL DEFAULT 0"),
+    ("is_greek_bid_day",          "INTEGER NOT NULL DEFAULT 0"),
+    ("is_greek_formal_season",    "INTEGER NOT NULL DEFAULT 0"),
+    ("is_greek_week",             "INTEGER NOT NULL DEFAULT 0"),
+    ("is_greek_thursday",         "INTEGER NOT NULL DEFAULT 0"),
+    ("is_greek_pregame_window",   "INTEGER NOT NULL DEFAULT 0"),
+    ("greek_social_intensity",    "REAL NOT NULL DEFAULT 0.0"),
 ]
 
 

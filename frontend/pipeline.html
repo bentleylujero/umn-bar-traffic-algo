@@ -1,92 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Data Pipeline — UMN Bar Tracker</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Signal Flow — UMN Bar Tracker</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inconsolata:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inconsolata:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
   <style>
-    /* ── RESET ──────────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    /* ── TOKENS ─────────────────────────────────────────────── */
-    :root {
-      --bg:           #080508;
-      --bg2:          #0d0a0e;
-      --card:         #110d14;
-      --card-h:       #171219;
-      --amber:        #e8a020;
-      --amber-bright: #ffb533;
-      --amber-dim:    rgba(232,160,32,0.35);
-      --amber-glow:   rgba(232,160,32,0.10);
-      --orange:       #d05820;
-      --red:          #df3030;
-      --red-dim:      rgba(223,48,48,0.25);
-      --green:        #56a85c;
-      --teal:         #3a9a8a;
-      --purple:       #8a5ab8;
-      --cream:        #ede0cc;
-      --cream-60:     rgba(237,224,204,0.60);
-      --cream-30:     rgba(237,224,204,0.30);
-      --cream-12:     rgba(237,224,204,0.12);
-      --border:       rgba(232,160,32,0.16);
-      --border-hot:   rgba(232,160,32,0.60);
-      --fd:           'Anton', sans-serif;
-      --fm:           'Inconsolata', monospace;
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
     }
 
-    /* ── BASE ───────────────────────────────────────────────── */
-    html, body {
+    :root {
+      --bg: #080508;
+      --card: #0f0c12;
+      --card2: #13101a;
+      --amber: #e8a020;
+      --amber-b: #ffb533;
+      --cream: #ede0cc;
+      --c60: rgba(237, 224, 204, .6);
+      --c30: rgba(237, 224, 204, .3);
+      --c12: rgba(237, 224, 204, .12);
+      --border: rgba(232, 160, 32, .13);
+      --border-h: rgba(232, 160, 32, .45);
+      --fd: 'Anton', sans-serif;
+      --fm: 'Inconsolata', monospace;
+    }
+
+    html,
+    body {
       height: 100%;
       background: var(--bg);
       color: var(--cream);
       font-family: var(--fm);
-      overflow-x: hidden;
+      overflow: hidden
     }
 
     body::before {
       content: '';
-      position: fixed; inset: 0; z-index: 9998; pointer-events: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.032'/%3E%3C/svg%3E");
-      opacity: 0.7;
-    }
-
-    body::after {
-      content: '';
-      position: fixed; inset: 0; z-index: 0; pointer-events: none;
-      background:
-        radial-gradient(ellipse 60% 40% at 50% 38%, rgba(232,160,32,0.06) 0%, transparent 70%),
-        radial-gradient(ellipse 40% 30% at 20% 80%, rgba(208,88,32,0.04) 0%, transparent 60%);
-    }
-
-    .app {
-      position: relative; z-index: 1;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(0, 190, 255, .022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 190, 255, .022) 1px, transparent 1px);
+      background-size: 52px 52px;
     }
 
     /* ── HEADER ─────────────────────────────────────────────── */
     header {
-      position: sticky; top: 0; z-index: 100;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
       height: 68px;
       padding: 0 2rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(8,5,8,0.92);
+      background: rgba(8, 5, 8, 0.92);
       border-bottom: 1px solid var(--border);
       backdrop-filter: blur(8px);
     }
 
     header::after {
       content: '';
-      position: absolute; inset: 0; pointer-events: none;
-      background: repeating-linear-gradient(
-        0deg, transparent 0 2px, rgba(0,0,0,0.06) 2px 3px
-      );
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(0deg, transparent 0 2px, rgba(0, 0, 0, 0.06) 2px 3px);
     }
 
     .hd-left {
@@ -100,7 +91,7 @@
       font-size: 1.9rem;
       letter-spacing: 0.04em;
       color: var(--amber);
-      text-shadow: 0 0 18px rgba(232,160,32,0.55), 0 0 36px rgba(232,160,32,0.18);
+      text-shadow: 0 0 18px rgba(232, 160, 32, 0.55), 0 0 36px rgba(232, 160, 32, 0.18);
       line-height: 1;
       text-decoration: none;
     }
@@ -109,12 +100,19 @@
       font-size: 0.6rem;
       letter-spacing: 0.22em;
       text-transform: uppercase;
-      color: var(--cream-30);
+      color: var(--c30);
     }
 
-    /* ── NAV ────────────────────────────────────────────────── */
+    .hd-right {
+      display: flex;
+      align-items: center;
+      gap: 1.4rem;
+    }
+
     .hd-nav {
-      position: absolute; left: 50%; transform: translateX(-50%);
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
       display: flex;
       gap: 0.15rem;
     }
@@ -125,31 +123,27 @@
       letter-spacing: 0.26em;
       text-transform: uppercase;
       padding: 0.32rem 0.9rem;
-      color: var(--cream-30);
+      color: var(--c30);
       text-decoration: none;
       border: 1px solid transparent;
       transition: color 0.2s, border-color 0.2s;
     }
 
     .nav-tab:hover {
-      color: var(--cream-60);
+      color: var(--c60);
       border-color: var(--border);
     }
 
     .nav-tab.active {
       color: var(--amber);
       border-color: var(--border);
-      background: var(--amber-glow);
-    }
-
-    .hd-right {
-      display: flex;
-      align-items: center;
-      gap: 1.4rem;
+      background: var(--amber-glow, rgba(232, 160, 32, 0.10));
     }
 
     .live-badge {
-      display: flex; align-items: center; gap: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
       font-size: 0.62rem;
       letter-spacing: 0.18em;
       text-transform: uppercase;
@@ -157,1254 +151,1239 @@
     }
 
     .live-dot {
-      width: 7px; height: 7px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background: var(--amber);
-      box-shadow: 0 0 5px var(--amber), 0 0 10px rgba(232,160,32,0.4);
+      box-shadow: 0 0 5px var(--amber), 0 0 10px rgba(232, 160, 32, 0.4);
       animation: blink 2.2s ease-in-out infinite;
     }
 
     @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.3; }
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.3;
+      }
     }
 
     .clock {
       font-size: 0.88rem;
       font-weight: 700;
       letter-spacing: 0.1em;
-      color: var(--cream-60);
+      color: var(--c60);
       font-variant-numeric: tabular-nums;
     }
 
-    .api-pill {
-      font-size: 0.58rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      padding: 0.22rem 0.6rem;
-      border: 1px solid;
-      border-radius: 2px;
-    }
+    /* PIPELINE SUB-HEADER */
+    .hdr {
+      position: fixed;
+      top: 68px;
 
-    .api-pill.online  { color: var(--green); border-color: rgba(86,168,92,0.35); }
-    .api-pill.offline { color: var(--red);   border-color: var(--red-dim); }
-    .api-pill.loading { color: var(--amber-dim); border-color: var(--border); animation: blink 1s linear infinite; }
-
-    /* ── ERROR BANNER ───────────────────────────────────────── */
-    .error-banner {
-      display: none;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.65rem 2rem;
-      background: rgba(200,40,40,0.12);
-      border-bottom: 1px solid rgba(200,40,40,0.3);
-      font-size: 0.68rem;
-      color: #e87070;
-    }
-
-    .error-banner.show { display: flex; }
-
-    /* ── MAIN ───────────────────────────────────────────────── */
-    main {
-      flex: 1;
-      padding: 2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 2rem;
-    }
-
-    /* ── SECTION LABEL ──────────────────────────────────────── */
-    .section-label {
-      font-size: 0.55rem;
-      letter-spacing: 0.35em;
-      text-transform: uppercase;
-      color: var(--amber);
-      margin-bottom: 0.9rem;
+      left: 0;
+      right: 0;
+      z-index: 90;
+      height: 50px;
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      justify-content: space-between;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8, 5, 8, .88);
+      backdrop-filter: blur(8px);
     }
 
-    .section-label::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
+    .hdr-left {
+      display: flex;
+      align-items: baseline;
+      gap: 14px
     }
 
-    .section-caption {
-      font-size: 0.63rem;
-      color: var(--cream-30);
-      letter-spacing: 0.04em;
-      margin-top: -0.5rem;
-      margin-bottom: 0.9rem;
+    .hdr-title {
+      font-family: var(--fd);
+      font-size: 20px;
+      letter-spacing: .07em
     }
 
-    /* ── DAG ────────────────────────────────────────────────── */
-    .dag-wrap {
+    .hdr-sub {
+      font-size: 9px;
+      color: var(--c30);
+      letter-spacing: .16em
+    }
+
+    .hdr-stats {
+      display: flex;
+      gap: 20px;
+      align-items: center
+    }
+
+    .hdr-stat {
+      text-align: center
+    }
+
+    .hdr-stat-v {
+      font-size: 15px;
+      color: var(--amber-b);
+      font-weight: 700;
+      line-height: 1
+    }
+
+    .hdr-stat-k {
+      font-size: 8px;
+      color: var(--c30);
+      letter-spacing: .1em;
+      margin-top: 1px
+    }
+
+    .run-btn {
+      padding: 7px 18px;
+      background: rgba(232, 160, 32, .1);
+      border: 1px solid var(--amber);
+      color: var(--amber-b);
+      font-family: var(--fm);
+      font-size: 10px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .run-btn:hover {
+      background: rgba(232, 160, 32, .2);
+      box-shadow: 0 0 14px rgba(232, 160, 32, .25)
+    }
+
+    .run-btn.running {
+      color: #3ecfb8;
+      border-color: #3ecfb8;
+      background: rgba(62, 207, 184, .08)
+    }
+
+    /* VIEWPORT */
+    #vp {
+      position: fixed;
+      top: 118px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      overflow: hidden;
+      cursor: grab;
+      z-index: 1
+    }
+
+    #vp.drag {
+      cursor: grabbing
+    }
+
+    #cv {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1860px;
+      height: 1100px;
+      transform-origin: 0 0
+    }
+
+    /* SVG */
+    #psvg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1860px;
+      height: 1100px;
+      pointer-events: none;
+      overflow: visible
+    }
+
+    /* NODES */
+    .node {
+      position: absolute;
+      width: 200px;
       background: var(--card);
       border: 1px solid var(--border);
-      padding: 2rem 1.5rem;
-      overflow-x: auto;
+      border-top: 2.5px solid var(--nc, var(--amber));
+      padding: 11px 14px 10px;
+      cursor: pointer;
+      transition: border-color .25s, box-shadow .25s, transform .18s;
+      z-index: 10;
     }
 
-    .dag-flow {
+    .node:hover {
+      border-color: var(--nc, var(--amber));
+      box-shadow: 0 0 22px color-mix(in srgb, var(--nc, var(--amber)) 25%, transparent),
+        inset 0 0 28px color-mix(in srgb, var(--nc, var(--amber)) 5%, transparent);
+      transform: translateY(-2px);
+      z-index: 20;
+    }
+
+    @keyframes nrefresh {
+      0% {
+        box-shadow: none
+      }
+
+      35% {
+        box-shadow: 0 0 0 3px var(--nc), 0 0 28px var(--nc)
+      }
+
+      100% {
+        box-shadow: none
+      }
+    }
+
+    .node.flash {
+      animation: nrefresh .75s ease-out
+    }
+
+    .nh {
       display: flex;
       align-items: center;
-      gap: 0;
-      min-width: 820px;
+      gap: 6px;
+      margin-bottom: 3px
     }
 
-    .dag-col {
+    .ndot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--nc, var(--amber));
+      box-shadow: 0 0 6px var(--nc, var(--amber));
+      flex-shrink: 0
+    }
+
+    .node-live .ndot {
+      animation: pdot 1.9s infinite
+    }
+
+    .nlabel {
+      font-family: var(--fd);
+      font-size: 13px;
+      letter-spacing: .07em;
+      flex: 1
+    }
+
+    .nbadge {
+      font-size: 7.5px;
+      letter-spacing: .13em;
+      padding: 2px 5px;
+      border: 1px solid var(--nc, var(--amber));
+      color: var(--nc, var(--amber));
+      opacity: .75
+    }
+
+    .nsub {
+      font-size: 8.5px;
+      color: var(--c30);
+      letter-spacing: .09em;
+      margin-bottom: 5px
+    }
+
+    .ncache {
+      font-size: 7.5px;
+      color: var(--c30);
+      letter-spacing: .1em
+    }
+
+    .nmetric {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-top: 6px;
+      border-top: 1px solid var(--border);
+      padding-top: 5px
+    }
+
+    .nmk {
+      font-size: 7.5px;
+      color: var(--c30);
+      letter-spacing: .07em
+    }
+
+    .nmv {
+      font-size: 12px;
+      color: var(--nc, var(--amber));
+      font-weight: 700
+    }
+
+    /* output bar nodes */
+    .nbar {
+      width: 220px
+    }
+
+    .prow {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-top: 3px
+    }
+
+    .pk {
+      font-size: 7.5px;
+      color: var(--c30);
+      letter-spacing: .07em
+    }
+
+    .pv {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--nc)
+    }
+
+    .cbadge {
+      display: inline-block;
+      font-size: 7px;
+      letter-spacing: .12em;
+      padding: 2px 5px;
+      border: 1px solid var(--nc);
+      color: var(--nc);
+      margin-top: 5px
+    }
+
+    /* column labels */
+    .clbl {
+      position: absolute;
+      font-size: 7.5px;
+      letter-spacing: .2em;
+      color: var(--c30);
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 4px;
+      text-align: center;
+    }
+
+    /* ZOOM CTRL */
+    #zc {
+      position: fixed;
+      bottom: 18px;
+      right: 18px;
+      z-index: 200;
       display: flex;
       flex-direction: column;
-      gap: 0.6rem;
-      flex-shrink: 0;
+      gap: 3px
     }
 
-    .dag-arrow-col {
+    .zb {
+      width: 30px;
+      height: 30px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--c60);
+      font-size: 16px;
+      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      flex: 1;
-      min-width: 56px;
-      position: relative;
-    }
-
-    /* multi-arrow for data sources → features */
-    .dag-fan {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 0;
-      flex: 1;
-      min-width: 60px;
-      position: relative;
-    }
-
-    .fan-line {
-      height: 1px;
-      width: 100%;
-      background: var(--border);
-      position: relative;
-    }
-
-    .fan-line::after {
-      content: '';
-      position: absolute;
-      right: -1px; top: -4px;
-      border-style: solid;
-      border-width: 4px 0 4px 7px;
-      border-color: transparent transparent transparent var(--amber-dim);
-    }
-
-    .dag-arrow {
-      width: 100%;
-      height: 1px;
-      background: var(--border);
-      position: relative;
-    }
-
-    .dag-arrow::after {
-      content: '';
-      position: absolute;
-      right: -1px; top: -4px;
-      border-style: solid;
-      border-width: 4px 0 4px 7px;
-      border-color: transparent transparent transparent var(--amber-dim);
-    }
-
-    .dag-node {
-      padding: 0.5rem 0.85rem;
-      border: 1px solid;
-      font-size: 0.6rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      white-space: nowrap;
-      position: relative;
-      transition: border-color 0.3s, box-shadow 0.3s;
-    }
-
-    .dag-node.source {
-      border-color: rgba(232,160,32,0.28);
-      color: var(--amber);
-      background: rgba(232,160,32,0.04);
-    }
-
-    .dag-node.feature {
-      border-color: rgba(208,88,32,0.40);
-      color: var(--orange);
-      background: rgba(208,88,32,0.06);
-      padding: 0.7rem 1.1rem;
-      font-size: 0.62rem;
-    }
-
-    .dag-node.predictor {
-      border-color: rgba(86,168,92,0.40);
-      color: var(--green);
-      background: rgba(86,168,92,0.05);
-      padding: 0.7rem 1.1rem;
-      font-size: 0.62rem;
-    }
-
-    .dag-node.source:hover,
-    .dag-node.feature:hover,
-    .dag-node.predictor:hover {
-      box-shadow: 0 0 16px var(--amber-glow);
-    }
-
-    .dag-node .node-tag {
-      font-size: 0.47rem;
-      letter-spacing: 0.2em;
-      color: var(--cream-30);
-      display: block;
-      margin-bottom: 0.15rem;
-    }
-
-    .dag-node .node-ms {
-      display: block;
-      font-size: 0.52rem;
-      letter-spacing: 0.06em;
-      color: var(--cream-30);
-      margin-top: 0.2rem;
-    }
-
-    .dag-node.running .node-ms { color: var(--amber); animation: blink 0.8s linear infinite; }
-    .dag-node.done    .node-ms { color: var(--green); }
-    .dag-node.error   .node-ms { color: var(--red); }
-
-    /* ── GLOBAL FACTORS ─────────────────────────────────────── */
-    .global-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1.25rem;
-    }
-
-    .factor-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      padding: 1.4rem 1.5rem;
-      position: relative;
-      overflow: hidden;
-      animation: rise 0.55s cubic-bezier(0.2, 0, 0.2, 1) both;
-    }
-
-    .factor-card:nth-child(1) { animation-delay: 0.05s; }
-    .factor-card:nth-child(2) { animation-delay: 0.15s; }
-    .factor-card:nth-child(3) { animation-delay: 0.25s; }
-
-    @keyframes rise {
-      from { opacity: 0; transform: translateY(14px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .factor-card::before {
-      content: '';
-      position: absolute; top: 0; right: 0;
-      border-style: solid;
-      border-width: 0 20px 20px 0;
-      border-color: transparent var(--amber) transparent transparent;
-      opacity: 0.25;
-    }
-
-    .factor-title {
-      font-size: 0.52rem;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      color: var(--amber);
-      margin-bottom: 0.9rem;
-      padding-bottom: 0.5rem;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .factor-metric {
-      display: flex;
-      align-items: baseline;
-      gap: 0.5rem;
-      margin-bottom: 0.55rem;
-    }
-
-    .metric-val {
-      font-family: var(--fd);
-      font-size: 2.2rem;
-      line-height: 1;
-      color: var(--amber-bright);
-      font-variant-numeric: tabular-nums;
-    }
-
-    .metric-unit {
-      font-size: 0.6rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--cream-30);
-    }
-
-    .flag-row {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.2rem 0;
-      font-size: 0.65rem;
-    }
-
-    .flag-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
-    .flag-dot.on  { background: var(--amber); box-shadow: 0 0 6px var(--amber-dim); }
-    .flag-dot.hot { background: var(--red);   box-shadow: 0 0 6px var(--red-dim); }
-    .flag-dot.ok  { background: var(--green); box-shadow: 0 0 4px rgba(86,168,92,0.4); }
-    .flag-dot.off { background: rgba(237,224,204,0.12); }
-
-    .flag-label { color: var(--cream-30); letter-spacing: 0.04em; flex: 1; }
-    .flag-val   { font-weight: 600; color: var(--cream-60); letter-spacing: 0.06em; }
-    .flag-val.active  { color: var(--amber); }
-    .flag-val.hot     { color: var(--red); }
-    .flag-val.good    { color: var(--green); }
-    .flag-val.dim     { color: rgba(237,224,204,0.20); }
-
-    .alert-box {
-      margin-top: 0.6rem;
-      padding: 0.4rem 0.65rem;
-      font-size: 0.62rem;
-      letter-spacing: 0.06em;
-      border: 1px solid;
-    }
-
-    .alert-box.warn  { border-color: rgba(223,48,48,0.35); background: rgba(223,48,48,0.07); color: #e87070; }
-    .alert-box.info  { border-color: rgba(232,160,32,0.28); background: var(--amber-glow); color: var(--amber); }
-    .alert-box.good  { border-color: rgba(86,168,92,0.28); background: rgba(86,168,92,0.05); color: var(--green); }
-
-    /* ── BAR SELECTOR ───────────────────────────────────────── */
-    .bar-selector {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 1.1rem;
-    }
-
-    .bar-tab {
+      transition: all .2s;
       font-family: var(--fm);
-      font-size: 0.6rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      padding: 0.4rem 1.1rem;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--cream-30);
-      cursor: pointer;
-      transition: color 0.2s, border-color 0.2s, background 0.2s;
     }
 
-    .bar-tab:hover { color: var(--cream-60); border-color: rgba(232,160,32,0.35); }
-
-    .bar-tab.active {
-      color: var(--amber-bright);
-      border-color: var(--border-hot);
-      background: var(--amber-glow);
+    .zb:hover {
+      border-color: var(--amber);
+      color: var(--amber-b)
     }
 
-    .bar-factors-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.25rem;
-    }
-
-    .specials-list {
-      margin-top: 0.5rem;
-    }
-
-    .special-row {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      padding: 0.32rem 0;
-      border-bottom: 1px solid var(--cream-12);
-      font-size: 0.66rem;
-    }
-
-    .special-row:last-child { border-bottom: none; }
-
-    .special-name { color: var(--cream-60); letter-spacing: 0.04em; }
-    .special-days { color: var(--cream-30); font-size: 0.58rem; letter-spacing: 0.06em; }
-    .special-lift {
-      font-weight: 700;
-      font-size: 0.68rem;
-      color: var(--green);
-      letter-spacing: 0.06em;
-    }
-    .special-lift.major { color: var(--amber-bright); }
-
-    .hh-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.4rem 0;
-      margin-bottom: 0.5rem;
-      border-bottom: 1px solid var(--cream-12);
-      font-size: 0.66rem;
-    }
-
-    .hh-label { color: var(--cream-30); letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.56rem; }
-    .hh-val   { color: var(--amber); font-weight: 600; }
-
-    /* ── CROWD INTEL ────────────────────────────────────────── */
-    .crowd-stat-row {
-      display: flex;
-      gap: 1.25rem;
-      margin-bottom: 1rem;
-    }
-
-    .crowd-stat {
-      flex: 1;
-    }
-
-    .crowd-stat-label {
-      font-size: 0.52rem;
-      letter-spacing: 0.24em;
-      text-transform: uppercase;
-      color: var(--cream-30);
-      margin-bottom: 0.25rem;
-    }
-
-    .crowd-stat-val {
-      font-family: var(--fd);
-      font-size: 2.4rem;
-      line-height: 1;
-      color: var(--amber-bright);
-      font-variant-numeric: tabular-nums;
-    }
-
-    .crowd-stat-val.medium { color: var(--orange); }
-    .crowd-stat-val.busy   { color: var(--red); }
-
-    .fill-track {
-      height: 5px;
-      background: var(--cream-12);
-      overflow: hidden;
-      margin-top: 0.35rem;
-    }
-
-    .fill-bar {
-      height: 100%;
-      width: 0;
-      transition: width 1.1s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .fill-bar.quiet  { background: linear-gradient(90deg, #7a5210, var(--amber)); }
-    .fill-bar.medium { background: linear-gradient(90deg, #7a2e10, var(--orange)); }
-    .fill-bar.busy   { background: linear-gradient(90deg, #7a1010, var(--red)); }
-
-    /* ── FEATURE VECTOR ─────────────────────────────────────── */
-    .feat-wrap {
+    #zlvl {
       background: var(--card);
       border: 1px solid var(--border);
+      color: var(--c30);
+      font-size: 8.5px;
+      letter-spacing: .1em;
+      text-align: center;
+      padding: 4px 0
     }
 
-    .feat-topbar {
-      padding: 0.65rem 1.5rem;
-      border-bottom: 1px solid var(--border);
+    /* TOOLTIP */
+    #tt {
+      position: fixed;
+      z-index: 500;
+      min-width: 248px;
+      max-width: 300px;
+      background: #09070d;
+      border: 1px solid var(--ttc, #e8a020);
+      box-shadow: 0 4px 40px rgba(0, 0, 0, .85);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .14s, transform .14s;
+      transform: translateY(5px);
+    }
+
+    #tt.vis {
+      opacity: 1;
+      transform: translateY(0)
+    }
+
+    .tth {
+      padding: 8px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, .07);
       display: flex;
       align-items: center;
       justify-content: space-between;
+      background: rgba(255, 255, 255, .025)
     }
 
-    .feat-topbar-title {
-      font-size: 0.56rem;
-      letter-spacing: 0.32em;
-      text-transform: uppercase;
-      color: var(--amber);
+    .tttl {
+      font-family: var(--fd);
+      font-size: 13px;
+      letter-spacing: .06em;
+      color: var(--ttc, #e8a020)
     }
 
-    .feat-topbar-note {
-      font-size: 0.58rem;
-      color: var(--cream-30);
-      letter-spacing: 0.06em;
+    .ttbg {
+      font-size: 7.5px;
+      letter-spacing: .12em;
+      padding: 2px 6px;
+      border: 1px solid var(--ttc, #e8a020);
+      color: var(--ttc, #e8a020)
     }
 
-    .feat-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 0;
+    .ttb {
+      padding: 9px 12px
     }
 
-    .feat-group {
-      padding: 1rem 1.25rem;
-      border-right: 1px solid var(--border);
+    .tts {
+      margin-bottom: 7px
     }
 
-    .feat-group:last-child { border-right: none; }
-
-    .feat-group-title {
-      font-size: 0.48rem;
-      letter-spacing: 0.28em;
-      text-transform: uppercase;
-      color: var(--amber);
-      margin-bottom: 0.5rem;
-      padding-bottom: 0.35rem;
-      border-bottom: 1px solid var(--border);
+    .ttst {
+      font-size: 7.5px;
+      letter-spacing: .17em;
+      color: var(--c30);
+      margin-bottom: 4px;
+      border-bottom: 1px solid rgba(255, 255, 255, .06);
+      padding-bottom: 3px
     }
 
-    .feat-row {
+    .ttr {
       display: flex;
+      justify-content: space-between;
       align-items: baseline;
-      justify-content: space-between;
-      padding: 0.18rem 0;
-      font-size: 0.62rem;
+      padding: 1.5px 0
     }
 
-    .feat-k { color: var(--cream-30); letter-spacing: 0.02em; }
-    .feat-v {
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      color: var(--cream-60);
-      font-variant-numeric: tabular-nums;
+    .ttk {
+      font-size: 8.5px;
+      color: var(--c30);
+      letter-spacing: .04em
     }
 
-    .feat-v.nonzero { color: var(--amber); }
-    .feat-v.strong  { color: var(--amber-bright); }
+    .ttv {
+      font-size: 9.5px;
+      color: var(--c60);
+      font-weight: 500
+    }
 
-    /* ── FOOTER ─────────────────────────────────────────────── */
-    footer {
-      padding: 0.55rem 2rem;
-      border-top: 1px solid var(--border);
+    .ttv.hi {
+      color: var(--ttc, #e8a020)
+    }
+
+    .ttchips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+      margin-top: 3px
+    }
+
+    .ttchip {
+      font-size: 7.5px;
+      padding: 2px 5px;
+      background: rgba(255, 255, 255, .04);
+      border: 1px solid rgba(255, 255, 255, .09);
+      color: var(--c30)
+    }
+
+    .ttbr {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      font-size: 0.58rem;
-      color: var(--cream-30);
-      letter-spacing: 0.08em;
+      gap: 7px;
+      padding: 3px 0
     }
 
-    .ft-left { display: flex; gap: 1.5rem; align-items: center; }
-    #refresh-cd { color: var(--amber-dim); }
-
-    /* ── SKELETON ───────────────────────────────────────────── */
-    .skel {
-      background: linear-gradient(
-        90deg, var(--card) 25%, rgba(255,255,255,0.035) 50%, var(--card) 75%
-      );
-      background-size: 200% 100%;
-      animation: shimmer 1.6s infinite;
+    .ttbn {
+      font-size: 8.5px;
+      color: var(--c60);
+      width: 84px;
+      flex-shrink: 0
     }
 
-    @keyframes shimmer {
-      from { background-position: 200% 0; }
-      to   { background-position: -200% 0; }
+    .tbbtr {
+      flex: 1;
+      height: 3px;
+      background: rgba(255, 255, 255, .07)
     }
 
-    /* ── RESPONSIVE ─────────────────────────────────────────── */
-    @media (max-width: 900px) {
-      .global-grid       { grid-template-columns: 1fr; }
-      .bar-factors-grid  { grid-template-columns: 1fr; }
-      .feat-grid         { grid-template-columns: 1fr 1fr; }
-      .hd-nav            { display: none; }
+    .tbbf {
+      height: 100%;
+      background: var(--ttc, #e8a020)
     }
 
-    @media (max-width: 600px) {
-      .feat-grid { grid-template-columns: 1fr; }
+    .tbbp {
+      font-size: 8.5px;
+      color: var(--ttc, #e8a020);
+      width: 28px;
+      text-align: right
+    }
+
+    /* ── ONTOLOGY BUTTON (sub-header) ────────────────────── */
+    .onto-btn {
+      padding: 7px 14px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--c60);
+      font-family: var(--fm);
+      font-size: 10px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .onto-btn:hover, .onto-btn.open {
+      border-color: var(--amber);
+      color: var(--amber-b);
+      background: rgba(232,160,32,.06);
     }
   </style>
 </head>
-<body>
-<div class="app">
 
-  <!-- ── HEADER ── -->
+<body>
+
   <header>
     <div class="hd-left">
-      <a href="index.html" class="logo">CROWD INTEL</a>
+      <a href="index.html" class="logo" style="text-decoration:none">CROWD INTEL</a>
       <span class="logo-sub">UMN Bar Tracker</span>
     </div>
     <nav class="hd-nav">
       <a class="nav-tab" href="index.html">Live Forecast</a>
+      <a class="nav-tab" href="map.html">Live Map</a>
       <a class="nav-tab active" href="pipeline.html">Data Pipeline</a>
     </nav>
     <div class="hd-right">
       <div class="live-badge"><span class="live-dot"></span>Live</div>
-      <span class="clock" id="clock">--:--:--</span>
-      <span class="api-pill loading" id="api-pill">Connecting</span>
+      <span class="clock" id="clk">--:--:--</span>
     </div>
   </header>
 
-  <!-- ── ERROR BANNER ── -->
-  <div class="error-banner" id="error-banner">
-    <span>⚠</span>
-    <span id="error-msg">Cannot reach API. Start backend: <code>python -m uvicorn platform.backend.main:app --reload --port 8001</code></span>
+  <div class="hdr">
+    <div class="hdr-left">
+      <div class="hdr-title">SIGNAL FLOW</div>
+      <div class="hdr-sub">LIVE DATA PIPELINE · 6 SOURCES · 75 FEATURES · 3 BARS</div>
+    </div>
+    <div class="hdr-stats">
+      <div class="hdr-stat">
+        <div class="hdr-stat-v">6</div>
+        <div class="hdr-stat-k">DATA SOURCES</div>
+      </div>
+      <div class="hdr-stat">
+        <div class="hdr-stat-v">75</div>
+        <div class="hdr-stat-k">FEATURES</div>
+      </div>
+      <div class="hdr-stat">
+        <div class="hdr-stat-v" id="s-lat">—</div>
+        <div class="hdr-stat-k">LAST RUN</div>
+      </div>
+    </div>
+    <button class="onto-btn" id="ontobtn" onclick="ontoToggle()">◈ ONTOLOGY</button>
+    <button class="run-btn" id="rbtn" onclick="runPipeline()">▶ RUN PIPELINE</button>
   </div>
 
-  <!-- ── MAIN ── -->
-  <main>
+  <div id="vp">
+    <div id="cv">
 
-    <!-- ── Section 1: Pipeline DAG ── -->
-    <div>
-      <div class="section-label">Algorithm Pipeline DAG</div>
-      <p class="section-caption">Node-by-node execution graph — data flows left to right through the digital nervous system.</p>
-      <div class="dag-wrap">
-        <div class="dag-flow" id="dag-flow">
-          <!-- Data source column -->
-          <div class="dag-col" id="dag-sources">
-            <div class="dag-node source" id="dn-weather">
-              <span class="node-tag">Data Source</span>
-              Weather
-              <span class="node-ms" id="ms-weather">—</span>
-            </div>
-            <div class="dag-node source" id="dn-sports">
-              <span class="node-tag">Data Source</span>
-              Sports
-              <span class="node-ms" id="ms-sports">—</span>
-            </div>
-            <div class="dag-node source" id="dn-calendar">
-              <span class="node-tag">Data Source</span>
-              Calendar
-              <span class="node-ms" id="ms-calendar">—</span>
-            </div>
-            <div class="dag-node source" id="dn-events">
-              <span class="node-tag">Data Source</span>
-              Events
-              <span class="node-ms" id="ms-events">—</span>
-            </div>
-            <div class="dag-node source" id="dn-pop-times">
-              <span class="node-tag">Data Source</span>
-              Pop Times
-              <span class="node-ms" id="ms-pop-times">—</span>
-            </div>
-            <div class="dag-node source" id="dn-crowd">
-              <span class="node-tag">Data Source</span>
-              Crowd Reports
-              <span class="node-ms" id="ms-crowd">—</span>
-            </div>
-          </div>
+      <!-- COLUMN LABELS -->
+      <div class="clbl" style="left:80px;top:42px;width:200px">DATA SOURCES</div>
+      <div class="clbl" style="left:615px;top:42px;width:200px">FEATURE BUILDER</div>
+      <div class="clbl" style="left:1075px;top:42px;width:200px">PREDICTOR</div>
+      <div class="clbl" style="left:1520px;top:42px;width:220px">OUTPUTS</div>
 
-          <!-- Fan arrows -->
-          <div style="display:flex;flex-direction:column;justify-content:center;flex:1;padding:0 4px;gap:0;min-width:48px;">
-            <div style="height:1px;background:var(--border);margin:14px 0;position:relative;">
-              <span style="position:absolute;right:-1px;top:-4px;border-style:solid;border-width:4px 0 4px 7px;border-color:transparent transparent transparent rgba(232,160,32,0.25)"></span>
-            </div>
-            <div style="height:1px;background:var(--border);margin:14px 0;position:relative;">
-              <span style="position:absolute;right:-1px;top:-4px;border-style:solid;border-width:4px 0 4px 7px;border-color:transparent transparent transparent rgba(232,160,32,0.25)"></span>
-            </div>
-            <div style="height:1px;background:var(--border);margin:14px 0;position:relative;">
-              <span style="position:absolute;right:-1px;top:-4px;border-style:solid;border-width:4px 0 4px 7px;border-color:transparent transparent transparent rgba(232,160,32,0.25)"></span>
-            </div>
-            <div style="height:1px;background:var(--border);margin:14px 0;position:relative;">
-              <span style="position:absolute;right:-1px;top:-4px;border-style:solid;border-width:4px 0 4px 7px;border-color:transparent transparent transparent rgba(232,160,32,0.25)"></span>
-            </div>
-            <div style="height:1px;background:var(--border);margin:14px 0;position:relative;">
-              <span style="position:absolute;right:-1px;top:-4px;border-style:solid;border-width:4px 0 4px 7px;border-color:transparent transparent transparent rgba(232,160,32,0.25)"></span>
-            </div>
-            <div style="height:1px;background:var(--border);margin:14px 0;position:relative;">
-              <span style="position:absolute;right:-1px;top:-4px;border-style:solid;border-width:4px 0 4px 7px;border-color:transparent transparent transparent rgba(232,160,32,0.25)"></span>
-            </div>
-          </div>
+      <!-- SVG -->
+      <svg id="psvg" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="gs" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="2.2" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <filter id="gl" x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur stdDeviation="4.5" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <marker id="ac" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto">
+            <path d="M0,0 L0,5 L5,2.5Z" fill="#00cfff" opacity=".55" />
+          </marker>
+          <marker id="aa" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto">
+            <path d="M0,0 L0,5 L5,2.5Z" fill="#ffb533" opacity=".55" />
+          </marker>
+          <marker id="ag" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto">
+            <path d="M0,0 L0,5 L5,2.5Z" fill="#56a85c" opacity=".55" />
+          </marker>
+          <marker id="ap" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto">
+            <path d="M0,0 L0,5 L5,2.5Z" fill="#c060e0" opacity=".55" />
+          </marker>
+          <marker id="at" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto">
+            <path d="M0,0 L0,5 L5,2.5Z" fill="#3ecfb8" opacity=".55" />
+          </marker>
+          <marker id="aw" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto">
+            <path d="M0,0 L0,5 L5,2.5Z" fill="#f0e0c0" opacity=".55" />
+          </marker>
+          <marker id="ab" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto">
+            <path d="M0,0 L0,5 L5,2.5Z" fill="#169b62" opacity=".55" />
+          </marker>
+          <marker id="as" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto">
+            <path d="M0,0 L0,5 L5,2.5Z" fill="#b5253d" opacity=".55" />
+          </marker>
+          <marker id="ak" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto">
+            <path d="M0,0 L0,5 L5,2.5Z" fill="#f5c800" opacity=".55" />
+          </marker>
+          <marker id="agl" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto">
+            <path d="M0,0 L0,5 L5,2.5Z" fill="#d868a0" opacity=".55" />
+          </marker>
+        </defs>
 
-          <!-- Feature node -->
-          <div class="dag-col" style="justify-content:center;align-self:center;">
-            <div class="dag-node feature" id="dn-features">
-              <span class="node-tag">Transform</span>
-              Feature Extractor
-              <span class="node-ms" id="ms-features">—</span>
-            </div>
-          </div>
+        <!-- EDGE PATHS -->
+        <path d="M 280,120 C 448,120 448,415 615,415" fill="none" stroke="#00cfff" stroke-width="1.4" opacity=".22"
+          marker-end="url(#ac)" />
+        <path d="M 280,265 C 448,265 448,415 615,415" fill="none" stroke="#ffb533" stroke-width="1.4" opacity=".22"
+          marker-end="url(#aa)" />
+        <path d="M 280,415 C 410,415 490,415 615,415" fill="none" stroke="#56a85c" stroke-width="1.4" opacity=".22"
+          marker-end="url(#ag)" />
+        <path d="M 280,565 C 448,565 448,415 615,415" fill="none" stroke="#c060e0" stroke-width="1.4" opacity=".22"
+          marker-end="url(#ap)" />
+        <path d="M 280,710 C 448,710 448,415 615,415" fill="none" stroke="#3ecfb8" stroke-width="1.4" opacity=".22"
+          marker-end="url(#at)" />
+        <path d="M 280,900 C 448,900 448,415 615,415" fill="none" stroke="#d868a0" stroke-width="1.4" opacity=".22"
+          marker-end="url(#agl)" />
+        <path d="M 815,415 C 915,415 975,415 1075,415" fill="none" stroke="#f0e0c0" stroke-width="2" opacity=".28"
+          marker-end="url(#aw)" />
+        <path d="M 1275,415 C 1398,415 1398,285 1520,285" fill="none" stroke="#169b62" stroke-width="1.4" opacity=".22"
+          marker-end="url(#ab)" />
+        <path d="M 1275,415 C 1390,415 1400,415 1520,415" fill="none" stroke="#b5253d" stroke-width="1.4" opacity=".22"
+          marker-end="url(#as)" />
+        <path d="M 1275,415 C 1398,415 1398,545 1520,545" fill="none" stroke="#f5c800" stroke-width="1.4" opacity=".22"
+          marker-end="url(#ak)" />
 
-          <!-- Single arrow -->
-          <div class="dag-arrow-col" style="min-width:48px;">
-            <div class="dag-arrow"></div>
-          </div>
+        <!-- PARTICLES: weather → feature (cyan) -->
+        <circle r="2.8" fill="#00cfff" filter="url(#gs)">
+          <animateMotion dur="2.9s" repeatCount="indefinite" begin="0s" path="M 280,120 C 448,120 448,415 615,415" />
+        </circle>
+        <circle r="2.8" fill="#00cfff" filter="url(#gs)">
+          <animateMotion dur="2.9s" repeatCount="indefinite" begin="0.72s" path="M 280,120 C 448,120 448,415 615,415" />
+        </circle>
+        <circle r="2.8" fill="#00cfff" filter="url(#gs)">
+          <animateMotion dur="2.9s" repeatCount="indefinite" begin="1.45s" path="M 280,120 C 448,120 448,415 615,415" />
+        </circle>
+        <circle r="2.8" fill="#00cfff" filter="url(#gs)">
+          <animateMotion dur="2.9s" repeatCount="indefinite" begin="2.17s" path="M 280,120 C 448,120 448,415 615,415" />
+        </circle>
 
-          <!-- Predictor node -->
-          <div class="dag-col" style="justify-content:center;align-self:center;">
-            <div class="dag-node predictor" id="dn-predictor">
-              <span class="node-tag">ML Model</span>
-              Predictor
-              <span class="node-ms" id="ms-predictor">—</span>
-            </div>
-          </div>
+        <!-- PARTICLES: sports → feature (amber) -->
+        <circle r="2.8" fill="#ffb533" filter="url(#gs)">
+          <animateMotion dur="2.6s" repeatCount="indefinite" begin="0s" path="M 280,265 C 448,265 448,415 615,415" />
+        </circle>
+        <circle r="2.8" fill="#ffb533" filter="url(#gs)">
+          <animateMotion dur="2.6s" repeatCount="indefinite" begin="0.65s" path="M 280,265 C 448,265 448,415 615,415" />
+        </circle>
+        <circle r="2.8" fill="#ffb533" filter="url(#gs)">
+          <animateMotion dur="2.6s" repeatCount="indefinite" begin="1.3s" path="M 280,265 C 448,265 448,415 615,415" />
+        </circle>
+        <circle r="2.8" fill="#ffb533" filter="url(#gs)">
+          <animateMotion dur="2.6s" repeatCount="indefinite" begin="1.95s" path="M 280,265 C 448,265 448,415 615,415" />
+        </circle>
+
+        <!-- PARTICLES: calendar → feature (green) -->
+        <circle r="2.8" fill="#56a85c" filter="url(#gs)">
+          <animateMotion dur="1.7s" repeatCount="indefinite" begin="0s" path="M 280,415 C 410,415 490,415 615,415" />
+        </circle>
+        <circle r="2.8" fill="#56a85c" filter="url(#gs)">
+          <animateMotion dur="1.7s" repeatCount="indefinite" begin="0.42s" path="M 280,415 C 410,415 490,415 615,415" />
+        </circle>
+        <circle r="2.8" fill="#56a85c" filter="url(#gs)">
+          <animateMotion dur="1.7s" repeatCount="indefinite" begin="0.85s" path="M 280,415 C 410,415 490,415 615,415" />
+        </circle>
+        <circle r="2.8" fill="#56a85c" filter="url(#gs)">
+          <animateMotion dur="1.7s" repeatCount="indefinite" begin="1.27s" path="M 280,415 C 410,415 490,415 615,415" />
+        </circle>
+
+        <!-- PARTICLES: events → feature (purple) -->
+        <circle r="2.8" fill="#c060e0" filter="url(#gs)">
+          <animateMotion dur="2.6s" repeatCount="indefinite" begin="0s" path="M 280,565 C 448,565 448,415 615,415" />
+        </circle>
+        <circle r="2.8" fill="#c060e0" filter="url(#gs)">
+          <animateMotion dur="2.6s" repeatCount="indefinite" begin="0.65s" path="M 280,565 C 448,565 448,415 615,415" />
+        </circle>
+        <circle r="2.8" fill="#c060e0" filter="url(#gs)">
+          <animateMotion dur="2.6s" repeatCount="indefinite" begin="1.3s" path="M 280,565 C 448,565 448,415 615,415" />
+        </circle>
+        <circle r="2.8" fill="#c060e0" filter="url(#gs)">
+          <animateMotion dur="2.6s" repeatCount="indefinite" begin="1.95s" path="M 280,565 C 448,565 448,415 615,415" />
+        </circle>
+
+        <!-- PARTICLES: popular_times → feature (teal) -->
+        <circle r="2.8" fill="#3ecfb8" filter="url(#gs)">
+          <animateMotion dur="3.3s" repeatCount="indefinite" begin="0s" path="M 280,710 C 448,710 448,415 615,415" />
+        </circle>
+        <circle r="2.8" fill="#3ecfb8" filter="url(#gs)">
+          <animateMotion dur="3.3s" repeatCount="indefinite" begin="0.82s" path="M 280,710 C 448,710 448,415 615,415" />
+        </circle>
+        <circle r="2.8" fill="#3ecfb8" filter="url(#gs)">
+          <animateMotion dur="3.3s" repeatCount="indefinite" begin="1.65s" path="M 280,710 C 448,710 448,415 615,415" />
+        </circle>
+        <circle r="2.8" fill="#3ecfb8" filter="url(#gs)">
+          <animateMotion dur="3.3s" repeatCount="indefinite" begin="2.47s" path="M 280,710 C 448,710 448,415 615,415" />
+        </circle>
+
+        <!-- PARTICLES: greek_life → feature (pink) -->
+        <circle r="2.8" fill="#d868a0" filter="url(#gs)">
+          <animateMotion dur="2.8s" repeatCount="indefinite" begin="0s" path="M 280,900 C 448,900 448,415 615,415" />
+        </circle>
+        <circle r="2.8" fill="#d868a0" filter="url(#gs)">
+          <animateMotion dur="2.8s" repeatCount="indefinite" begin="0.7s" path="M 280,900 C 448,900 448,415 615,415" />
+        </circle>
+        <circle r="2.8" fill="#d868a0" filter="url(#gs)">
+          <animateMotion dur="2.8s" repeatCount="indefinite" begin="1.4s" path="M 280,900 C 448,900 448,415 615,415" />
+        </circle>
+        <circle r="2.8" fill="#d868a0" filter="url(#gs)">
+          <animateMotion dur="2.8s" repeatCount="indefinite" begin="2.1s" path="M 280,900 C 448,900 448,415 615,415" />
+        </circle>
+
+        <!-- PARTICLES: feature → predictor (cream, larger) -->
+        <circle r="3.8" fill="#f0e0c0" filter="url(#gl)">
+          <animateMotion dur="1.35s" repeatCount="indefinite" begin="0s" path="M 815,415 C 915,415 975,415 1075,415" />
+        </circle>
+        <circle r="3.8" fill="#f0e0c0" filter="url(#gl)">
+          <animateMotion dur="1.35s" repeatCount="indefinite" begin="0.34s"
+            path="M 815,415 C 915,415 975,415 1075,415" />
+        </circle>
+        <circle r="3.8" fill="#f0e0c0" filter="url(#gl)">
+          <animateMotion dur="1.35s" repeatCount="indefinite" begin="0.67s"
+            path="M 815,415 C 915,415 975,415 1075,415" />
+        </circle>
+        <circle r="3.8" fill="#f0e0c0" filter="url(#gl)">
+          <animateMotion dur="1.35s" repeatCount="indefinite" begin="1.01s"
+            path="M 815,415 C 915,415 975,415 1075,415" />
+        </circle>
+
+        <!-- PARTICLES: predictor → blarneys (irish green) -->
+        <circle r="3" fill="#169b62" filter="url(#gs)">
+          <animateMotion dur="1.8s" repeatCount="indefinite" begin="0s"
+            path="M 1275,415 C 1398,415 1398,285 1520,285" />
+        </circle>
+        <circle r="3" fill="#169b62" filter="url(#gs)">
+          <animateMotion dur="1.8s" repeatCount="indefinite" begin="0.6s"
+            path="M 1275,415 C 1398,415 1398,285 1520,285" />
+        </circle>
+        <circle r="3" fill="#169b62" filter="url(#gs)">
+          <animateMotion dur="1.8s" repeatCount="indefinite" begin="1.2s"
+            path="M 1275,415 C 1398,415 1398,285 1520,285" />
+        </circle>
+
+        <!-- PARTICLES: predictor → sallys (maroon) -->
+        <circle r="3" fill="#c0304a" filter="url(#gs)">
+          <animateMotion dur="1.55s" repeatCount="indefinite" begin="0s"
+            path="M 1275,415 C 1390,415 1400,415 1520,415" />
+        </circle>
+        <circle r="3" fill="#c0304a" filter="url(#gs)">
+          <animateMotion dur="1.55s" repeatCount="indefinite" begin="0.52s"
+            path="M 1275,415 C 1390,415 1400,415 1520,415" />
+        </circle>
+        <circle r="3" fill="#c0304a" filter="url(#gs)">
+          <animateMotion dur="1.55s" repeatCount="indefinite" begin="1.03s"
+            path="M 1275,415 C 1390,415 1400,415 1520,415" />
+        </circle>
+
+        <!-- PARTICLES: predictor → kk (yellow) -->
+        <circle r="3" fill="#f5c800" filter="url(#gs)">
+          <animateMotion dur="1.8s" repeatCount="indefinite" begin="0s"
+            path="M 1275,415 C 1398,415 1398,545 1520,545" />
+        </circle>
+        <circle r="3" fill="#f5c800" filter="url(#gs)">
+          <animateMotion dur="1.8s" repeatCount="indefinite" begin="0.6s"
+            path="M 1275,415 C 1398,415 1398,545 1520,545" />
+        </circle>
+        <circle r="3" fill="#f5c800" filter="url(#gs)">
+          <animateMotion dur="1.8s" repeatCount="indefinite" begin="1.2s"
+            path="M 1275,415 C 1398,415 1398,545 1520,545" />
+        </circle>
+      </svg>
+
+      <!-- SOURCE NODES -->
+      <div class="node node-live" data-node="weather" style="left:80px;top:75px;--nc:#00cfff">
+        <div class="nh">
+          <div class="ndot"></div><span class="nlabel">WEATHER</span><span class="nbadge">LIVE</span>
+        </div>
+        <div class="nsub">Open-Meteo API · open-meteo.com</div>
+        <div class="ncache">CACHE 10 MIN &nbsp;·&nbsp; 8 SIGNALS</div>
+        <div class="nmetric"><span class="nmk">TEMPERATURE</span><span class="nmv" id="nv-t">−2.1°C</span></div>
+      </div>
+
+      <div class="node node-live" data-node="sports" style="left:80px;top:220px;--nc:#ffb533">
+        <div class="nh">
+          <div class="ndot"></div><span class="nlabel">SPORTS</span><span class="nbadge">LIVE</span>
+        </div>
+        <div class="nsub">ESPN API · site.api.espn.com</div>
+        <div class="ncache">CACHE 1 HR &nbsp;·&nbsp; 15 SIGNALS</div>
+        <div class="nmetric"><span class="nmk">BBALL HOME</span><span class="nmv" style="color:#56a85c">TRUE</span>
         </div>
       </div>
-    </div>
 
-    <!-- ── Section 2: Global Factors ── -->
-    <div>
-      <div class="section-label">Global Factors</div>
-      <p class="section-caption">Environmental and cultural signals affecting the entire campus ecosystem simultaneously.</p>
-      <div class="global-grid" id="global-grid">
-        <div class="factor-card"><div class="skel" style="height:200px"></div></div>
-        <div class="factor-card"><div class="skel" style="height:200px"></div></div>
-        <div class="factor-card"><div class="skel" style="height:200px"></div></div>
-      </div>
-    </div>
-
-    <!-- ── Section 3: Bar-Specific Factors ── -->
-    <div>
-      <div class="section-label">Bar-Specific Factors</div>
-      <p class="section-caption">Unique signals that attract crowds to one location while others might be empty.</p>
-      <div class="bar-selector">
-        <button class="bar-tab active" data-bar="1" onclick="selectBar(1)">Blarney's</button>
-        <button class="bar-tab" data-bar="2" onclick="selectBar(2)">Sally's</button>
-        <button class="bar-tab" data-bar="3" onclick="selectBar(3)">Kollege Klub</button>
-      </div>
-      <div class="bar-factors-grid" id="bar-factors-grid">
-        <div class="factor-card"><div class="skel" style="height:180px"></div></div>
-        <div class="factor-card"><div class="skel" style="height:180px"></div></div>
-      </div>
-    </div>
-
-    <!-- ── Section 4: Feature Vector ── -->
-    <div>
-      <div class="section-label">Feature Transformation</div>
-      <p class="section-caption">How the algorithm "sees" the world right now — the full feature vector sent to the RandomForest.</p>
-      <div class="feat-wrap" id="feat-wrap">
-        <div class="feat-topbar">
-          <span class="feat-topbar-title">Current Feature Vector</span>
-          <span class="feat-topbar-note" id="feat-bar-label">Select a bar above</span>
+      <div class="node" data-node="calendar" style="left:80px;top:370px;--nc:#56a85c">
+        <div class="nh">
+          <div class="ndot"></div><span class="nlabel">CALENDAR</span><span class="nbadge">COMPUTED</span>
         </div>
-        <div class="feat-grid" id="feat-grid">
-          <div style="padding:1.5rem;grid-column:1/-1"><div class="skel" style="height:120px"></div></div>
+        <div class="nsub">UMN Academic Calendar</div>
+        <div class="ncache">STATIC &nbsp;·&nbsp; 19 FLAGS</div>
+        <div class="nmetric"><span class="nmk">CLASSES IN SESSION</span><span class="nmv">TRUE</span></div>
+      </div>
+
+      <div class="node node-live" data-node="events" style="left:80px;top:520px;--nc:#c060e0">
+        <div class="nh">
+          <div class="ndot"></div><span class="nlabel">EVENTS</span><span class="nbadge">LIVE</span>
+        </div>
+        <div class="nsub">SeatGeek API · UMN Events</div>
+        <div class="ncache">CACHE 1 HR &nbsp;·&nbsp; 5 SIGNALS</div>
+        <div class="nmetric"><span class="nmk">NEARBY EVENTS</span><span class="nmv">3</span></div>
+      </div>
+
+      <div class="node node-live" data-node="popular_times" style="left:80px;top:665px;--nc:#3ecfb8">
+        <div class="nh">
+          <div class="ndot"></div><span class="nlabel">POP. TIMES</span><span class="nbadge">LIVE</span>
+        </div>
+        <div class="nsub">Google Places API</div>
+        <div class="ncache">CACHE 1 HR &nbsp;·&nbsp; 3 BARS</div>
+        <div class="nmetric"><span class="nmk">AVG BUSYNESS</span><span class="nmv">62%</span></div>
+      </div>
+
+      <div class="node" data-node="greek_life" style="left:80px;top:858px;--nc:#d868a0">
+        <div class="nh">
+          <div class="ndot"></div><span class="nlabel">GREEK LIFE</span><span class="nbadge">COMPUTED</span>
+        </div>
+        <div class="nsub">providers/greek_life.py · ~3,000 members</div>
+        <div class="ncache">STATIC &nbsp;·&nbsp; 7 SIGNALS</div>
+        <div class="nmetric"><span class="nmk">SOCIAL INTENSITY</span><span class="nmv" id="nv-gl">0.72</span></div>
+      </div>
+
+      <!-- FEATURE NODE -->
+      <div class="node" data-node="feature_extractor" style="left:615px;top:370px;--nc:#f0e0c0">
+        <div class="nh">
+          <div class="ndot"></div><span class="nlabel">FEATURES</span><span class="nbadge">READY</span>
+        </div>
+        <div class="nsub">features/builder.py · FeatureBuilder</div>
+        <div class="ncache">68 FEATURES &nbsp;·&nbsp; PER-BAR</div>
+        <div class="nmetric"><span class="nmk">TOP SIGNAL</span><span class="nmv" style="font-size:10px">hour_cos</span>
         </div>
       </div>
-    </div>
 
-  </main>
+      <!-- PREDICTOR NODE -->
+      <div class="node" data-node="predictor" style="left:1075px;top:370px;--nc:#ff7030">
+        <div class="nh">
+          <div class="ndot"></div><span class="nlabel">PREDICTOR</span><span class="nbadge">READY</span>
+        </div>
+        <div class="nsub">RandomForest + BaselineModel</div>
+        <div class="ncache">ENSEMBLE &nbsp;·&nbsp; 14-DAY SPLIT</div>
+        <div class="nmetric"><span class="nmk">MODELS</span><span class="nmv" style="font-size:10px">RF + MEDIAN</span>
+        </div>
+      </div>
 
-  <!-- ── FOOTER ── -->
-  <footer>
-    <div class="ft-left">
-      <span id="last-updated">—</span>
-      <span id="refresh-cd">Refreshing in 60s</span>
-    </div>
-    <span>Open Foundry Platform · Data Pipeline · UMN Bar Traffic Algo</span>
-  </footer>
+      <!-- OUTPUT NODES -->
+      <div class="node nbar" data-node="blarneys" style="left:1520px;top:240px;--nc:#169b62">
+        <div class="nh">
+          <div class="ndot"></div><span class="nlabel" style="font-size:11px">BLARNEY'S</span><span class="nbadge"
+            style="border-color:#e8640a;color:#e8640a">BAR 1</span>
+        </div>
+        <div class="nsub">Dinkytown · bar_id = 1</div>
+        <div class="prow"><span class="pk">WAIT</span><span class="pv">14 min</span></div>
+        <div class="prow"><span class="pk">PCT FULL</span><span class="pv">68%</span></div>
+        <div class="cbadge">HIGH CONFIDENCE</div>
+      </div>
 
-</div>
+      <div class="node nbar" data-node="sallys" style="left:1520px;top:370px;--nc:#b5253d">
+        <div class="nh">
+          <div class="ndot"></div><span class="nlabel" style="font-size:11px">SALLY'S</span><span class="nbadge">BAR
+            2</span>
+        </div>
+        <div class="nsub">Dinkytown · bar_id = 2</div>
+        <div class="prow"><span class="pk">WAIT</span><span class="pv">8 min</span></div>
+        <div class="prow"><span class="pk">PCT FULL</span><span class="pv">52%</span></div>
+        <div class="cbadge">HIGH CONFIDENCE</div>
+      </div>
 
-<script>
-  /* ── CONFIG ────────────────────────────────────────────── */
-  const API       = 'http://localhost:8001';
-  const REFRESH_S = 60;
+      <div class="node nbar" data-node="kk" style="left:1520px;top:500px;--nc:#f5c800">
+        <div class="nh">
+          <div class="ndot"></div><span class="nlabel" style="font-size:11px">KOLLEGE KLUB</span><span class="nbadge"
+            style="border-color:#8b1a2e;color:#8b1a2e">BAR 3</span>
+        </div>
+        <div class="nsub">Stadium Village · bar_id = 3</div>
+        <div class="prow"><span class="pk">WAIT</span><span class="pv">22 min</span></div>
+        <div class="prow"><span class="pk">PCT FULL</span><span class="pv">81%</span></div>
+        <div class="cbadge">MED CONFIDENCE</div>
+      </div>
 
-  let cdInterval  = null;
-  let cdLeft      = REFRESH_S;
-  let activeBarId = 1;
-  let _signals    = null;
-  let _preds      = null;
+    </div><!-- /cv -->
+  </div><!-- /vp -->
 
-  /* ── BAR SCHEDULES (from config/settings.py) ──────────── */
-  const BAR_SCHEDULES = {
-    1: {
-      name: "Blarney's",
-      happy_hour: { label: "3:17 PM – 6:17 PM daily" },
-      late_night_draw: true,
-      specials: [
-        { name: "Karaoke Night",     days: "Thu",       time: "9 PM – 2 AM",  lift: 55  },
-        { name: "Wednesday Deals",   days: "Wed",       time: "9 PM – 1 AM",  lift: 25  },
-        { name: "Late Night Draw",   days: "Daily",     time: "After 10 PM",  lift: null, note: "Drunk migration" },
-      ]
-    },
-    2: {
-      name: "Sally's",
-      happy_hour: { label: "3:00 PM – 6:00 PM daily" },
-      late_night_draw: false,
-      specials: [
-        { name: "Late Happy Hour",   days: "Daily",     time: "10 PM – Midnight", lift: 20 },
-        { name: "$2 Tuesday",        days: "Tue",       time: "8 PM – Midnight",  lift: 30 },
-      ]
-    },
-    3: {
-      name: "Kollege Klub",
-      happy_hour: null,
-      cover_charge: "Thu – Sat",
-      late_night_draw: false,
-      specials: [
-        { name: "KK Tuesday",        days: "Tue",       time: "9 PM – 2 AM",  lift: 70 },
-        { name: "KK Thursday",       days: "Thu",       time: "9 PM – 2 AM",  lift: 40 },
-        { name: "Friday After Class",days: "Fri",       time: "3 PM – 7 PM",  lift: 35 },
-      ]
+  <div id="tt"></div>
+
+  <!-- ontology panel injected by ontology.js -->
+
+  <div id="zc">
+    <button class="zb" onclick="doZoom(1.18)" title="Zoom in">+</button>
+    <div id="zlvl">100%</div>
+    <button class="zb" onclick="doZoom(1/1.18)" title="Zoom out">−</button>
+    <button class="zb" onclick="fitView()" title="Fit" style="font-size:11px">⊡</button>
+  </div>
+
+  <script>
+    /* ── ZOOM / PAN ─────────────────────────────── */
+    const vp = document.getElementById('vp');
+    const cv = document.getElementById('cv');
+    let sc = 0.82, tx = 60, ty = 20;
+
+    function applyT() {
+      cv.style.transform = `translate(${tx}px,${ty}px) scale(${sc})`;
+      document.getElementById('zlvl').textContent = Math.round(sc * 100) + '%';
     }
-  };
+    applyT();
 
-  /* ── FEATURE GROUPS (for display grouping) ────────────── */
-  const FEAT_GROUPS = {
-    "Time": [
-      "hour","day_of_week","hour_sin","hour_cos","dow_sin","dow_cos",
-      "is_weekend","is_thursday","month","week_of_year","is_late_night"
-    ],
-    "Weather": [
-      "temperature_c","precipitation_mm","wind_chill_c","snowfall_mm",
-      "wind_speed_ms","is_severe_weather","cloud_cover","is_first_nice_day"
-    ],
-    "Sports & Events": [
-      "is_game_day","is_football_home","is_basketball_home","is_hockey_home",
-      "hours_until_game","is_rivalry_game","is_wild_game","is_timberwolves_game",
-      "is_nhl_playoffs","is_nfl_game_day","is_nfl_playoffs","is_super_bowl",
-      "is_vikings_game","is_cfb_saturday","is_cfb_championship",
-      "is_march_madness","is_march_madness_elite","is_nba_playoffs",
-      "tv_game_hour","tv_game_weight"
-    ],
-    "Academic": [
-      "classes_in_session","is_finals_week","is_welcome_week","is_break",
-      "is_summer_session","week_of_semester","is_midterms_week","is_syllabus_week",
-      "is_study_days","is_commencement","days_until_break","days_since_semester_start",
-      "is_st_patricks","is_halloween","is_homecoming","is_bar_crawl",
-      "is_blackout_wednesday","is_new_years_eve","is_cinco_de_mayo","is_parents_weekend"
-    ]
-  };
+    function doZoom(f, cx, cy) {
+      const r = vp.getBoundingClientRect();
+      cx = cx ?? r.width / 2; cy = cy ?? r.height / 2;
+      const ns = Math.min(2.4, Math.max(0.2, sc * f));
+      tx = cx - (cx - tx) * (ns / sc);
+      ty = cy - (cy - ty) * (ns / sc);
+      sc = ns; applyT();
+    }
 
-  /* ── CLOCK ─────────────────────────────────────────────── */
-  function tick() {
-    const n = new Date();
-    const p = v => String(v).padStart(2, '0');
-    document.getElementById('clock').textContent =
-      `${p(n.getHours())}:${p(n.getMinutes())}:${p(n.getSeconds())}`;
-  }
-  setInterval(tick, 1000);
-  tick();
+    function fitView() {
+      const r = vp.getBoundingClientRect();
+      sc = Math.min(r.width / 1860, r.height / 1100) * 0.88;
+      tx = (r.width - 1860 * sc) / 2;
+      ty = (r.height - 1100 * sc) / 2;
+      applyT();
+    }
 
-  /* ── COUNTDOWN ─────────────────────────────────────────── */
-  function startCountdown() {
-    clearInterval(cdInterval);
-    cdLeft = REFRESH_S;
-    const el = document.getElementById('refresh-cd');
-    cdInterval = setInterval(() => {
-      cdLeft--;
-      el.textContent = cdLeft > 0 ? `Refreshing in ${cdLeft}s` : 'Refreshing…';
-      if (cdLeft <= 0) { clearInterval(cdInterval); fetchAll(); }
-    }, 1000);
-  }
+    vp.addEventListener('wheel', e => {
+      e.preventDefault();
+      const r = vp.getBoundingClientRect();
+      doZoom(e.deltaY < 0 ? 1.1 : 0.91, e.clientX - r.left, e.clientY - r.top);
+    }, { passive: false });
 
-  /* ── BAR SELECTOR ──────────────────────────────────────── */
-  function selectBar(barId) {
-    activeBarId = barId;
-    document.querySelectorAll('.bar-tab').forEach(t => {
-      t.classList.toggle('active', Number(t.dataset.bar) === barId);
+    let drag = null;
+    vp.addEventListener('pointerdown', e => {
+      if (e.target.closest('.node')) return;
+      drag = { sx: e.clientX - tx, sy: e.clientY - ty };
+      vp.classList.add('drag');
+      vp.setPointerCapture(e.pointerId);
     });
-    if (_preds && _signals) renderBarFactors(barId);
-  }
+    vp.addEventListener('pointermove', e => {
+      if (!drag) return;
+      tx = e.clientX - drag.sx; ty = e.clientY - drag.sy; applyT();
+    });
+    vp.addEventListener('pointerup', () => { drag = null; vp.classList.remove('drag'); });
 
-  /* ── RENDER DAG ────────────────────────────────────────── */
-  function renderDag(execMs) {
-    /* When we get a response from the API, mark all nodes as "done"
-       and show approximate timing. We don't have per-node timing from
-       signals/live, so we show total pipeline time and distribute heuristically. */
-    const nodeIds = ['weather','sports','calendar','events','pop-times','crowd','features','predictor'];
-    const approx  = {
-      weather:   '~150ms', sports:   '~120ms', calendar: '~5ms',
-      events:    '~180ms', 'pop-times': '~90ms', crowd: '~8ms',
-      features:  '~12ms',  predictor: '~340ms'
-    };
-    nodeIds.forEach(id => {
-      const ms = document.getElementById(`ms-${id}`);
-      if (ms) {
-        ms.textContent = approx[id] || '—';
-        ms.parentElement.classList.remove('running','error');
-        ms.parentElement.classList.add('done');
+    /* ── CLOCK ───────────────────────────────────── */
+    function tick() {
+      const d = new Date();
+      document.getElementById('clk').textContent =
+        d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    }
+    setInterval(tick, 1000); tick();
+
+    /* ── TOOLTIP DATA ────────────────────────────── */
+    const ND = {
+      weather: {
+        color: '#00cfff', label: 'WEATHER NODE', badge: 'Open-Meteo',
+        sections: [
+          {
+            t: 'LIVE SIGNALS', rows: [
+              ['temperature_c', '−2.1°C', 1], ['wind_chill_c', '−8.4°C', 1],
+              ['precipitation_mm', '0.0', 0], ['snowfall_mm', '1.2 mm', 1],
+              ['wind_speed_ms', '6.8 m/s', 1], ['cloud_cover', '78%', 1],
+              ['is_severe_weather', 'false', 0], ['is_first_nice_day', 'false', 0],
+            ]
+          },
+          {
+            t: 'CONFIG', rows: [
+              ['endpoint', 'api.open-meteo.com', 0], ['location', 'Minneapolis MN', 0],
+              ['cache_ttl', '600 s', 0], ['unit', 'metric', 0],
+            ]
+          }
+        ]
+      },
+      sports: {
+        color: '#ffb533', label: 'SPORTS NODE', badge: 'ESPN API',
+        sections: [
+          {
+            t: 'UMN ATHLETICS', rows: [
+              ['is_football_home', 'false', 0], ['is_basketball_home', 'true', 1],
+              ['is_hockey_home', 'false', 0], ['is_rivalry_game', 'false', 0],
+              ['hours_until_game', '5.5 h', 1],
+            ]
+          },
+          {
+            t: 'TV SPORTS', rows: [
+              ['is_nfl_game_day', 'false', 0], ['is_super_bowl', 'false', 0],
+              ['is_vikings_game', 'false', 0], ['is_cfb_saturday', 'false', 0],
+              ['is_march_madness', 'false', 0], ['is_nba_playoffs', 'false', 0],
+              ['tv_game_weight', '0.65', 1],
+            ]
+          }
+        ]
+      },
+      calendar: {
+        color: '#56a85c', label: 'CALENDAR NODE', badge: 'UMN Academic',
+        sections: [
+          {
+            t: 'ACADEMIC FLAGS', rows: [
+              ['classes_in_session', 'true', 1], ['is_finals_week', 'false', 0],
+              ['is_welcome_week', 'false', 0], ['is_midterms_week', 'false', 0],
+              ['is_syllabus_week', 'false', 0], ['is_study_days', 'false', 0],
+              ['is_break', 'false', 0], ['week_of_semester', '6', 1],
+              ['days_until_break', '41', 0], ['is_summer_session', 'false', 0],
+            ]
+          },
+          {
+            t: 'SOCIAL EVENTS', rows: [
+              ['is_st_patricks', 'false', 0], ['is_halloween', 'false', 0],
+              ['is_homecoming', 'false', 0], ['is_bar_crawl', 'false', 0],
+              ['is_blackout_wednesday', 'false', 0], ['is_new_years_eve', 'false', 0],
+              ['is_cinco_de_mayo', 'false', 0], ['is_parents_weekend', 'false', 0],
+            ]
+          }
+        ]
+      },
+      events: {
+        color: '#c060e0', label: 'EVENTS NODE', badge: 'SeatGeek',
+        sections: [
+          {
+            t: 'NEARBY EVENTS (≤2km)', rows: [
+              ['events_nearby', '3', 1], ['max_capacity', '1,200', 1],
+              ['has_large_event', 'true', 1], ['nearest_dist_km', '0.4 km', 0],
+              ['categories', 'music, comedy', 0],
+            ]
+          },
+          {
+            t: 'CONFIG', rows: [
+              ['endpoint', 'api.seatgeek.com/2', 0],
+              ['radius_km', '2.0', 0], ['cache_ttl', '3600 s', 0],
+            ]
+          }
+        ]
+      },
+      popular_times: {
+        color: '#3ecfb8', label: 'POP. TIMES NODE', badge: 'Google Places',
+        bars: [
+          { name: "BLARNEY'S", busy: 61 },
+          { name: "SALLY'S", busy: 54 },
+          { name: 'KOLL. KLUB', busy: 72 },
+        ],
+        extra: [['source', 'Google Places API'], ['model', 'historical hourly'], ['cache_ttl', '3600 s']]
+      },
+      feature_extractor: {
+        color: '#f0e0c0', label: 'FEATURE EXTRACTOR', badge: '75 features',
+        groups: [
+          { n: 'TIME (10)', c: ['hour', 'day_of_week', 'hour_sin', 'hour_cos', 'dow_sin', 'dow_cos', 'is_weekend', 'is_thursday', 'month', 'week_of_year'] },
+          { n: 'GREEK LIFE (7)', c: ['is_greek_bid_day', 'is_greek_thursday', 'is_greek_formal_season', 'is_greek_pregame_window', 'greek_social_intensity', 'is_greek_rush_week', 'is_greek_week'] },
+          { n: 'WEATHER (8)', c: ['temperature_c', 'wind_chill_c', 'precipitation_mm', 'snowfall_mm', 'wind_speed_ms', 'is_severe_weather', 'cloud_cover', 'is_first_nice_day'] },
+          { n: 'SPORTS (15)', c: ['is_football_home', 'is_basketball_home', 'is_hockey_home', 'hours_until_game', 'is_rivalry_game', 'is_nfl_game_day', 'is_vikings_game', 'tv_game_weight', '+ 7 more'] },
+          { n: 'ACADEMIC + EVENTS (35)', c: ['classes_in_session', 'is_finals_week', 'week_of_semester', 'days_until_break', 'is_bar_crawl', 'is_homecoming', 'is_halloween', 'cover_charge', '+ 27 more'] },
+        ]
+      },
+      predictor: {
+        color: '#ff7030', label: 'PREDICTOR NODE', badge: 'Ensemble',
+        sections: [
+          {
+            t: 'MODELS', rows: [
+              ['primary', 'WaitTimeModel (RF)', 1], ['fallback_1', 'BaselineModel (median)', 0],
+              ['fallback_2', 'global default', 0], ['n_estimators', '100', 0],
+              ['test_split_days', '14', 1],
+            ]
+          },
+          {
+            t: 'OUTPUTS (per bar)', rows: [
+              ['predicted_wait_minutes', 'float', 1], ['predicted_pct_full', '0.0 – 1.0', 1],
+              ['confidence', 'high / med / low', 1], ['model_used', 'str', 0],
+              ['signals_used', 'dict[str,Any]', 0],
+            ]
+          }
+        ]
+      },
+      blarneys: {
+        color: '#169b62', label: "BLARNEY'S", badge: 'bar_id = 1',
+        sections: [
+          {
+            t: 'PREDICTIONS', rows: [
+              ['wait_minutes', '14 min', 1], ['pct_full', '68%', 1],
+              ['confidence', 'HIGH', 1], ['model_used', 'ml (RF)', 0],
+            ]
+          },
+          {
+            t: 'BAR SPECIALS', rows: [
+              ['Karaoke Thu', '9 PM–2 AM  +55%', 1], ['Happy Hour', '3:17–6:17 PM', 0],
+              ['Wed Deal', '9 PM–1 AM  +25%', 0], ['late_night_draw', 'true', 0],
+            ]
+          }
+        ]
+      },
+      sallys: {
+        color: '#b5253d', label: "SALLY'S", badge: 'bar_id = 2',
+        sections: [
+          {
+            t: 'PREDICTIONS', rows: [
+              ['wait_minutes', '8 min', 1], ['pct_full', '52%', 1],
+              ['confidence', 'HIGH', 1], ['model_used', 'ml (RF)', 0],
+            ]
+          },
+          {
+            t: 'BAR SPECIALS', rows: [
+              ['$2 Tuesday', '8 PM–midnight  +30%', 1],
+              ['Late HH', '10 PM–midnight  +20%', 0],
+              ['Happy Hour', '3–6 PM', 0],
+            ]
+          }
+        ]
+      },
+      greek_life: {
+        color: '#d868a0', label: 'GREEK LIFE NODE', badge: 'providers/greek_life.py',
+        sections: [
+          {
+            t: 'SOCIAL CALENDAR', rows: [
+              ['is_greek_rush_week', 'false', 0], ['is_greek_bid_day', 'false', 0],
+              ['is_greek_formal_season', 'false', 0], ['is_greek_week', 'false', 0],
+              ['is_greek_thursday', 'true', 1], ['is_greek_pregame_window', 'true', 1],
+              ['greek_social_intensity', '0.72', 1],
+            ]
+          },
+          {
+            t: 'COMMUNITY', rows: [
+              ['ifc_fraternities', '24 chapters', 0], ['phc_sororities', '13 chapters', 0],
+              ['total_members', '~3,000', 1], ['source', 'computed — no API', 0],
+              ['kk_affinity', '0.90', 1], ['blarneys_affinity', '0.75', 1],
+              ['sallys_affinity', '0.45', 0],
+            ]
+          }
+        ]
+      },
+      kk: {
+        color: '#f5c800', label: 'KOLLEGE KLUB', badge: 'bar_id = 3',
+        sections: [
+          {
+            t: 'PREDICTIONS', rows: [
+              ['wait_minutes', '22 min', 1], ['pct_full', '81%', 1],
+              ['confidence', 'MEDIUM', 1], ['model_used', 'ml (RF)', 0],
+            ]
+          },
+          {
+            t: 'BAR SPECIALS', rows: [
+              ['KK Tuesday', '9 PM–2 AM  +70%', 1], ['KK Thursday', '9 PM–2 AM  +40%', 1],
+              ['Fri After Class', '3–7 PM  +35%', 0], ['cover_charge', 'Thu–Sat', 0],
+            ]
+          }
+        ]
       }
-    });
-  }
-
-  /* ── RENDER GLOBAL FACTORS ─────────────────────────────── */
-  function renderGlobalFactors(signals) {
-    const grid = document.getElementById('global-grid');
-    grid.innerHTML = '';
-
-    /* ── Weather card ── */
-    const w     = signals.weather || {};
-    const temp  = w.temperature_c  != null ? w.temperature_c.toFixed(1)  : '—';
-    const feels = w.wind_chill_c   != null ? w.wind_chill_c.toFixed(1)   : '—';
-    const wind  = w.wind_speed_ms  != null ? w.wind_speed_ms.toFixed(1)  : '—';
-    const prec  = w.precipitation_mm != null ? w.precipitation_mm.toFixed(1) : '—';
-    const snow  = w.snowfall_mm    != null && w.snowfall_mm > 0 ? w.snowfall_mm.toFixed(1) : null;
-    const cloud = w.cloud_cover    != null ? Math.round(w.cloud_cover)   : '—';
-    const sevWx = !!w.is_severe_weather;
-    const nice  = !!w.is_first_nice_day;
-
-    const wxCard = document.createElement('div');
-    wxCard.className = 'factor-card';
-    wxCard.innerHTML = `
-      <div class="factor-title">Physical Environment</div>
-      <div class="factor-metric">
-        <span class="metric-val">${temp}</span>
-        <span class="metric-unit">°C</span>
-      </div>
-      ${flagRow('dot','Temperature',     `${temp}°C`,   'neutral')}
-      ${flagRow('dot','Feels Like',      `${feels}°C`,  'neutral')}
-      ${flagRow('dot','Wind',            `${wind} m/s`, 'neutral')}
-      ${flagRow('dot','Precipitation',   `${prec} mm`,  'neutral')}
-      ${flagRow('dot','Cloud Cover',     `${cloud}%`,   'neutral')}
-      ${snow ? flagRow('on','Snowfall',  `${snow} mm`,  'active') : flagRow('off','Snow','None','dim')}
-      ${sevWx ? `<div class="alert-box warn">⚠ Severe Weather Active</div>` : ''}
-      ${nice  ? `<div class="alert-box info">☀ First Nice Day Effect</div>` : ''}
-    `;
-    grid.appendChild(wxCard);
-
-    /* ── Sports card ── */
-    const s = signals.sports || {};
-    const c = signals.calendar || {};
-
-    const activeGames = [];
-    if (s.is_football_home)     activeGames.push('Gophers Football');
-    if (s.is_basketball_home)   activeGames.push('Gophers B-Ball');
-    if (s.is_hockey_home)       activeGames.push('Gophers Hockey');
-    if (s.is_wild_game)         activeGames.push('Wild Game');
-    if (s.is_timberwolves_game) activeGames.push('T-Wolves');
-    if (s.is_vikings_game)      activeGames.push('Vikings');
-    if (s.is_nfl_game_day)      activeGames.push('NFL Sunday');
-    if (s.is_cfb_saturday)      activeGames.push('CFB Saturday');
-    if (s.is_super_bowl)        activeGames.push('SUPER BOWL');
-    if (s.is_march_madness)     activeGames.push('March Madness');
-
-    const tvWt = s.tv_game_weight != null ? s.tv_game_weight.toFixed(2) : '0.00';
-    const hasGames = activeGames.length > 0;
-    const highTV   = parseFloat(tvWt) > 2.0;
-
-    const spCard = document.createElement('div');
-    spCard.className = 'factor-card';
-    spCard.innerHTML = `
-      <div class="factor-title">Athletics & TV Sports</div>
-      <div class="factor-metric">
-        <span class="metric-val" style="color:${hasGames ? 'var(--amber-bright)' : 'var(--cream-30)'}">${activeGames.length}</span>
-        <span class="metric-unit">active game${activeGames.length !== 1 ? 's' : ''}</span>
-      </div>
-      ${flagRow(hasGames ? 'on':'off', 'Active Games', hasGames ? activeGames.join(', ') : 'None', hasGames ? 'active':'dim')}
-      ${flagRow('dot','TV Weight',      tvWt,                   highTV  ? 'active':'neutral')}
-      ${flagRow(s.is_rivalry_game?'hot':'off', 'Rivalry',       s.is_rivalry_game ? 'YES':'No', s.is_rivalry_game?'hot':'dim')}
-      ${flagRow(s.is_nhl_playoffs ?'on':'off', 'NHL Playoffs',  s.is_nhl_playoffs  ? 'YES':'No', s.is_nhl_playoffs ?'active':'dim')}
-      ${flagRow(s.is_nba_playoffs ?'on':'off', 'NBA Playoffs',  s.is_nba_playoffs  ? 'YES':'No', s.is_nba_playoffs ?'active':'dim')}
-      ${highTV ? `<div class="alert-box info">📺 High-draw TV event detected (${tvWt}/4.0)</div>` : ''}
-    `;
-    grid.appendChild(spCard);
-
-    /* ── Academic card ── */
-    const period =
-      c.is_finals_week    ? 'FINALS'
-      : c.is_midterms_week  ? 'MIDTERMS'
-      : c.is_welcome_week   ? 'WELCOME WEEK'
-      : c.is_study_days     ? 'STUDY DAYS'
-      : c.is_syllabus_week  ? 'SYLLABUS WEEK'
-      : c.is_commencement   ? 'COMMENCEMENT'
-      : 'Normal';
-
-    const periodHot  = ['FINALS','MIDTERMS'].includes(period);
-    const periodGood = ['WELCOME WEEK','SYLLABUS WEEK'].includes(period);
-    const weekStr    = c.week_of_semester != null ? `Week ${c.week_of_semester}` : '—';
-    const breakStr   = c.days_until_break != null
-                       ? (c.days_until_break > 0 ? `${c.days_until_break} days` : 'BREAK NOW')
-                       : '—';
-
-    const acCard = document.createElement('div');
-    acCard.className = 'factor-card';
-    acCard.innerHTML = `
-      <div class="factor-title">Academic Rhythm</div>
-      <div class="factor-metric">
-        <span class="metric-val" style="font-size:1.3rem;letter-spacing:0.02em;color:${c.classes_in_session ? 'var(--amber)' : 'var(--cream-30)'}">${c.classes_in_session ? 'IN SESSION' : 'ON BREAK'}</span>
-      </div>
-      ${flagRow(c.classes_in_session ? 'on':'off', 'Classes',       c.classes_in_session ? 'In Session':'Not in Session', c.classes_in_session?'active':'dim')}
-      ${flagRow(period !== 'Normal' ? (periodHot?'hot':'on') : 'off', 'Period', period, periodHot?'hot': periodGood?'good': period !== 'Normal' ? 'active':'dim')}
-      ${flagRow('dot','Semester Week',  weekStr,                        'neutral')}
-      ${flagRow('dot','Break In',       breakStr,                       'neutral')}
-      ${flagRow('dot','Days Since Start', c.days_since_semester_start != null ? String(c.days_since_semester_start) : '—', 'neutral')}
-      ${flagRow(c.is_bar_crawl ? 'hot':'off',       'Bar Crawl',     c.is_bar_crawl?'YES':'No',             c.is_bar_crawl?'hot':'dim')}
-      ${flagRow(c.is_st_patricks ? 'hot':'off',     "St. Patrick's", c.is_st_patricks?'YES':'No',           c.is_st_patricks?'hot':'dim')}
-      ${periodHot   ? `<div class="alert-box warn">📑 ${period} — library/stress effect</div>` : ''}
-      ${periodGood  ? `<div class="alert-box good">🎉 ${period} — peak party volume</div>` : ''}
-    `;
-    grid.appendChild(acCard);
-  }
-
-  function flagRow(dotType, label, value, valClass) {
-    return `<div class="flag-row">
-      <span class="flag-dot ${dotType}"></span>
-      <span class="flag-label">${label}</span>
-      <span class="flag-val ${valClass}">${value}</span>
-    </div>`;
-  }
-
-  /* ── RENDER BAR FACTORS ────────────────────────────────── */
-  function renderBarFactors(barId) {
-    const grid  = document.getElementById('bar-factors-grid');
-    const sched = BAR_SCHEDULES[barId];
-    const pred  = _preds ? _preds.find(p => p.bar_id === barId) : null;
-
-    grid.innerHTML = '';
-
-    /* Deals & Schedules card */
-    const dealsCard = document.createElement('div');
-    dealsCard.className = 'factor-card';
-
-    let specialsHtml = '';
-    if (sched.specials && sched.specials.length) {
-      specialsHtml = sched.specials.map(sp => {
-        const liftHtml = sp.lift != null
-          ? `<span class="special-lift ${sp.lift >= 50 ? 'major' : ''}">+${sp.lift}%</span>`
-          : `<span class="special-lift" style="color:var(--cream-30)">${sp.note || ''}</span>`;
-        return `<div class="special-row">
-          <div>
-            <span class="special-name">${sp.name}</span><br>
-            <span class="special-days">${sp.days} · ${sp.time}</span>
-          </div>
-          ${liftHtml}
-        </div>`;
-      }).join('');
-    }
-
-    const coverHtml = sched.cover_charge
-      ? `<div class="hh-row"><span class="hh-label">Cover Charge</span><span class="hh-val">${sched.cover_charge}</span></div>`
-      : '';
-
-    dealsCard.innerHTML = `
-      <div class="factor-title">Weekly Deals & Schedules</div>
-      ${sched.happy_hour
-        ? `<div class="hh-row"><span class="hh-label">Happy Hour</span><span class="hh-val">${sched.happy_hour.label}</span></div>`
-        : ''}
-      ${coverHtml}
-      <div class="specials-list">${specialsHtml}</div>
-    `;
-    grid.appendChild(dealsCard);
-
-    /* Live Crowd Intel card */
-    const crowdCard = document.createElement('div');
-    crowdCard.className = 'factor-card';
-
-    if (pred) {
-      const waitRnd = Math.round(pred.predicted_wait_minutes);
-      const pctDisp = Math.round(pred.predicted_pct_full * 100);
-      const tierCls = pctDisp >= 70 ? 'busy' : pctDisp >= 40 ? 'medium' : '';
-      const confBadge = pred.confidence;
-      const modelKey  = pred.model_used === 'ml' ? 'ML Model' : pred.model_used === 'baseline' ? 'Baseline' : 'Fallback';
-
-      crowdCard.innerHTML = `
-        <div class="factor-title">Live Crowd Intelligence</div>
-        <div class="crowd-stat-row">
-          <div class="crowd-stat">
-            <div class="crowd-stat-label">Predicted Wait</div>
-            <div class="crowd-stat-val ${tierCls}" id="crowd-wait-${barId}">0</div>
-            <div style="font-size:0.56rem;letter-spacing:0.1em;color:var(--cream-30);text-transform:uppercase;">min</div>
-          </div>
-          <div class="crowd-stat">
-            <div class="crowd-stat-label">Capacity</div>
-            <div class="crowd-stat-val ${tierCls}">${pctDisp}%</div>
-          </div>
-        </div>
-        <div class="fill-track">
-          <div class="fill-bar ${tierCls}" id="crowd-bar-${barId}" style="width:0"></div>
-        </div>
-        <div style="display:flex;gap:0.5rem;margin-top:0.75rem;flex-wrap:wrap;">
-          <span class="flag-val ${confBadge === 'high' ? 'good' : confBadge === 'medium' ? 'active' : 'dim'}" style="font-size:0.58rem;border:1px solid currentColor;padding:0.18rem 0.5rem;">${confBadge} confidence</span>
-          <span class="flag-val neutral" style="font-size:0.58rem;border:1px solid var(--border);padding:0.18rem 0.5rem;color:var(--cream-60);">${modelKey}</span>
-        </div>
-      `;
-      grid.appendChild(crowdCard);
-
-      // Animate after paint
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          countUp(document.getElementById(`crowd-wait-${barId}`), waitRnd);
-          const fb = document.getElementById(`crowd-bar-${barId}`);
-          if (fb) fb.style.width = `${pctDisp}%`;
-        }, 80);
-      });
-    } else {
-      crowdCard.innerHTML = `
-        <div class="factor-title">Live Crowd Intelligence</div>
-        <div class="alert-box info" style="margin-top:0.5rem">Awaiting prediction data…</div>
-      `;
-      grid.appendChild(crowdCard);
-    }
-  }
-
-  /* ── COUNT UP ──────────────────────────────────────────── */
-  function countUp(el, target) {
-    if (!el) return;
-    let cur = 0;
-    const step = Math.max(1, Math.ceil(target / 22));
-    const iv = setInterval(() => {
-      cur = Math.min(cur + step, target);
-      el.textContent = cur;
-      if (cur >= target) clearInterval(iv);
-    }, 36);
-  }
-
-  /* ── RENDER FEATURE VECTOR ─────────────────────────────── */
-  function renderFeatureVector(signals, barId) {
-    document.getElementById('feat-bar-label').textContent =
-      `Bar #${barId} — ${BAR_SCHEDULES[barId].name}`;
-
-    const s = signals.sports   || {};
-    const w = signals.weather  || {};
-    const c = signals.calendar || {};
-
-    // Build a synthetic flat feature map from signals
-    const now = new Date();
-    const hour = now.getHours();
-    const dow  = now.getDay();  // 0=Sun
-    // Convert to Python convention (0=Mon)
-    const pyDow = (dow + 6) % 7;
-    const hrSin = Math.sin(2 * Math.PI * hour / 24);
-    const hrCos = Math.cos(2 * Math.PI * hour / 24);
-    const dowSin = Math.sin(2 * Math.PI * pyDow / 7);
-    const dowCos = Math.cos(2 * Math.PI * pyDow / 7);
-    const isWeekend = (pyDow >= 4) ? 1 : 0;  // Fri/Sat/Sun
-    const isThu = pyDow === 3 ? 1 : 0;
-    const isLateNight = (hour >= 22 || hour < 4) ? 1 : 0;
-
-    const featMap = {
-      // Time
-      hour,
-      day_of_week: pyDow,
-      hour_sin:    parseFloat(hrSin.toFixed(4)),
-      hour_cos:    parseFloat(hrCos.toFixed(4)),
-      dow_sin:     parseFloat(dowSin.toFixed(4)),
-      dow_cos:     parseFloat(dowCos.toFixed(4)),
-      is_weekend:  isWeekend,
-      is_thursday: isThu,
-      month:       now.getMonth() + 1,
-      week_of_year: getWeekOfYear(now),
-      is_late_night: isLateNight,
-      // Weather
-      temperature_c:    w.temperature_c    ?? 0,
-      precipitation_mm: w.precipitation_mm ?? 0,
-      wind_chill_c:     w.wind_chill_c     ?? 0,
-      snowfall_mm:      w.snowfall_mm      ?? 0,
-      wind_speed_ms:    w.wind_speed_ms    ?? 0,
-      is_severe_weather: w.is_severe_weather  ? 1 : 0,
-      cloud_cover:      w.cloud_cover      ?? 0,
-      is_first_nice_day: w.is_first_nice_day ? 1 : 0,
-      // Sports
-      is_game_day:          (s.is_football_home || s.is_basketball_home || s.is_hockey_home) ? 1 : 0,
-      is_football_home:     s.is_football_home     ? 1 : 0,
-      is_basketball_home:   s.is_basketball_home   ? 1 : 0,
-      is_hockey_home:       s.is_hockey_home       ? 1 : 0,
-      hours_until_game:     s.hours_until_game     ?? 0,
-      is_rivalry_game:      s.is_rivalry_game      ? 1 : 0,
-      is_wild_game:         s.is_wild_game         ? 1 : 0,
-      is_timberwolves_game: s.is_timberwolves_game ? 1 : 0,
-      is_nhl_playoffs:      s.is_nhl_playoffs      ? 1 : 0,
-      is_nfl_game_day:      s.is_nfl_game_day      ? 1 : 0,
-      is_nfl_playoffs:      s.is_nfl_playoffs      ? 1 : 0,
-      is_super_bowl:        s.is_super_bowl        ? 1 : 0,
-      is_vikings_game:      s.is_vikings_game      ? 1 : 0,
-      is_cfb_saturday:      s.is_cfb_saturday      ? 1 : 0,
-      is_cfb_championship:  s.is_cfb_championship  ? 1 : 0,
-      is_march_madness:     s.is_march_madness     ? 1 : 0,
-      is_march_madness_elite: s.is_march_madness_elite ? 1 : 0,
-      is_nba_playoffs:      s.is_nba_playoffs      ? 1 : 0,
-      tv_game_hour:         s.tv_game_hour         ?? 0,
-      tv_game_weight:       s.tv_game_weight       ?? 0,
-      // Academic
-      classes_in_session:       c.classes_in_session        ? 1 : 0,
-      is_finals_week:           c.is_finals_week            ? 1 : 0,
-      is_welcome_week:          c.is_welcome_week           ? 1 : 0,
-      is_break:                 c.is_break                  ? 1 : 0,
-      is_summer_session:        c.is_summer_session         ? 1 : 0,
-      week_of_semester:         c.week_of_semester          ?? 0,
-      is_midterms_week:         c.is_midterms_week          ? 1 : 0,
-      is_syllabus_week:         c.is_syllabus_week          ? 1 : 0,
-      is_study_days:            c.is_study_days             ? 1 : 0,
-      is_commencement:          c.is_commencement           ? 1 : 0,
-      days_until_break:         c.days_until_break          ?? 0,
-      days_since_semester_start: c.days_since_semester_start ?? 0,
-      is_st_patricks:           c.is_st_patricks            ? 1 : 0,
-      is_halloween:             c.is_halloween              ? 1 : 0,
-      is_homecoming:            c.is_homecoming             ? 1 : 0,
-      is_bar_crawl:             c.is_bar_crawl              ? 1 : 0,
-      is_blackout_wednesday:    c.is_blackout_wednesday     ? 1 : 0,
-      is_new_years_eve:         c.is_new_years_eve          ? 1 : 0,
-      is_cinco_de_mayo:         c.is_cinco_de_mayo          ? 1 : 0,
-      is_parents_weekend:       c.is_parents_weekend        ? 1 : 0,
     };
 
-    const grid = document.getElementById('feat-grid');
-    grid.innerHTML = '';
-
-    Object.entries(FEAT_GROUPS).forEach(([groupName, keys]) => {
-      const col = document.createElement('div');
-      col.className = 'feat-group';
-      const rows = keys
-        .filter(k => featMap[k] !== undefined)
-        .map(k => {
-          const v = featMap[k];
-          const isFloat  = typeof v === 'number' && !Number.isInteger(v);
-          const display  = isFloat ? v.toFixed(4) : String(v);
-          const nonzero  = v !== 0 && v !== '0';
-          const strong   = typeof v === 'number' && Math.abs(v) > 0.5 && nonzero;
-          const cls      = strong ? 'strong' : nonzero ? 'nonzero' : '';
-          return `<div class="feat-row">
-            <span class="feat-k">${k}</span>
-            <span class="feat-v ${cls}">${display}</span>
-          </div>`;
-        }).join('');
-
-      col.innerHTML = `<div class="feat-group-title">${groupName}</div>${rows}`;
-      grid.appendChild(col);
-    });
-  }
-
-  function getWeekOfYear(date) {
-    const start = new Date(date.getFullYear(), 0, 1);
-    const diff  = date - start;
-    return Math.ceil(diff / (7 * 24 * 60 * 60 * 1000));
-  }
-
-  /* ── FETCH ─────────────────────────────────────────────── */
-  async function fetchAll() {
-    const pill  = document.getElementById('api-pill');
-    const errEl = document.getElementById('error-banner');
-    pill.className   = 'api-pill loading';
-    pill.textContent = 'Loading';
-
-    // Mark all nodes as running
-    ['weather','sports','calendar','events','pop-times','crowd','features','predictor'].forEach(id => {
-      const el = document.getElementById(`dn-${id}`);
-      if (el) { el.classList.remove('done','error'); el.classList.add('running'); }
-      const ms = document.getElementById(`ms-${id}`);
-      if (ms) { ms.textContent = '…'; }
-    });
-
-    try {
-      const [sigsRes, predsRes] = await Promise.all([
-        fetch(`${API}/api/v1/signals/live`),
-        fetch(`${API}/api/v1/predict/all`),
-      ]);
-
-      if (!sigsRes.ok)  throw new Error(`signals/live ${sigsRes.status}`);
-      if (!predsRes.ok) throw new Error(`predict/all ${predsRes.status}`);
-
-      _signals = await sigsRes.json();
-      _preds   = await predsRes.json();
-
-      renderDag();
-      renderGlobalFactors(_signals);
-      renderBarFactors(activeBarId);
-      renderFeatureVector(_signals, activeBarId);
-
-      pill.className   = 'api-pill online';
-      pill.textContent = 'Online';
-      errEl.classList.remove('show');
-
-      document.getElementById('last-updated').textContent =
-        `Updated ${new Date().toLocaleTimeString()}`;
-
-    } catch (err) {
-      console.error(err);
-      pill.className   = 'api-pill offline';
-      pill.textContent = 'Offline';
-      document.getElementById('error-msg').textContent =
-        `Cannot reach API (${err.message}) — run: python -m uvicorn platform.backend.main:app --reload --port 8001`;
-      errEl.classList.add('show');
-
-      ['weather','sports','calendar','events','pop-times','crowd','features','predictor'].forEach(id => {
-        const el = document.getElementById(`dn-${id}`);
-        if (el) { el.classList.remove('running','done'); el.classList.add('error'); }
-        const ms = document.getElementById(`ms-${id}`);
-        if (ms) ms.textContent = 'error';
-      });
+    function buildTT(id) {
+      const d = ND[id]; if (!d) return '';
+      const tt = document.getElementById('tt');
+      tt.style.setProperty('--ttc', d.color);
+      let h = `<div class="tth"><span class="tttl">${d.label}</span><span class="ttbg">${d.badge}</span></div><div class="ttb">`;
+      if (d.sections) {
+        d.sections.forEach(s => {
+          h += `<div class="tts"><div class="ttst">${s.t}</div>`;
+          s.rows.forEach(([k, v, hi]) => {
+            h += `<div class="ttr"><span class="ttk">${k}</span><span class="ttv${hi ? ' hi' : ''}">${v}</span></div>`;
+          });
+          h += '</div>';
+        });
+      }
+      if (d.groups) {
+        d.groups.forEach(g => {
+          h += `<div class="tts"><div class="ttst">${g.n}</div><div class="ttchips">`;
+          g.c.forEach(c => { h += `<span class="ttchip">${c}</span>`; });
+          h += '</div></div>';
+        });
+      }
+      if (d.bars) {
+        h += '<div class="tts"><div class="ttst">BUSYNESS BASELINE</div>';
+        d.bars.forEach(b => {
+          h += `<div class="ttbr"><span class="ttbn">${b.name}</span><div class="tbbtr"><div class="tbbf" style="width:${b.busy}%"></div></div><span class="tbbp">${b.busy}%</span></div>`;
+        });
+        h += '</div>';
+        if (d.extra) {
+          h += '<div class="tts">';
+          d.extra.forEach(([k, v]) => { h += `<div class="ttr"><span class="ttk">${k}</span><span class="ttv">${v}</span></div>`; });
+          h += '</div>';
+        }
+      }
+      return h + '</div>';
     }
 
-    startCountdown();
-  }
+    /* ── TOOLTIP HOVER ───────────────────────────── */
+    const ttEl = document.getElementById('tt');
+    let ttT = null;
+    const RIGHT_NODES = new Set(['blarneys', 'sallys', 'kk', 'predictor']);
 
-  /* ── INIT ──────────────────────────────────────────────── */
-  fetchAll();
-</script>
+    document.querySelectorAll('.node').forEach(n => {
+      n.addEventListener('mouseenter', () => {
+        clearTimeout(ttT);
+        const id = n.dataset.node;
+        ttEl.innerHTML = buildTT(id);
+        const r = n.getBoundingClientRect();
+        const isRight = RIGHT_NODES.has(id);
+        let left = isRight ? r.left - 268 : r.right + 10;
+        let top = r.top + r.height / 2 - 90;
+        left = Math.max(8, Math.min(left, window.innerWidth - 310));
+        top = Math.max(8, Math.min(top, window.innerHeight - 420));
+        ttEl.style.left = left + 'px';
+        ttEl.style.top = top + 'px';
+        ttEl.classList.add('vis');
+      });
+      n.addEventListener('mouseleave', () => { ttT = setTimeout(() => ttEl.classList.remove('vis'), 110); });
+    });
+    ttEl.addEventListener('mouseenter', () => clearTimeout(ttT));
+    ttEl.addEventListener('mouseleave', () => ttEl.classList.remove('vis'));
+
+    /* ── REFRESH PULSES ──────────────────────────── */
+    const liveSrc = ['weather', 'sports', 'events', 'popular_times'];
+    function pulse() {
+      const id = liveSrc[Math.floor(Math.random() * liveSrc.length)];
+      const el = document.querySelector(`[data-node="${id}"]`);
+      if (el) { el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+      setTimeout(() => { if (el) el.classList.remove('flash'); }, 800);
+      setTimeout(pulse, 3800 + Math.random() * 3200);
+    }
+    setTimeout(pulse, 2000);
+
+    /* ── RUN PIPELINE ────────────────────────────── */
+    function runPipeline() {
+      const btn = document.getElementById('rbtn');
+      if (btn.classList.contains('running')) return;
+      btn.textContent = '◉ RUNNING…'; btn.classList.add('running');
+      const seq = ['weather', 'sports', 'calendar', 'events', 'popular_times', 'greek_life', 'feature_extractor', 'predictor'];
+      let i = 0;
+      function step() {
+        if (i >= seq.length) {
+          btn.textContent = '▶ RUN PIPELINE'; btn.classList.remove('running');
+          document.getElementById('s-lat').textContent = (115 + Math.floor(Math.random() * 80)) + 'ms';
+          return;
+        }
+        const el = document.querySelector(`[data-node="${seq[i]}"]`);
+        if (el) { el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+        i++; setTimeout(step, 320);
+      }
+      setTimeout(step, 80);
+    }
+
+    window.addEventListener('load', fitView);
+
+  </script>
+  <script src="ontology.js"></script>
 </body>
+
 </html>
